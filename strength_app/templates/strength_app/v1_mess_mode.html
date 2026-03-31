@@ -1,0 +1,105 @@
+{% extends 'strength_app/base.html' %}
+{% block title %}Mess Mode — VYAYAM{% endblock %}
+
+{% block extra_css %}
+<style>
+  body { background: #0a0e27; color: #fff; }
+  .mess-container { max-width: 860px; margin: 0 auto; padding: 24px 20px; }
+  h1 { font-size: 1.5rem; font-weight: 800; margin-bottom: 4px; }
+  .card { background: #1a1f3a; border-radius: 16px; padding: 20px; margin-bottom: 18px; }
+  .card-label { font-size: .7rem; text-transform: uppercase; letter-spacing: 1px; opacity: .5; margin-bottom: 12px; }
+  .food-checkbox-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(175px, 1fr)); gap: 10px; }
+  .food-checkbox-item {
+    background: #252b4a; border-radius: 10px; padding: 10px 12px;
+    cursor: pointer; border: 2px solid transparent; transition: all .2s;
+    display: flex; align-items: flex-start; gap: 10px;
+  }
+  .food-checkbox-item:has(input:checked) { border-color: #667eea; background: rgba(102,126,234,.12); }
+  .food-checkbox-item input { margin-top: 2px; accent-color: #667eea; }
+  .fcb-name { font-weight: 600; font-size: .85rem; }
+  .fcb-meta { font-size: .72rem; opacity: .5; margin-top: 2px; }
+  label.field-label { font-size: .85rem; opacity: .7; margin-bottom: 4px; display: block; }
+  select, textarea {
+    width: 100%; background: #2a2f4a; border: 1px solid rgba(255,255,255,.1);
+    color: #fff; border-radius: 10px; padding: 10px 14px; font-size: .9rem;
+  }
+  textarea { resize: vertical; min-height: 70px; }
+  .btn-submit {
+    width: 100%; padding: 14px; font-weight: 700; font-size: 1rem;
+    background: linear-gradient(135deg, #11998e, #38ef7d);
+    border: none; border-radius: 12px; color: #fff; cursor: pointer; margin-top: 8px;
+  }
+  .guidance-box {
+    background: rgba(56,239,125,.1); border: 1px solid rgba(56,239,125,.3);
+    border-radius: 12px; padding: 18px 20px; white-space: pre-line;
+    font-size: .92rem; line-height: 1.7;
+  }
+  .recent-row { padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,.06); font-size: .85rem; }
+  .back-link { color: rgba(255,255,255,.4); font-size: .85rem; text-decoration: none; display: inline-block; margin-bottom: 16px; }
+  .back-link:hover { color: #fff; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="mess-container">
+  <a href="{% url 'v1_nutrition_dashboard' %}" class="back-link"><i class="fas fa-arrow-left me-1"></i> Back to Nutrition</a>
+  <h1>Mess Mode</h1>
+  <p style="opacity:.55;font-size:.9rem;margin-bottom:20px;">Select what's being served today — we'll tell you how much to eat.</p>
+
+  {% if guidance %}
+  <div class="card">
+    <div class="card-label">Your Guidance</div>
+    <div class="guidance-box">{{ guidance }}</div>
+  </div>
+  {% endif %}
+
+  <form method="post">
+    {% csrf_token %}
+    <div class="card">
+      <div class="card-label">What's on the menu today?</div>
+      <div class="food-checkbox-grid">
+        {% for food in mess_foods %}
+        <label class="food-checkbox-item">
+          <input type="checkbox" name="food_ids" value="{{ food.id }}"
+            {% if food in selected_items %}checked{% endif %}>
+          <div>
+            <div class="fcb-name">{{ food.name }}</div>
+            <div class="fcb-meta">{{ food.calories_per_100g|floatformat:0 }} kcal/100g · {{ food.protein_per_100g }}g P</div>
+          </div>
+        </label>
+        {% endfor %}
+      </div>
+
+      <div style="margin-top:18px;">
+        <label class="field-label">Meal</label>
+        <select name="meal_type">
+          {% for m in meal_types %}
+          <option value="{{ m }}" {% if m == 'lunch' %}selected{% endif %}>{{ m|capfirst }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div style="margin-top:14px;">
+        <label class="field-label">Extra items not listed above (optional free text)</label>
+        <textarea name="raw_description" placeholder="e.g. sweet pongal, kesari bath, rasam..."></textarea>
+      </div>
+
+      <button type="submit" class="btn-submit">
+        <i class="fas fa-magic me-2"></i>Get My Portion Guidance
+      </button>
+    </div>
+  </form>
+
+  {% if recent %}
+  <div class="card">
+    <div class="card-label">Recent Mess Entries</div>
+    {% for entry in recent %}
+    <div class="recent-row">
+      <strong>{{ entry.entry_date|date:"D d M" }}</strong> — {{ entry.meal_type|capfirst }}
+      {% if entry.raw_description %} · {{ entry.raw_description|truncatechars:60 }}{% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,145 @@
+{% extends 'strength_app/base.html' %}
+{% block title %}Cool-Down — VYAYAM{% endblock %}
+
+{% block extra_css %}
+<style>
+  body { background: #0a0e27; color: #fff; }
+  .cd-wrap { max-width: 700px; margin: 0 auto; padding: 24px 16px; }
+  .top-bar { background: #1a1f3a; border-radius: 14px; padding: 16px 20px;
+    display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+  .phase-card { background: #1a1f3a; border-radius: 16px; margin-bottom: 16px; overflow: hidden; }
+  .phase-header { padding: 14px 20px; display: flex; align-items: center; gap: 10px;
+    font-weight: 700; font-size: 1rem; }
+  .phase-num { display: inline-flex; width: 28px; height: 28px; border-radius: 50%;
+    background: rgba(17,153,142,.2); border: 2px solid #11998e;
+    align-items: center; justify-content: center; font-size: .8rem; font-weight: 800; }
+  .phase-body { padding: 0 20px 16px; }
+  .ex-row { display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,.06); }
+  .ex-row:last-child { border-bottom: none; }
+  .ex-name { font-weight: 600; font-size: .9rem; }
+  .ex-detail { font-size: .8rem; opacity: .6; margin-top: 2px; }
+  .ex-badge { background: rgba(17,153,142,.2); color: #6ee7b7; border-radius: 8px;
+    padding: 4px 10px; font-size: .75rem; font-weight: 700; white-space: nowrap; }
+
+  /* Breathing animation */
+  .breath-section { text-align: center; padding: 24px 20px; }
+  .breath-ring { width: 120px; height: 120px; margin: 0 auto 16px; position: relative; }
+  .breath-circle { width: 120px; height: 120px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(102,126,234,.4) 0%, rgba(118,75,162,.1) 70%);
+    border: 2px solid rgba(102,126,234,.4);
+    animation: breathe 8s ease-in-out infinite; }
+  @keyframes breathe {
+    0%, 100% { transform: scale(0.8); opacity: .6; }
+    50% { transform: scale(1.2); opacity: 1; }
+  }
+  .breath-label { font-size: .85rem; opacity: .7; }
+  #breathText { font-size: 1rem; font-weight: 700; color: #a5b4fc; margin-top: 8px; }
+
+  .cta-btn { display: block; width: 100%; padding: 16px; font-size: 1rem; font-weight: 700;
+    background: linear-gradient(135deg, #11998e, #38ef7d);
+    border: none; border-radius: 14px; color: white; cursor: pointer;
+    text-align: center; text-decoration: none; margin-top: 24px; }
+  .empty-note { padding: 12px; opacity: .5; font-size: .85rem; font-style: italic; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="cd-wrap">
+  <div class="top-bar">
+    <div>
+      <div style="font-size:1.1rem;font-weight:800;">Cool-Down</div>
+      <div style="font-size:.8rem;opacity:.6;">3 phases · ~8 min</div>
+    </div>
+    <div style="font-size:.85rem;opacity:.6;"><i class="fas fa-user me-1"></i>{{ patient.name }}</div>
+  </div>
+
+  <!-- Phase 1: Light Movement -->
+  <div class="phase-card">
+    <div class="phase-header">
+      <span class="phase-num">1</span>
+      <span>🚶 Light Movement</span>
+    </div>
+    <div class="phase-body">
+      {% if light_movement %}
+        {% for ex in light_movement %}
+        <div class="ex-row">
+          <div>
+            <div class="ex-name">{{ ex.name }}</div>
+            <div class="ex-detail">{{ ex.duration|default:"60 sec" }}{% if ex.notes %} · {{ ex.notes }}{% endif %}</div>
+          </div>
+          <span class="ex-badge">{{ ex.duration|default:"60s" }}</span>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="empty-note">Easy walking or gentle movement for 3–5 minutes.</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Phase 2: Static Stretching -->
+  <div class="phase-card">
+    <div class="phase-header">
+      <span class="phase-num">2</span>
+      <span>🧘 Static Stretches</span>
+    </div>
+    <div class="phase-body">
+      {% if static_stretch %}
+        {% for ex in static_stretch %}
+        <div class="ex-row">
+          <div>
+            <div class="ex-name">{{ ex.name }}</div>
+            <div class="ex-detail">Hold {{ ex.hold|default:"30" }}s{% if ex.sides %} each side{% endif %}{% if ex.notes %} · {{ ex.notes }}{% endif %}</div>
+          </div>
+          <span class="ex-badge">{{ ex.hold|default:"30" }}s hold</span>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="empty-note">Hip flexor, hamstring, and thoracic stretch — 30s each hold.</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Phase 3: Breathing -->
+  <div class="phase-card">
+    <div class="phase-header">
+      <span class="phase-num">3</span>
+      <span>💨 Breathing &amp; Nervous System Reset</span>
+    </div>
+    <div class="breath-section">
+      <div class="breath-ring"><div class="breath-circle"></div></div>
+      <div class="breath-label">Follow the rhythm</div>
+      <div id="breathText">Inhale...</div>
+      {% if breathing %}
+        <div style="margin-top:16px;text-align:left;">
+          {% for ex in breathing %}
+          <div class="ex-row">
+            <div>
+              <div class="ex-name">{{ ex.name }}</div>
+              <div class="ex-detail">{{ ex.pattern|default:"4-4-4-4" }} · {{ ex.rounds|default:5 }} rounds{% if ex.notes %} · {{ ex.notes }}{% endif %}</div>
+            </div>
+            <span class="ex-badge">{{ ex.rounds|default:5 }} rounds</span>
+          </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <a href="{% url 'v1_post_session_feedback' %}" class="cta-btn">
+    <i class="fas fa-check me-2"></i>Complete Cool-Down &amp; Check In
+  </a>
+</div>
+
+<script>
+// Breathing cue cycle: inhale 4s → hold 4s → exhale 4s → rest 4s
+const phases = ['Inhale...', 'Hold...', 'Exhale...', 'Rest...'];
+const durations = [4000, 4000, 4000, 4000];
+let idx = 0;
+function nextBreath() {
+  document.getElementById('breathText').textContent = phases[idx];
+  setTimeout(() => { idx = (idx + 1) % phases.length; nextBreath(); }, durations[idx]);
+}
+nextBreath();
+</script>
+{% endblock %}

@@ -1,0 +1,92 @@
+{% extends 'strength_app/base.html' %}
+{% block title %}Cycle Tracking — VYAYAM Assessment{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+  <div class="row justify-content-center">
+    <div class="col-lg-6">
+
+      <div class="mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <span class="text-muted small fw-600">Step {{ step }} of {{ total }}</span>
+          <span class="text-muted small">Hormonal Integration</span>
+        </div>
+        <div class="progress" style="height:6px;border-radius:6px;">
+          <div class="progress-bar" style="width:{% widthratio step total 100 %}%;background:var(--primary-gradient);"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-body p-4">
+          <h4 class="fw-700 mb-1">Cycle-Aware Training</h4>
+          <p class="text-muted mb-2">VYAYAM V1 adjusts your training load based on your hormonal cycle — reducing volume during luteal and menstrual phases when fatigue is typically higher.</p>
+          <div class="alert alert-info border-0 mb-4" style="background:rgba(79,172,254,.1);">
+            <i class="fas fa-lock me-2"></i><small>This information is private and only used to personalise your programme.</small>
+          </div>
+
+          <form method="post">
+            {% csrf_token %}
+
+            <div class="mb-3">
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" name="cycle_tracking_enabled" id="cycleTracking"
+                  {% if patient.cycle_tracking_enabled %}checked{% endif %}
+                  onchange="toggleCycleFields(this.checked)">
+                <label class="form-check-label fw-600" for="cycleTracking">Enable cycle-aware training</label>
+              </div>
+              <div class="text-muted small mt-1">Adjusts volume and rest automatically each week</div>
+            </div>
+
+            <div id="cycleFields" {% if not patient.cycle_tracking_enabled %}style="display:none;"{% endif %}>
+
+              <div class="mb-3">
+                <label class="form-label fw-600">Average cycle length (days)</label>
+                <input type="number" name="cycle_length_days" class="form-control" min="21" max="45"
+                       value="{{ patient.cycle_length_days|default:28 }}" placeholder="28">
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label fw-600">First day of last period</label>
+                <input type="date" name="last_period_start" class="form-control"
+                       value="{{ patient.last_period_start|date:'Y-m-d' }}">
+                <div class="text-muted small mt-1">Used to estimate your current cycle phase</div>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label fw-600">Menstrual pain level (when not using contraception)</label>
+                <select name="menstrual_pain_level" class="form-select">
+                  <option value="" {% if not patient.menstrual_pain_level %}selected{% endif %}>Prefer not to say</option>
+                  <option value="minimal"     {% if patient.menstrual_pain_level == 'minimal'     %}selected{% endif %}>Minimal — barely noticeable</option>
+                  <option value="moderate"    {% if patient.menstrual_pain_level == 'moderate'    %}selected{% endif %}>Moderate — affects daily activities mildly</option>
+                  <option value="significant" {% if patient.menstrual_pain_level == 'significant' %}selected{% endif %}>Significant — need to modify activities</option>
+                  <option value="severe"      {% if patient.menstrual_pain_level == 'severe'      %}selected{% endif %}>Severe — rest required (mobility-only sessions)</option>
+                </select>
+              </div>
+
+            </div>
+
+            <div class="mb-4">
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" name="hormonal_contraceptive" id="hornContra"
+                  {% if patient.hormonal_contraceptive %}checked{% endif %}>
+                <label class="form-check-label fw-600" for="hornContra">Currently using hormonal contraception</label>
+              </div>
+              <div class="text-muted small mt-1">Pill, implant, IUD, injection etc. — this mutes cycle phase variation</div>
+            </div>
+
+            <button type="submit" class="btn w-100 py-3 fw-700" style="background:var(--primary-gradient);color:white;border:none;border-radius:10px;">
+              Save &amp; Continue <i class="fas fa-arrow-right ms-2"></i>
+            </button>
+          </form>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+<script>
+  function toggleCycleFields(show) {
+    document.getElementById('cycleFields').style.display = show ? 'block' : 'none';
+  }
+</script>
+{% endblock %}

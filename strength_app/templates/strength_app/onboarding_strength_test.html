@@ -1,0 +1,71 @@
+{% extends 'strength_app/base.html' %}
+{% block title %}Strength Tests — VYAYAM Assessment{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+  <div class="row justify-content-center">
+    <div class="col-lg-7">
+
+      <div class="mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <span class="text-muted small fw-600">Step {{ step }} of {{ total }}</span>
+          <span class="text-muted small">Movement Testing</span>
+        </div>
+        <div class="progress" style="height:6px;border-radius:6px;">
+          <div class="progress-bar" style="width:{% widthratio step total 100 %}%;background:var(--primary-gradient);"></div>
+        </div>
+      </div>
+
+      <div class="card mb-3" style="background:var(--primary-gradient);color:white;">
+        <div class="card-body p-4 text-center">
+          <i class="fas fa-dumbbell fa-2x mb-2" style="opacity:.9"></i>
+          <h4 class="fw-700 mb-1">7 Movement Tests</h4>
+          <p class="mb-0 opacity-75">Camera will guide you. Each test takes 30–120 seconds. You score yourself 1–5 at the end of each.</p>
+        </div>
+      </div>
+
+      <div class="card mb-3">
+        <div class="card-body p-4">
+          <h6 class="text-muted fw-700 text-uppercase mb-3" style="font-size:.7rem;letter-spacing:1px;">Tests You'll Perform</h6>
+          <div class="d-flex flex-column gap-2">
+            {% for test in tests %}
+            <div class="d-flex align-items-center gap-3 p-3 rounded-3" style="background:#f8fafc;">
+              <div class="fw-800 text-primary" style="width:28px;font-size:1.1rem;">{{ forloop.counter }}</div>
+              <div class="flex-grow-1">
+                <div class="fw-600">{{ test.name }}</div>
+                <div class="text-muted small">{{ test.exercise }}</div>
+              </div>
+              <div class="text-muted small">{{ test.duration_seconds }}s</div>
+              {% if test.is_bilateral %}
+              <span class="badge" style="background:rgba(102,126,234,.15);color:#667eea;font-size:.7rem;">Both sides</span>
+              {% endif %}
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Setup checklist -->
+      <div class="card mb-4">
+        <div class="card-body p-4">
+          <h6 class="fw-700 mb-3"><i class="fas fa-check-circle me-2 text-success"></i>Before you start</h6>
+          <ul class="list-unstyled mb-0 d-flex flex-column gap-2">
+            <li><i class="fas fa-camera text-primary me-2"></i> Camera or phone positioned to see your full body</li>
+            <li><i class="fas fa-shoe-prints text-primary me-2"></i> Clear floor space (2m × 2m minimum)</li>
+            <li><i class="fas fa-tshirt text-primary me-2"></i> Comfortable, fitted clothing (so posture is visible)</li>
+            <li><i class="fas fa-droplet text-primary me-2"></i> Do a 5-minute gentle warm-up first (walk, arm swings)</li>
+          </ul>
+        </div>
+      </div>
+
+      <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn w-100 py-3 fw-700 fs-5" style="background:var(--success-gradient);color:white;border:none;border-radius:12px;">
+          <i class="fas fa-play me-2"></i>Start Testing
+        </button>
+      </form>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

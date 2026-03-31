@@ -1,0 +1,149 @@
+{% extends 'strength_app/base.html' %}
+
+{% block title %}Progress Reports - VYAYAM{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="text-center mb-4">
+                <h1 class="display-5 gradient-text">
+                    <i class="fas fa-chart-line me-2"></i>Progress Reports
+                </h1>
+                <p class="lead text-muted">Track your fitness journey with detailed analytics</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Overview -->
+    <div class="row g-3 mb-5">
+        <div class="col-md-6">
+            <div class="stat-card primary">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <p class="text-muted mb-1">Total Sessions</p>
+                        <h2 class="mb-0">{{ total_sessions }}</h2>
+                        <small class="text-muted">Workout sessions completed</small>
+                    </div>
+                    <div class="text-primary" style="font-size: 3rem; opacity: 0.2;">
+                        <i class="fas fa-dumbbell"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="stat-card success">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <p class="text-muted mb-1">Reports Generated</p>
+                        <h2 class="mb-0">{{ reports.count }}</h2>
+                        <small class="text-muted">Professional progress reports</small>
+                    </div>
+                    <div class="text-success" style="font-size: 3rem; opacity: 0.2;">
+                        <i class="fas fa-file-medical-alt"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reports List -->
+    <div class="card">
+        <div class="card-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 text-white">
+                    <i class="fas fa-folder-open me-2"></i>Your Reports
+                </h5>
+                {% if sessions %}
+                    <a href="{% url 'generate_report' %}" class="btn btn-light btn-sm">
+                        <i class="fas fa-plus me-2"></i>Generate New Report
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+        <div class="card-body">
+            {% if reports %}
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead style="background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);">
+                            <tr>
+                                <th class="px-4 py-3">Period</th>
+                                <th class="py-3">Date Generated</th>
+                                <th class="py-3">Sessions</th>
+                                <th class="py-3">Adherence</th>
+                                <th class="py-3 text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for report in reports %}
+                            <tr>
+                                <td class="px-4 py-3">
+                                    <strong>{{ report.report_period }}</strong>
+                                </td>
+                                <td class="py-3">{{ report.report_date|date:"M d, Y" }}</td>
+                                <td class="py-3">
+                                    <span class="badge bg-primary" style="padding: 0.5rem 0.75rem;">
+                                        {{ report.total_sessions_completed }}/{{ report.total_sessions_prescribed }}
+                                    </span>
+                                </td>
+                                <td class="py-3">
+                                    {% if report.overall_adherence_rate >= 80 %}
+                                        <span class="badge bg-success" style="padding: 0.5rem 0.75rem;">
+                                    {% elif report.overall_adherence_rate >= 60 %}
+                                        <span class="badge bg-warning" style="padding: 0.5rem 0.75rem;">
+                                    {% else %}
+                                        <span class="badge bg-danger" style="padding: 0.5rem 0.75rem;">
+                                    {% endif %}
+                                        {{ report.overall_adherence_rate|floatformat:1 }}%
+                                    </span>
+                                </td>
+                                <td class="py-3 text-end">
+                                    <a href="{% url 'view_report' report.id %}" class="btn btn-sm btn-primary me-2">
+                                        <i class="fas fa-eye me-1"></i>View
+                                    </a>
+                                    <a href="{% url 'download_report' report.id %}" class="btn btn-sm btn-outline-secondary">
+                                        <i class="fas fa-download me-1"></i>Download
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <div class="mb-4" style="font-size: 4rem; opacity: 0.3;">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h5 class="text-muted mb-3">No Reports Generated Yet</h5>
+                    {% if sessions %}
+                        <p class="text-muted mb-4">Ready to see your progress? Generate your first report now!</p>
+                        <a href="{% url 'generate_report' %}" class="btn btn-primary btn-lg">
+                            <i class="fas fa-plus me-2"></i>Generate Your First Report
+                        </a>
+                    {% else %}
+                        <p class="text-muted mb-4">Complete some workout sessions first to generate progress reports.</p>
+                        <a href="{% url 'daily_workout' %}" class="btn btn-success btn-lg">
+                            <i class="fas fa-dumbbell me-2"></i>Start Your First Workout
+                        </a>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Info Card -->
+    {% if reports %}
+    <div class="card mt-4" style="border-left: 4px solid #4facfe;">
+        <div class="card-body">
+            <h6 class="mb-3">
+                <i class="fas fa-info-circle text-info me-2"></i>About Progress Reports
+            </h6>
+            <p class="small text-muted mb-0">
+                Progress reports provide detailed analysis of your training, including session adherence, form quality, exercise progressions, and personalized recommendations for continued improvement. Generate weekly reports to track your fitness journey!
+            </p>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

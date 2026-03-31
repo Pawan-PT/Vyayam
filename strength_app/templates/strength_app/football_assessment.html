@@ -1,0 +1,53 @@
+{% extends 'strength_app/base.html' %}
+{% block title %}Football Assessment — VYAYAM{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card" style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;">
+        <div class="card-body p-4">
+          <h3 class="fw-800 mb-2"><i class="fas fa-futbol me-2"></i>Football Assessment Battery</h3>
+          <p class="mb-0 opacity-85">{{ total_tests }} tests that measure your explosive power, reactive strength, speed, agility, and stability. Your weakest score sets your training level.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3 mb-4">
+    {% for test in tests %}
+    <div class="col-md-6">
+      <div class="card h-100">
+        <div class="card-body p-3">
+          <div class="d-flex align-items-start gap-3">
+            <div class="rounded-circle d-flex align-items-center justify-content-center fw-800" style="width:36px;height:36px;background:rgba(102,126,234,.15);color:#667eea;flex-shrink:0;">{{ forloop.counter }}</div>
+            <div>
+              <h6 class="fw-700 mb-1">{{ test.name }}</h6>
+              <p class="text-muted small mb-0">{{ test.measure }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="card mb-4">
+    <div class="card-body p-4">
+      <h6 class="fw-700 mb-2"><i class="fas fa-info-circle me-2 text-primary"></i>What You'll Need</h6>
+      <p class="text-muted small mb-0">A flat surface (at least 20 metres), a tape measure, a phone timer, and someone to anchor your ankles for the Nordic test. Each test takes about 2 minutes. Total assessment time: approximately 15 minutes.</p>
+    </div>
+  </div>
+
+  <div class="text-center">
+    <form method="post">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-lg px-5 py-3 fw-700" style="background:var(--primary-gradient);color:white;border:none;border-radius:14px;">
+        <i class="fas fa-play me-2"></i>Begin Assessment
+      </button>
+    </form>
+  </div>
+
+</div>
+{% endblock %}

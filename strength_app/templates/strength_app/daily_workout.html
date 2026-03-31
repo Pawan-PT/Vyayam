@@ -1,0 +1,258 @@
+{% extends 'strength_app/base.html' %}
+{% load static %}
+
+{% block title %}Daily Workout - VYAYAM{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="text-center mb-4">
+                <h1 class="display-5 gradient-text">
+                    <i class="fas fa-dumbbell me-2"></i>Today's Workout
+                </h1>
+                <p class="lead text-muted">Complete your personalized training session</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8 mb-4">
+            <!-- Workout Overview Card -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0 text-white">
+                        <i class="fas fa-list-check me-2"></i>Workout Overview
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center mb-4">
+                        <div class="col-md-4">
+                            <div class="p-3 rounded" style="background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);">
+                                <h3 class="mb-1">{{ total_exercises }}</h3>
+                                <p class="text-muted mb-0 small">Total Exercises</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="p-3 rounded" style="background: linear-gradient(135deg, rgba(17, 153, 142, 0.1) 0%, rgba(56, 239, 125, 0.1) 100%);">
+                                <h3 class="mb-1">30-40</h3>
+                                <p class="text-muted mb-0 small">Minutes Duration</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="p-3 rounded" style="background: linear-gradient(135deg, rgba(240, 147, 251, 0.1) 0%, rgba(245, 87, 108, 0.1) 100%);">
+                                <h3 class="mb-1">
+                                    <i class="fas fa-fire text-danger"></i>
+                                </h3>
+                                <p class="text-muted mb-0 small">Moderate Intensity</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info mb-0">
+                        <h6 class="mb-2">
+                            <i class="fas fa-camera me-2"></i>AI-Powered Form Tracking
+                        </h6>
+                        <p class="mb-2 small">
+                            Real-time camera analysis with color-coded feedback:
+                        </p>
+                        <div class="d-flex gap-3 flex-wrap">
+                            <span class="badge bg-success" style="padding: 0.5rem 1rem;">
+                                <i class="fas fa-check me-1"></i>GREEN = Perfect Form
+                            </span>
+                            <span class="badge bg-warning" style="padding: 0.5rem 1rem;">
+                                <i class="fas fa-adjust me-1"></i>YELLOW = Adjust Form
+                            </span>
+                            <span class="badge bg-danger" style="padding: 0.5rem 1rem;">
+                                <i class="fas fa-times me-1"></i>RED = Poor Form
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Exercise List -->
+            {% if exercises %}
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0 text-white">
+                        <i class="fas fa-play-circle me-2"></i>Exercise List
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        {% for exercise in exercises %}
+                        <div class="list-group-item">
+                            <div class="row align-items-center">
+                                <div class="col-md-1 text-center">
+                                    <div class="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center" 
+                                         style="width: 40px; height: 40px; font-weight: 600;">
+                                        {{ forloop.counter }}
+                                    </div>
+                                </div>
+                                <div class="col-md-5">
+                                    <h6 class="mb-1">{{ exercise.exercise_name }}</h6>
+                                    <span class="badge badge-sm" 
+                                          style="background: {% if exercise.type == 'stretching' %}#667eea{% elif exercise.type == 'strength' %}#11998e{% else %}#f093fb{% endif %};">
+                                        {{ exercise.section }}
+                                    </span>
+                                </div>
+                                <div class="col-md-3 text-center">
+                                    <small class="text-muted d-block">Sets × Reps</small>
+                                    <strong>{{ exercise.sets }} × {{ exercise.reps }}</strong>
+                                </div>
+                                <div class="col-md-3 text-end">
+                                    <a href="{% url 'execute_exercise' exercise.index %}" 
+                                       class="btn btn-sm btn-success">
+                                        <i class="fas fa-play me-1"></i>Start
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="alert alert-warning">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                No exercises found. Please generate a prescription first.
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Progress Card -->
+            <div class="card mb-4" style="border-left: 4px solid #667eea;">
+                <div class="card-body">
+                    <h6 class="mb-3">
+                        <i class="fas fa-chart-line text-primary me-2"></i>Today's Progress
+                    </h6>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="small">Exercises Completed</span>
+                            <span class="small fw-bold">0 / {{ total_exercises }}</span>
+                        </div>
+                        <div class="progress" style="height: 8px;">
+                            <div class="progress-bar bg-success" role="progressbar" 
+                                 style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="text-center">
+                        <p class="small text-muted mb-2">Ready to start?</p>
+                        <i class="fas fa-trophy text-warning" style="font-size: 2rem;"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tips Card -->
+            <div class="card mb-4" style="border-left: 4px solid #11998e;">
+                <div class="card-body">
+                    <h6 class="mb-3">
+                        <i class="fas fa-lightbulb text-warning me-2"></i>Workout Tips
+                    </h6>
+                    <ul class="list-unstyled mb-0 small">
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            Stand 6-8 feet from camera
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            Ensure full body is visible
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            Use good lighting
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            Focus on form, not speed
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            Take full rest between sets
+                        </li>
+                        <li class="mb-0">
+                            <i class="fas fa-check text-success me-2"></i>
+                            Stay hydrated
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Safety Card -->
+            <div class="card" style="border-left: 4px solid #eb3349;">
+                <div class="card-body">
+                    <h6 class="mb-3">
+                        <i class="fas fa-shield-heart text-danger me-2"></i>Safety First
+                    </h6>
+                    <p class="small text-muted mb-2">
+                        <strong>Stop immediately if you experience:</strong>
+                    </p>
+                    <ul class="small mb-0">
+                        <li>Sharp or sudden pain</li>
+                        <li>Dizziness or nausea</li>
+                        <li>Chest discomfort</li>
+                        <li>Excessive breathlessness</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.gradient-text {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.fade-in {
+    animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.list-group-item {
+    transition: all 0.3s;
+    border-left: 3px solid transparent;
+}
+
+.list-group-item:hover {
+    background-color: rgba(102, 126, 234, 0.05);
+    border-left-color: #667eea;
+}
+
+.card {
+    border: none;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    margin-bottom: 1.5rem;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.card-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-bottom: none;
+    padding: 1rem 1.5rem;
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    border: none;
+    transition: all 0.3s;
+}
+
+.btn-success:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(17, 153, 142, 0.4);
+}
+</style>
+{% endblock %}

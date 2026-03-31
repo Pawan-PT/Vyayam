@@ -1,0 +1,522 @@
+{% extends 'strength_app/base.html' %}
+{% load static %}
+
+{% block title %}{{ family.name }} — Level {{ level_index|add:1 }} — VYAYAM{% endblock %}
+
+{% block extra_css %}
+<style>
+body { background: #0a0e27; color: #fff; }
+
+.gate-wrap { max-width: 1300px; margin: 0 auto; padding: 20px; }
+
+/* ── Progress ── */
+.progress-strip { display: flex; gap: 6px; margin-bottom: 20px; }
+.progress-fam {
+  flex: 1; height: 8px; border-radius: 4px;
+  background: rgba(255,255,255,0.12);
+  transition: background 0.4s;
+}
+.progress-fam.done    { background: #22c55e; }
+.progress-fam.current { background: #667eea; animation: pulse-bar 1.5s infinite; }
+@keyframes pulse-bar { 0%,100% { opacity:1; } 50% { opacity:.6; } }
+
+/* ── Level ladder ── */
+.level-ladder { display: flex; gap: 6px; margin-bottom: 20px; }
+.level-pip {
+  flex: 1; height: 6px; border-radius: 3px;
+  background: rgba(255,255,255,0.1);
+  transition: background 0.3s;
+}
+.level-pip.passed  { background: #22c55e; }
+.level-pip.current { background: #f59e0b; }
+
+/* ── Video section ── */
+.video-section {
+  position: relative; background: #1a1f3a;
+  border-radius: 20px; overflow: hidden;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+  min-height: 280px;
+}
+#videoCanvas { width: 100%; height: auto; display: none; background: #000; }
+#cameraFeed  { display: none; }
+
+.hud-overlay {
+  position: absolute; top: 16px; left: 16px; right: 16px;
+  display: flex; justify-content: space-between; z-index: 10;
+}
+.hud-pill {
+  background: rgba(0,0,0,0.7); backdrop-filter: blur(8px);
+  padding: 10px 16px; border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+.rep-num { font-size: 40px; font-weight: 700; color: #667eea; line-height: 1; }
+.rep-lbl { font-size: 11px; opacity: 0.6; text-transform: uppercase; margin-top: 2px; }
+
+.form-bar { width: 120px; height: 20px; background: rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden; margin-top: 6px; }
+.form-fill { height: 100%; border-radius: 10px; transition: width 0.25s, background 0.25s; background: #22c55e; }
+
+.center-msg {
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+  z-index: 20; pointer-events: none; text-align: center;
+}
+.center-bubble {
+  background: rgba(0,0,0,0.85); border-radius: 14px;
+  padding: 16px 32px; font-size: 24px; font-weight: 700;
+  backdrop-filter: blur(10px);
+}
+.phase-tag {
+  position: absolute; bottom: 14px; right: 14px;
+  background: rgba(0,0,0,0.6); border-radius: 6px;
+  padding: 5px 12px; font-size: 12px; z-index: 10;
+}
+
+#loadingArea { text-align: center; padding: 60px 24px; }
+
+
+.spin { border: 4px solid rgba(255,255,255,0.1); border-top-color: #667eea;
+  border-radius: 50%; width: 52px; height: 52px;
+  animation: spin 1s linear infinite; margin: 0 auto 16px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Action buttons ── */
+.action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; }
+.action-grid .btn-full { grid-column: span 2; }
+
+.btn-g { width: 100%; padding: 14px; font-size: 16px; font-weight: 600;
+  border-radius: 12px; border: none; cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s; }
+.btn-g:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 18px rgba(0,0,0,0.3); }
+.btn-g:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+.btn-start   { background: linear-gradient(135deg,#667eea,#764ba2); color:#fff; }
+.btn-tooEasy { background: linear-gradient(135deg,#22c55e,#16a34a); color:#fff; }
+.btn-myLevel { background: linear-gradient(135deg,#f59e0b,#d97706); color:#fff; }
+.btn-cannot  { background: linear-gradient(135deg,#ef4444,#dc2626); color:#fff; }
+.btn-manual  { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2); color:#fff; }
+.btn-skip    { background: transparent; border: 1px solid rgba(255,255,255,0.2); color:rgba(255,255,255,0.5); font-size:13px; }
+
+/* ── Cards ── */
+.info-card {
+  background: #1a1f3a; border-radius: 16px; padding: 20px;
+  border: 1px solid rgba(255,255,255,0.08); height: 100%;
+}
+.instruction-list { list-style: none; padding: 0; margin: 0; }
+.instruction-list li { padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.06); font-size: 14px; }
+.instruction-list li:last-child { border-bottom: none; }
+.instruction-list li::before { content: '→ '; color: #667eea; }
+
+/* ── Modal ── */
+.modal-backdrop {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.85); z-index: 1000;
+  align-items: center; justify-content: center;
+}
+.modal-backdrop.open { display: flex; }
+.modal-box {
+  background: #1a1f3a; border-radius: 20px; padding: 32px;
+  max-width: 480px; width: 92%; border: 1px solid rgba(255,255,255,0.1);
+  max-height: 90vh; overflow-y: auto;
+}
+.modal-box h4 { margin-bottom: 18px; }
+.field-label { font-size: 13px; opacity: 0.75; margin-bottom: 5px; display: block; }
+.field-input {
+  width: 100%; background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.15); border-radius: 8px;
+  color: #fff; padding: 10px 14px; font-size: 15px; margin-bottom: 4px;
+  box-sizing: border-box;
+}
+.field-input:focus { outline: none; border-color: #667eea; }
+textarea.field-input { resize: vertical; }
+.range-row { display: flex; justify-content: space-between; font-size: 11px; opacity: 0.5; margin-bottom: 14px; }
+input[type=range] { width: 100%; accent-color: #667eea; }
+.capability-preview {
+  padding: 12px 16px; border-radius: 10px; margin: 16px 0;
+  font-weight: 600; font-size: 15px; text-align: center;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="gate-wrap">
+
+  <!-- Family progress strip -->
+  <div class="progress-strip mb-1">
+    {% for fam in family.levels %}
+      {% if forloop.counter0 < family_index %}
+        <div class="progress-fam done" title="Done"></div>
+      {% elif forloop.counter0 == family_index %}
+        <div class="progress-fam current" title="In progress"></div>
+      {% else %}
+        <div class="progress-fam" title="Upcoming"></div>
+      {% endif %}
+    {% empty %}{% endfor %}
+    {% for i in "123456" %}
+      {% if forloop.counter0 < total_families %}
+        <div class="progress-fam{% if forloop.counter0 < family_index %} done{% elif forloop.counter0 == family_index %} current{% endif %}"></div>
+      {% endif %}
+    {% endfor %}
+  </div>
+  <small class="text-muted">Pattern {{ family_index|add:1 }} of {{ total_families }}: <strong style="color:#fff;">{{ family.name }}</strong></small>
+
+  <!-- Level ladder within this family -->
+  <div class="level-ladder mt-3">
+    {% for lvl in current_level.level|add:0|floatformat %}{% empty %}
+    {% for i in family.levels %}
+      <div class="level-pip{% if forloop.counter0 < level_index %} passed{% elif forloop.counter0 == level_index %} current{% endif %}"></div>
+    {% endfor %}
+    {% endfor %}
+  </div>
+  <small class="text-muted">
+    Trying: <strong style="color:#f59e0b;">{{ current_level.label }}</strong>
+    — {{ current_level.name }}
+  </small>
+
+  <div class="row mt-4 g-3">
+    <!-- Camera column -->
+    <div class="col-lg-8">
+      <div class="video-section">
+        <video id="cameraFeed" autoplay playsinline></video>
+        <canvas id="videoCanvas"></canvas>
+
+        <div class="hud-overlay" id="hud" style="display:none;">
+          <div class="hud-pill">
+            <div class="rep-num" id="repNum">0</div>
+            <div class="rep-lbl">Reps Counted</div>
+          </div>
+          <div class="hud-pill">
+            <div class="rep-lbl">Form Score</div>
+            <div style="font-size:22px;font-weight:700;" id="formNum">—</div>
+            <div class="form-bar"><div class="form-fill" id="formFill" style="width:0%"></div></div>
+          </div>
+        </div>
+
+        <div class="center-msg" id="centerMsg" style="display:none;">
+          <div class="center-bubble" id="centerBubble"></div>
+        </div>
+        <div class="phase-tag">Phase: <span id="phaseSpan">Ready</span></div>
+
+
+        <div id="loadingArea">
+          <div class="spin"></div>
+          <p style="opacity:.8;">Start the camera below to count reps automatically.</p>
+          <p class="small" style="opacity:.5;">Or skip camera and enter your result manually.</p>
+        </div>
+      </div>
+
+      <!-- Instructions -->
+      <div class="info-card mt-3">
+        <h6 class="mb-2">📋 {{ current_level.name }}</h6>
+        <p class="small" style="opacity:.8; margin-bottom:10px;">{{ current_level.description }}</p>
+        <ul class="instruction-list">
+          {% for step in current_level.instructions %}
+          <li>{{ step }}</li>
+          {% endfor %}
+        </ul>
+        {% if current_level.target_reps > 1 %}
+        <p class="small mt-2" style="opacity:.6;">Target: <strong>{{ current_level.target_reps }} reps</strong> — do as many as comfortable.</p>
+        {% else %}
+        <p class="small mt-2" style="opacity:.6;">Target: hold for <strong>{{ current_level.hold_duration }}s</strong>.</p>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Controls column -->
+    <div class="col-lg-4">
+      <div class="info-card">
+        <h6 class="mb-3">Controls</h6>
+
+        <button class="btn-g btn-start mb-3" id="startCamBtn" style="width:100%;">
+          🎥 Start Camera
+        </button>
+
+        <!-- Three main action buttons -->
+        <div class="action-grid mt-2">
+          <button class="btn-g btn-tooEasy" id="tooEasyBtn">
+            ✅ Too Easy<br><small>Try Next Level →</small>
+          </button>
+          <button class="btn-g btn-myLevel" id="myLevelBtn">
+            🎯 This is My Level<br><small>Record & Move On</small>
+          </button>
+          <button class="btn-g btn-cannot btn-full" id="cannotBtn">
+            ✗ Cannot Do This Exercise
+          </button>
+        </div>
+
+        <hr style="border-color:rgba(255,255,255,0.1); margin:16px 0;">
+        <button class="btn-g btn-manual mb-2" id="manualBtn" style="width:100%;">
+          📝 Enter Result Manually
+        </button>
+        <button class="btn-g btn-skip" id="skipBtn" style="width:100%;">
+          ⏭ Skip This Pattern
+        </button>
+      </div>
+
+      <!-- Level context card -->
+      <div class="info-card mt-3">
+        <h6 style="opacity:.7; font-size:13px;">PROGRESSION LADDER</h6>
+        <div style="margin-top:10px;">
+          {% for lvl in family.levels %}
+          <div class="d-flex align-items-center mb-2" style="font-size:13px; {% if forloop.counter0 == level_index %}color:#f59e0b; font-weight:700;{% elif forloop.counter0 < level_index %}color:#22c55e; opacity:.7;{% else %}opacity:.35;{% endif %}">
+            <span class="me-2">
+              {% if forloop.counter0 < level_index %}✓{% elif forloop.counter0 == level_index %}▶{% else %}○{% endif %}
+            </span>
+            <span>{{ lvl.label }}: {{ lvl.name }}</span>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Result Entry Modal -->
+<div class="modal-backdrop" id="resultModal">
+  <div class="modal-box">
+    <h4>📊 Record Result: {{ current_level.name }}</h4>
+
+    {% if current_level.target_reps > 1 %}
+    <label class="field-label">Reps completed (camera counted: <span id="modalReps">0</span>)</label>
+    <input class="field-input" type="number" id="repsInput" min="0" max="200" value="0">
+    {% else %}
+    <label class="field-label">Did you complete the hold? <span id="modalReps" style="display:none;">0</span></label>
+    <select class="field-input" id="repsInput">
+      <option value="1">Yes, completed the hold</option>
+      <option value="0">No, couldn't complete it</option>
+    </select>
+    {% endif %}
+
+    <label class="field-label mt-2">Difficulty: <span id="diffVal">5</span>/10</label>
+    <input type="range" min="1" max="10" value="5" id="diffInput"
+           oninput="document.getElementById('diffVal').textContent=this.value; updateCapabilityPreview()">
+    <div class="range-row"><span>1 – Very Easy</span><span>10 – Max Effort</span></div>
+
+    <label class="field-label">Pain: <span id="painVal">0</span>/10</label>
+    <input type="range" min="0" max="10" value="0" id="painInput"
+           oninput="document.getElementById('painVal').textContent=this.value; updateCapabilityPreview()">
+    <div class="range-row"><span>0 – None</span><span>10 – Severe</span></div>
+
+    <div class="capability-preview" id="capabilityPreview" style="background:rgba(34,197,94,0.15);border:1px solid #22c55e;color:#22c55e;">
+      Predicted: Manageable — 3 sets × 10 reps
+    </div>
+
+    <label class="field-label">Notes (optional)</label>
+    <textarea class="field-input" id="notesInput" rows="2" placeholder="Any pain, observations…"></textarea>
+
+    {% csrf_token %}
+    <button class="btn-g btn-myLevel mt-3" id="saveModalBtn" style="width:100%;">💾 Save & Continue</button>
+    <button class="btn-g btn-skip mt-2" onclick="document.getElementById('resultModal').classList.remove('open')" style="width:100%;">Cancel</button>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
+
+<script>
+const CFG = {
+  familyIndex: {{ family_index }},
+  levelIndex:  {{ level_index }},
+  totalFamilies: {{ total_families }},
+  totalLevels: {{ total_levels }},
+  isLastLevel: {{ is_last_level|yesno:"true,false" }},
+  isLastFamily: {{ is_last_family|yesno:"true,false" }},
+  targetReps: {{ current_level.target_reps }},
+  holdDuration: {{ current_level.hold_duration }},
+};
+
+
+const st = { reps: 0, formScore: 0, running: false, phase: 'up' };
+let poseInst, cam;
+const vid = document.getElementById('cameraFeed');
+const cvs = document.getElementById('videoCanvas');
+const ctx = cvs.getContext('2d');
+
+// ── MediaPipe ──────────────────────────────────────────────────────────────
+function angleDeg(a, b, c) {
+  const r = Math.atan2(c.y-b.y, c.x-b.x) - Math.atan2(a.y-b.y, a.x-b.x);
+  let d = Math.abs(r * 180 / Math.PI);
+  return d > 180 ? 360-d : d;
+}
+
+function onPose(res) {
+  ctx.save();
+  ctx.clearRect(0, 0, cvs.width, cvs.height);
+  ctx.drawImage(res.image, 0, 0, cvs.width, cvs.height);
+  if (!res.poseLandmarks) { ctx.restore(); return; }
+  const lm = res.poseLandmarks;
+  drawConnectors(ctx, lm, POSE_CONNECTIONS, { color:'#00ff00', lineWidth:3 });
+  drawLandmarks(ctx, lm, { color:'#ff4444', lineWidth:2, radius:4 });
+  ctx.restore();
+
+  // Knee angles for rep detection
+  const lk = angleDeg(lm[23], lm[25], lm[27]);
+  const rk = angleDeg(lm[24], lm[26], lm[28]);
+  const sym = Math.max(0, 100 - Math.abs(lk-rk)*2);
+  st.formScore = sym;
+  document.getElementById('formNum').textContent = Math.round(sym);
+  const fill = document.getElementById('formFill');
+  fill.style.width = sym + '%';
+  fill.style.background = sym >= 75 ? '#22c55e' : sym >= 50 ? '#f59e0b' : '#ef4444';
+
+  // Generic rep detection via avg knee angle
+  const avg = (lk+rk)/2;
+  if (st.phase === 'up' && avg < 120) {
+    st.phase = 'down';
+    document.getElementById('phaseSpan').textContent = 'Down ↓';
+  } else if (st.phase === 'down' && avg > 155) {
+    st.phase = 'up';
+    st.reps++;
+    document.getElementById('repNum').textContent = st.reps;
+    document.getElementById('phaseSpan').textContent = 'Up ↑';
+    flashMsg(sym >= 75 ? '✅ Good rep!' : sym >= 50 ? '⚠️ Keep form' : '🔴 Watch form');
+  }
+}
+
+function flashMsg(txt, ms=1200) {
+  const el = document.getElementById('centerMsg');
+  document.getElementById('centerBubble').textContent = txt;
+  el.style.display = 'block';
+  setTimeout(() => el.style.display = 'none', ms);
+}
+
+async function startCam() {
+  poseInst = new Pose({ locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${f}` });
+  poseInst.setOptions({ modelComplexity:1, smoothLandmarks:true, minDetectionConfidence:0.6, minTrackingConfidence:0.6 });
+  poseInst.onResults(onPose);
+  cam = new Camera(vid, {
+    onFrame: async () => { if (st.running) await poseInst.send({ image: vid }); },
+    width: 1280, height: 720,
+  });
+  await cam.start();
+}
+
+document.getElementById('startCamBtn').addEventListener('click', async function() {
+  this.disabled = true; this.textContent = '⏳ Starting…';
+  document.getElementById('loadingArea').innerHTML = '<div class="spin"></div><p>Connecting…</p>';
+  try {
+    await startCam();
+    cvs.width = 1280; cvs.height = 720;
+    cvs.style.display = 'block';
+    document.getElementById('loadingArea').style.display = 'none';
+    document.getElementById('hud').style.display = 'flex';
+    st.running = true;
+    this.style.display = 'none';
+    flashMsg('🏁 Go! Camera is tracking you.', 2500);
+  } catch(e) {
+    this.disabled = false; this.textContent = '🎥 Start Camera';
+    document.getElementById('loadingArea').innerHTML = '<p style="color:#f87171;">Camera failed. Use Manual Entry.</p>';
+  }
+});
+
+// ── CSRF helper ────────────────────────────────────────────────────────────
+function csrf() {
+  const el = document.querySelector('[name=csrfmiddlewaretoken]');
+  if (el) return el.value;
+  const m = document.cookie.match(/csrftoken=([^;]+)/);
+  return m ? m[1] : '';
+}
+
+// ── Generic save ───────────────────────────────────────────────────────────
+async function postResult(action, extraData={}) {
+  st.running = false;
+  if (cam) cam.stop();
+
+  const payload = {
+    family_index: CFG.familyIndex,
+    level_index:  CFG.levelIndex,
+    action,
+    reps_completed: st.reps,
+    difficulty_reported: 5,
+    pain_during: 0,
+    notes: '',
+    ...extraData,
+  };
+
+  const resp = await fetch('/save-gate-test-result/', {
+    method: 'POST',
+    headers: { 'Content-Type':'application/json', 'X-CSRFToken': csrf() },
+    body: JSON.stringify(payload),
+  });
+  const data = await resp.json();
+  if (data.success) {
+    window.location.href = data.next_url;
+  } else {
+    alert('Error: ' + (data.error || 'Unknown'));
+    st.running = true;
+  }
+}
+
+// ── Button: Too Easy ───────────────────────────────────────────────────────
+document.getElementById('tooEasyBtn').addEventListener('click', async function() {
+  this.disabled = true; this.textContent = '⏳ Advancing…';
+  await postResult('too_easy');
+});
+
+// ── Button: Cannot Do ──────────────────────────────────────────────────────
+document.getElementById('cannotBtn').addEventListener('click', async function() {
+  if (!confirm('Confirm: you cannot perform this exercise safely?')) return;
+  this.disabled = true;
+  await postResult('cannot_do', { reps_completed: 0, pain_during: parseInt(document.getElementById('painInput')?.value || 0) });
+});
+
+// ── Button: Skip ──────────────────────────────────────────────────────────
+document.getElementById('skipBtn').addEventListener('click', async function() {
+  if (!confirm('Skip this entire movement pattern?')) return;
+  this.disabled = true;
+  await postResult('skip');
+});
+
+// ── Button: This is My Level / Manual Entry → open modal ──────────────────
+function openModal() {
+  st.running = false;
+  document.getElementById('modalReps').textContent = st.reps;
+  document.getElementById('repsInput').value = st.reps;
+  updateCapabilityPreview();
+  document.getElementById('resultModal').classList.add('open');
+}
+document.getElementById('myLevelBtn').addEventListener('click', openModal);
+document.getElementById('manualBtn').addEventListener('click', openModal);
+
+// ── Capability preview in modal ────────────────────────────────────────────
+function updateCapabilityPreview() {
+  const diff = parseInt(document.getElementById('diffInput').value);
+  const pain = parseInt(document.getElementById('painInput').value);
+  const reps = parseInt(document.getElementById('repsInput').value);
+  const target = CFG.targetReps;
+  const prev = document.getElementById('capabilityPreview');
+
+  let txt, bg, border, color;
+  if (pain >= 6 || reps === 0) {
+    txt = 'Cannot Do — will find an easier alternative'; bg='rgba(239,68,68,0.15)'; border='#ef4444'; color='#ef4444';
+  } else if (diff >= 7 || reps < target * 0.4) {
+    txt = 'Struggling → 2 sets × 7 reps'; bg='rgba(245,158,11,0.15)'; border='#f59e0b'; color='#f59e0b';
+  } else if (diff >= 4 || reps < target * 0.8) {
+    txt = 'Manageable → 3 sets × 10 reps'; bg='rgba(34,197,94,0.15)'; border='#22c55e'; color='#22c55e';
+  } else {
+    txt = 'Easy → 3 sets × 12 reps'; bg='rgba(102,126,234,0.15)'; border='#667eea'; color='#667eea';
+  }
+  prev.textContent = '📊 Predicted: ' + txt;
+  prev.style.cssText = `padding:12px 16px;border-radius:10px;margin:16px 0;font-weight:600;font-size:14px;text-align:center;background:${bg};border:1px solid ${border};color:${color};`;
+}
+
+// ── Save modal ─────────────────────────────────────────────────────────────
+document.getElementById('repsInput').addEventListener('input', updateCapabilityPreview);
+
+document.getElementById('saveModalBtn').addEventListener('click', async function() {
+  this.disabled = true; this.textContent = '💾 Saving…';
+  await postResult('this_is_my_level', {
+    reps_completed: parseInt(document.getElementById('repsInput').value) || 0,
+    difficulty_reported: parseInt(document.getElementById('diffInput').value),
+    pain_during: parseInt(document.getElementById('painInput').value),
+    notes: document.getElementById('notesInput').value,
+  });
+});
+
+window.addEventListener('beforeunload', () => {
+  if (cam) cam.stop();
+});
+</script>
+{% endblock %}

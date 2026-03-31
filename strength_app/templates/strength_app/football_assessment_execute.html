@@ -1,0 +1,128 @@
+{% extends 'strength_app/base.html' %}
+{% block title %}{{ test.name }} — Football Assessment{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+
+  <!-- Progress -->
+  <div class="mb-3">
+    <div class="d-flex justify-content-between small text-muted mb-1">
+      <span>Test {{ test_index|add:1 }} of {{ total_tests }}</span>
+      <span>{{ progress_pct }}%</span>
+    </div>
+    <div class="progress" style="height:6px;">
+      <div class="progress-bar" style="width:{{ progress_pct }}%;background:var(--primary-gradient);"></div>
+    </div>
+  </div>
+
+  <!-- Test card -->
+  <div class="card mb-4">
+    <div class="card-body p-4">
+      <h4 class="fw-800 mb-1">{{ test.name }}</h4>
+      <p class="text-muted mb-3">{{ test.measure }}</p>
+      {% if side %}
+      <div class="alert border-0 py-2 px-3 mb-3" style="background:rgba(102,126,234,.1);color:#667eea;">
+        <i class="fas fa-arrow-{% if side == 'left' %}left{% else %}right{% endif %} me-1"></i>
+        <strong>{{ side|title }} side</strong>
+      </div>
+      {% endif %}
+
+      <h6 class="fw-700 mb-2">Instructions</h6>
+      <ol class="mb-0">
+        {% for instruction in test.instructions %}
+        <li class="mb-1">{{ instruction }}</li>
+        {% endfor %}
+      </ol>
+    </div>
+  </div>
+
+  <!-- Input -->
+  <div class="card mb-4">
+    <div class="card-body p-4">
+      <h6 class="fw-700 mb-3">Record Your Result</h6>
+
+      <div class="mb-3">
+        <label class="form-label fw-600">{{ test.input_label }}</label>
+        <input type="number" step="any" id="rawValue" class="form-control form-control-lg"
+               placeholder="Enter value" autofocus>
+      </div>
+
+      <!-- Scoring reference -->
+      <div class="mt-3">
+        <h6 class="fw-600 small text-muted mb-2">Scoring Guide</h6>
+        {% for item in scoring_items %}
+        <div class="d-flex align-items-center gap-2 mb-1">
+          <span class="badge rounded-pill {% if item.score >= 4 %}bg-success{% elif item.score >= 3 %}bg-primary{% elif item.score >= 2 %}bg-warning{% else %}bg-secondary{% endif %}" style="min-width:28px;">{{ item.score }}</span>
+          <span class="small">{{ item.desc }}</span>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Save button -->
+  <div class="text-center mb-4">
+    <button id="saveBtn" class="btn btn-lg px-5 py-3 fw-700" style="background:var(--success-gradient);color:white;border:none;border-radius:14px;" onclick="saveResult()">
+      <i class="fas fa-check me-2"></i>Save &amp; Continue
+    </button>
+  </div>
+
+</div>
+
+<script>
+(function() {
+  var thresholds = {{ test.scoring_thresholds|safe }};
+  var reverse = {% if test.scoring_thresholds_reverse %}true{% else %}false{% endif %};
+
+  function autoScore(val) {
+    if (reverse) {
+      for (var i = 0; i < thresholds.length; i++) {
+        if (val > thresholds[i]) return i + 1;
+      }
+      return 5;
+    } else {
+      for (var i = 0; i < thresholds.length; i++) {
+        if (val < thresholds[i]) return i + 1;
+      }
+      return 5;
+    }
+  }
+
+  window.saveResult = function() {
+    var rawVal = document.getElementById('rawValue').value;
+    if (!rawVal) { alert('Please enter your result.'); return; }
+
+    var btn = document.getElementById('saveBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Saving...';
+
+    var score = autoScore(parseFloat(rawVal));
+
+    fetch('{% url "football_save_test_result" %}', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': '{{ csrf_token }}',
+      },
+      body: JSON.stringify({
+        test_index: {{ test_index }},
+        raw_value: rawVal,
+        score: score,
+        side: '{{ side }}',
+      }),
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.next_url) {
+        window.location.href = data.next_url;
+      }
+    })
+    .catch(function() {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-check me-2"></i>Save & Continue';
+      alert('Error saving. Please try again.');
+    });
+  };
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,211 @@
+{% extends 'strength_app/base.html' %}
+{% block title %}Your Programme — VYAYAM Assessment Complete{% endblock %}
+
+{% block extra_css %}
+<style>
+  .radar-container { position: relative; max-width: 380px; margin: 0 auto; }
+  .priority-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 10px 16px; border-radius: 12px; font-weight: 600; font-size: .9rem;
+  }
+  .priority-1 { background: rgba(102,126,234,.15); color: #667eea; }
+  .priority-2 { background: rgba(17,153,142,.15); color: #11998e; }
+  .priority-3 { background: rgba(240,147,251,.15); color: #a855f7; }
+  .asym-bar {
+    height: 8px; border-radius: 8px; background: #e2e8f0; overflow: hidden;
+  }
+  .asym-fill { height: 100%; border-radius: 8px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+
+  <!-- Header -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card text-center" style="background:var(--primary-gradient);color:white;">
+        <div class="card-body p-5">
+          <i class="fas fa-check-circle fa-3x mb-3" style="opacity:.9"></i>
+          <h2 class="fw-800 mb-1">You're All Set, {{ patient.name }}! 🎉</h2>
+          <p class="mb-0 opacity-75 fs-5">We've built your personalised training plan. Here's what we found.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4 mb-4">
+
+    <!-- Radar chart -->
+    <div class="col-lg-5">
+      <div class="card h-100">
+        <div class="card-body p-4">
+          <h5 class="fw-700 mb-3"><i class="fas fa-chart-line me-2 text-primary"></i>Your Strength Map</h5>
+          <p class="text-muted small mb-2" style="margin-top:-8px;">Higher = stronger. We'll focus on building up the lower areas.</p>
+          <div class="radar-container">
+            <canvas id="radarChart" width="380" height="380"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Priority patterns -->
+    <div class="col-lg-7">
+      <div class="card h-100">
+        <div class="card-body p-4">
+          <h5 class="fw-700 mb-3"><i class="fas fa-bullseye me-2 text-primary"></i>Where We'll Focus First</h5>
+          <div class="d-flex flex-column gap-3 mb-4">
+            {% for pattern in top_3 %}
+            <div class="priority-badge priority-{{ forloop.counter }}">
+              <span class="fw-800">#{{ forloop.counter }}</span>
+              <span class="text-capitalize">{{ pattern|title }}</span>
+            </div>
+            {% endfor %}
+          </div>
+
+          <p class="text-muted small mb-0 mt-3">
+            <i class="fas fa-lightbulb me-1 text-warning"></i>
+            Based on your goal (<strong>{{ goal_info.label|default:patient.goal_type }}</strong>) and your test results, these areas need the most attention. Your workouts will have extra exercises here.
+          </p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="row g-4 mb-4">
+
+    <!-- Asymmetry -->
+    {% if asym %}
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-body p-4">
+          <h5 class="fw-700 mb-3"><i class="fas fa-balance-scale me-2 text-warning"></i>Left vs Right Balance</h5>
+          <p class="text-muted small mb-3" style="margin-top:-8px;">Any imbalances between your left and right side. We'll train the weaker side first to even things out.</p>
+          {% for pattern, data in asym.items %}
+          {% if data.asymmetry != 'none' %}
+          <div class="mb-3">
+            <div class="d-flex justify-content-between mb-1">
+              <span class="fw-600 text-capitalize">{{ pattern }} — {{ data.asymmetry }}</span>
+              <span class="text-muted small">Weaker: {{ data.weaker_side|upper|default:"—" }}</span>
+            </div>
+            <div class="asym-bar">
+              <div class="asym-fill"
+                style="width:{% if data.asymmetry == 'mild' %}33{% elif data.asymmetry == 'moderate' %}66{% else %}100{% endif %}%;
+                       background:{% if data.asymmetry == 'mild' %}#f59e0b{% elif data.asymmetry == 'moderate' %}#f97316{% else %}#ef4444{% endif %};">
+              </div>
+            </div>
+          </div>
+          {% endif %}
+          {% endfor %}
+          <p class="text-muted small mb-0"><i class="fas fa-info-circle me-1"></i>Weaker side always trained first. Extra sets added until gap closes.</p>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Programme plan -->
+    <div class="col-md-{% if asym %}6{% else %}12{% endif %}">
+      <div class="card">
+        <div class="card-body p-4">
+          <h5 class="fw-700 mb-3"><i class="fas fa-calendar-alt me-2 text-success"></i>Your Starting Plan</h5>
+          <div class="d-flex flex-column gap-2">
+            <div class="d-flex justify-content-between p-3 rounded-3" style="background:#f8fafc;">
+              <span class="fw-600">Phase</span>
+              <span class="text-primary fw-700">Foundation Phase — Building Control</span>
+              <div class="text-muted small mt-1">We start with holds and slow movements to build a safe base before adding weight or speed.</div>
+            </div>
+            <div class="d-flex justify-content-between p-3 rounded-3" style="background:#f8fafc;">
+              <span class="fw-600">Duration</span>
+              <span>Weeks 1–2 (isometric), then Weeks 3–{{ aa_weeks }} (eccentric)</span>
+            </div>
+            <div class="d-flex justify-content-between p-3 rounded-3" style="background:#f8fafc;">
+              <span class="fw-600">Goal</span>
+              <span>{{ goal_info.label|default:patient.goal_type }}</span>
+            </div>
+            <div class="d-flex justify-content-between p-3 rounded-3" style="background:#f8fafc;">
+              <span class="fw-600">Sessions / week</span>
+              <span>{{ patient.sessions_per_week|default:3 }}</span>
+            </div>
+            <div class="d-flex justify-content-between p-3 rounded-3" style="background:#f8fafc;">
+              <span class="fw-600">Session duration</span>
+              <span>~{{ patient.session_duration_minutes|default:45 }} minutes</span>
+            </div>
+          </div>
+          <div class="alert border-0 mt-3 mb-0" style="background:rgba(17,153,142,.1);">
+            <small><i class="fas fa-info-circle me-1 text-success"></i>
+            <strong>Why isometric first?</strong> Isometric holds load tendons and ligaments at safe angles. This is physiotherapy principle #1 — prepare connective tissue before dynamic loading.</small>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Patient ID reminder -->
+  <div class="card mb-4">
+    <div class="card-body p-4 text-center">
+      <div class="text-muted small">Your profile code (share with your coach if asked): <strong>{{ patient.patient_id }}</strong></div>
+    </div>
+  </div>
+
+  <!-- Start button -->
+  <div class="text-center mb-5">
+    {% if athlete_tier_eligible %}
+    <div class="card mb-4" style="background:linear-gradient(135deg,#f093fb 0%,#f5576c 100%);color:white;">
+      <div class="card-body p-4">
+        <h5 class="fw-800 mb-2"><i class="fas fa-trophy me-2"></i>Athlete Tier Unlocked</h5>
+        <p class="opacity-85 mb-3">Your strength scores qualify you for sport-specific athletic performance training.</p>
+        <a href="{% url 'football_sport_select' %}" class="btn btn-light btn-lg px-4 py-2 fw-700" style="border-radius:12px;">
+          <i class="fas fa-running me-2"></i>Choose Your Sport
+        </a>
+      </div>
+    </div>
+    {% endif %}
+    <a href="{% url 'v1_session_overview' %}" class="btn btn-lg px-5 py-3 fw-700 fs-5" style="background:var(--success-gradient);color:white;border:none;border-radius:14px;">
+      <i class="fas fa-play me-2"></i>{% if athlete_tier_eligible %}Start General Training Instead{% else %}Start First Session{% endif %}
+    </a>
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{{ radar_data|json_script:"radar-data" }}
+<script>
+  const radarData = JSON.parse(document.getElementById('radar-data').textContent);
+  const labels = Object.keys(radarData);
+  const values = Object.values(radarData);
+
+  new Chart(document.getElementById('radarChart'), {
+    type: 'radar',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'Your Strength',
+        data: values,
+        backgroundColor: 'rgba(102,126,234,0.2)',
+        borderColor: '#667eea',
+        borderWidth: 2,
+        pointBackgroundColor: '#764ba2',
+        pointRadius: 5,
+        pointHoverRadius: 7,
+      }],
+    },
+    options: {
+      responsive: true,
+      scales: {
+        r: {
+          min: 0, max: 5,
+          ticks: { stepSize: 1, display: false },
+          grid: { color: 'rgba(0,0,0,.08)' },
+          angleLines: { color: 'rgba(0,0,0,.08)' },
+          pointLabels: { font: { size: 13, weight: 'bold' }, color: '#334155' },
+        },
+      },
+      plugins: {
+        legend: { display: false },
+      },
+    },
+  });
+</script>
+{% endblock %}

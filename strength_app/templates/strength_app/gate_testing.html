@@ -1,0 +1,152 @@
+{% extends 'strength_app/base.html' %}
+
+{% block title %}Gate Testing — VYAYAM{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+  <!-- Header -->
+  <div class="text-center mb-5">
+    <h1 class="display-5 gradient-text">
+      <i class="fas fa-clipboard-check me-2"></i>Capability Gate Testing
+    </h1>
+    <p class="lead text-muted">
+      We'll find your starting level for each movement pattern — no guessing, no random prescriptions.
+    </p>
+  </div>
+
+  <!-- How it works banner -->
+  <div class="alert alert-info mb-4" style="border-radius:14px;">
+    <div class="row align-items-center g-3">
+      <div class="col-md-2 text-center" style="font-size:2.5rem;">🎯</div>
+      <div class="col-md-10">
+        <h5 class="mb-1">How It Works</h5>
+        <p class="mb-0 small">
+          For each movement pattern you'll start at the <strong>easiest variation</strong>.
+          If it's too easy, you click <strong>"Too Easy → Try Next Level"</strong> and we advance you up the ladder.
+          When you find your level, click <strong>"This is My Level"</strong> — we record it and prescribe at that exact exercise.
+          No fixed list. No assumptions. Your prescription matches exactly where YOU are today.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Families grid -->
+  <div class="row g-4 mb-5">
+    {% for fam in families_overview %}
+    <div class="col-md-6 col-lg-4">
+      <div class="card h-100" style="border-left: 4px solid #667eea;">
+        <div class="card-body">
+          <div class="d-flex align-items-center mb-3">
+            <span style="font-size:2rem; margin-right:12px;">{{ fam.icon }}</span>
+            <div>
+              <h6 class="mb-0">{{ fam.name }}</h6>
+              <small class="text-muted">{{ fam.num_levels }} levels</small>
+            </div>
+          </div>
+          <p class="small text-muted mb-2">{{ fam.description }}</p>
+          <div class="d-flex justify-content-between small">
+            <span class="badge bg-success">Start: {{ fam.first_exercise }}</span>
+            <span class="badge bg-primary">Max: {{ fam.last_exercise }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Capability levels legend -->
+  <div class="card mb-5" style="border-radius:14px;">
+    <div class="card-header"><h5 class="mb-0 text-white"><i class="fas fa-info-circle me-2"></i>Capability Levels Explained</h5></div>
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-3">
+          <div class="p-3 rounded text-center" style="background:rgba(239,68,68,0.1);border:1px solid #ef4444;">
+            <div style="font-size:1.5rem;">✗</div>
+            <strong style="color:#ef4444;">Cannot Do</strong>
+            <p class="small text-muted mb-0 mt-1">Not ready yet — we'll prescribe an easier alternative</p>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="p-3 rounded text-center" style="background:rgba(245,158,11,0.1);border:1px solid #f59e0b;">
+            <div style="font-size:1.5rem;">〰</div>
+            <strong style="color:#f59e0b;">Struggling</strong>
+            <p class="small text-muted mb-0 mt-1">Can do with effort → 2 sets × 7 reps to build tolerance</p>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="p-3 rounded text-center" style="background:rgba(34,197,94,0.1);border:1px solid #22c55e;">
+            <div style="font-size:1.5rem;">✓</div>
+            <strong style="color:#22c55e;">Manageable</strong>
+            <p class="small text-muted mb-0 mt-1">Challenging but doable → 3 sets × 10 reps</p>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="p-3 rounded text-center" style="background:rgba(102,126,234,0.1);border:1px solid #667eea;">
+            <div style="font-size:1.5rem;">★</div>
+            <strong style="color:#667eea;">Easy</strong>
+            <p class="small text-muted mb-0 mt-1">Comfortable → 3 sets × 12 reps, ready to progress soon</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tips -->
+  <div class="row g-4 mb-5">
+    <div class="col-md-6">
+      <div class="card h-100" style="border-left:4px solid #22c55e;">
+        <div class="card-body">
+          <h6><i class="fas fa-lightbulb text-warning me-2"></i>Tips for Accurate Results</h6>
+          <ul class="small text-muted mb-0">
+            <li class="mb-1">Be <strong>honest</strong> — this determines your programme</li>
+            <li class="mb-1">Don't push through real pain (soreness is fine)</li>
+            <li class="mb-1">If unsure, pick the lower level — you can always advance</li>
+            <li class="mb-1">Use the camera if available — it counts reps automatically</li>
+            <li class="mb-0">Manual entry is perfectly fine if no camera</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="card h-100" style="border-left:4px solid #667eea;">
+        <div class="card-body">
+          <h6><i class="fas fa-clock text-primary me-2"></i>What to Expect</h6>
+          <ul class="small text-muted mb-0">
+            <li class="mb-1">{{ total_families }} exercise families to test</li>
+            <li class="mb-1">Each test: 2–5 minutes (depends on your level)</li>
+            <li class="mb-1">Total time: 15–25 minutes</li>
+            <li class="mb-1">You can skip any family if needed</li>
+            <li class="mb-0">Results immediately generate your personalised prescription</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Start button -->
+  <div class="text-center">
+    <form method="post">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-primary btn-lg px-5 py-3" style="font-size:1.2rem;">
+        <i class="fas fa-play me-2"></i>Begin Gate Testing ({{ total_families }} Patterns)
+      </button>
+    </form>
+    <p class="text-muted small mt-3">You can stop at any time. Partial results will still generate a prescription.</p>
+  </div>
+</div>
+
+<style>
+.gradient-text {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.card { border: none; box-shadow: 0 2px 10px rgba(0,0,0,0.08); border-radius: 12px; overflow: hidden; }
+.card-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-bottom: none; padding: 1rem 1.5rem; }
+.btn-primary { background: linear-gradient(135deg, #667eea, #764ba2); border: none; border-radius: 12px; }
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(102,126,234,0.4); }
+.fade-in { animation: fadeIn 0.4s ease-in; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+</style>
+{% endblock %}

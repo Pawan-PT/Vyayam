@@ -1,0 +1,88 @@
+{% extends 'strength_app/base.html' %}
+{% block title %}Lifestyle — VYAYAM Assessment{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+  <div class="row justify-content-center">
+    <div class="col-lg-6">
+
+      <div class="mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <span class="text-muted small fw-600">Step {{ step }} of {{ total }}</span>
+          <span class="text-muted small">Lifestyle Factors</span>
+        </div>
+        <div class="progress" style="height:6px;border-radius:6px;">
+          <div class="progress-bar" style="width:{% widthratio step total 100 %}%;background:var(--primary-gradient);"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-body p-4">
+          <h4 class="fw-700 mb-1">Lifestyle &amp; Recovery</h4>
+          <p class="text-muted mb-4">Sleep, stress, and nutrition directly affect your training load. We use these to automatically adjust session intensity.</p>
+
+          <form method="post">
+            {% csrf_token %}
+
+            <div class="mb-3">
+              <label class="form-label fw-600">Overall activity level</label>
+              <select name="lifestyle" class="form-select">
+                {% for val, label in lifestyle_choices %}
+                <option value="{{ val }}" {% if patient.lifestyle == val %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-600">Typical sleep quality</label>
+              <select name="sleep_quality" class="form-select">
+                <option value="poor"     {% if patient.sleep_quality == 'poor'     %}selected{% endif %}>Poor (under 5 hours or disrupted)</option>
+                <option value="moderate" {% if patient.sleep_quality == 'moderate' %}selected{% endif %}>Moderate (5–6 hours)</option>
+                <option value="good"     {% if patient.sleep_quality == 'good' or not patient.sleep_quality %}selected{% endif %}>Good (7–8 hours)</option>
+                <option value="variable" {% if patient.sleep_quality == 'variable' %}selected{% endif %}>Variable (changes week to week)</option>
+              </select>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-600">Typical stress level</label>
+              <select name="stress_level" class="form-select">
+                <option value="low"       {% if patient.stress_level == 'low'      %}selected{% endif %}>Low — generally relaxed</option>
+                <option value="moderate"  {% if patient.stress_level == 'moderate' or not patient.stress_level %}selected{% endif %}>Moderate — manageable daily stress</option>
+                <option value="high"      {% if patient.stress_level == 'high'     %}selected{% endif %}>High — regularly stressed</option>
+                <option value="very_high" {% if patient.stress_level == 'very_high'%}selected{% endif %}>Very high — frequently overwhelmed</option>
+              </select>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-600">Nutrition quality</label>
+              <select name="nutrition_quality" class="form-select">
+                <option value="skip_meals" {% if patient.nutrition_quality == 'skip_meals' %}selected{% endif %}>Often skip meals</option>
+                <option value="regular"    {% if patient.nutrition_quality == 'regular' or not patient.nutrition_quality %}selected{% endif %}>Regular meals — average quality</option>
+                <option value="good"       {% if patient.nutrition_quality == 'good'      %}selected{% endif %}>Good — protein at every meal, vegetables daily</option>
+                <option value="managed"    {% if patient.nutrition_quality == 'managed'   %}selected{% endif %}>Managed — I track intake deliberately</option>
+              </select>
+            </div>
+
+            <div class="mb-4">
+              <label class="form-label fw-600">Hours sitting per day: <span id="sitLabel">{{ patient.daily_sitting_hours|default:6 }}</span> hours</label>
+              <input type="range" name="daily_sitting_hours" id="sitSlider"
+                     min="0" max="16" step="1"
+                     value="{{ patient.daily_sitting_hours|default:6 }}"
+                     class="form-range"
+                     oninput="document.getElementById('sitLabel').textContent = this.value">
+              <div class="d-flex justify-content-between text-muted small">
+                <span>0h</span><span>8h</span><span>16h</span>
+              </div>
+            </div>
+
+            <button type="submit" class="btn w-100 py-3 fw-700" style="background:var(--primary-gradient);color:white;border:none;border-radius:10px;">
+              Save &amp; Continue <i class="fas fa-arrow-right ms-2"></i>
+            </button>
+          </form>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,151 @@
+{% extends 'strength_app/base.html' %}
+
+{% block title %}{{ exercise.display_name }} - VYAYAM{% endblock %}
+
+{% block content %}
+<div class="row mt-4">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="mb-0">
+                    {{ exercise.display_name }}
+                    {% if exercise.new_in_v2 %}<span class="badge bg-success">NEW IN V2</span>{% endif %}
+                </h3>
+            </div>
+            <div class="card-body">
+                <!-- Exercise Info -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <p><strong>Category:</strong> 
+                            {% if exercise.category == 'strength' %}💪 Strength
+                            {% elif exercise.category == 'cardio' %}🏃 Cardio
+                            {% elif exercise.category == 'stretching' %}🧘 Stretching
+                            {% elif exercise.category == 'balance' %}⚖️ Balance
+                            {% else %}🔄 Mobility{% endif %}
+                        </p>
+                        <p><strong>Level:</strong> 
+                            <span class="badge bg-secondary">{{ exercise.level|title }}</span>
+                        </p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Type:</strong> 
+                            {% if exercise.unilateral %}
+                                <span class="badge bg-info">Unilateral</span>
+                            {% else %}
+                                <span class="badge bg-primary">Bilateral</span>
+                            {% endif %}
+                        </p>
+                        <p><strong>Subcategory:</strong> {{ exercise.subcategory|title }}</p>
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <!-- Exercise Description -->
+                <h5>About This Exercise</h5>
+                <p>
+                    The <strong>{{ exercise.display_name }}</strong> is a 
+                    {{ exercise.level }} level {{ exercise.category }} exercise
+                    designed to improve strength, mobility, and functional capacity.
+                </p>
+                
+                {% if exercise.category == 'strength' %}
+                    <div class="alert alert-info">
+                        <h6><i class="fas fa-dumbbell"></i> Strength Training Benefits</h6>
+                        <ul class="mb-0">
+                            <li>Builds muscle strength and endurance</li>
+                            <li>Improves functional movement patterns</li>
+                            <li>Supports joint stability and health</li>
+                            <li>Progressive difficulty levels available</li>
+                        </ul>
+                    </div>
+                {% elif exercise.category == 'cardio' %}
+                    <div class="alert alert-danger">
+                        <h6><i class="fas fa-heartbeat"></i> Cardiovascular Benefits</h6>
+                        <ul class="mb-0">
+                            <li>Improves heart and lung capacity</li>
+                            <li>Increases endurance and stamina</li>
+                            <li>Burns calories effectively</li>
+                            <li>Boosts overall fitness levels</li>
+                        </ul>
+                    </div>
+                {% elif exercise.category == 'stretching' %}
+                    <div class="alert alert-warning">
+                        <h6><i class="fas fa-child"></i> Flexibility Benefits</h6>
+                        <ul class="mb-0">
+                            <li>Increases range of motion</li>
+                            <li>Reduces muscle tension</li>
+                            <li>Improves posture and alignment</li>
+                            <li>Prevents injury and aids recovery</li>
+                        </ul>
+                    </div>
+                {% endif %}
+                
+                <hr>
+                
+                <!-- Features -->
+                <h5>Exercise Features</h5>
+                <div class="row">
+                    <div class="col-md-6">
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-check text-success me-2"></i> Real-time form tracking</li>
+                            <li><i class="fas fa-check text-success me-2"></i> Voice coaching feedback</li>
+                            <li><i class="fas fa-check text-success me-2"></i> AR overlay guidance</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-check text-success me-2"></i> Green/Yellow/Red rep counting</li>
+                            <li><i class="fas fa-check text-success me-2"></i> Practice mode available</li>
+                            <li><i class="fas fa-check text-success me-2"></i> Progress tracking</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <!-- Action Buttons -->
+                <div class="d-grid gap-2 d-md-flex justify-content-md-start mt-4">
+                    <a href="{% url 'exercise_execute' exercise_id %}" class="btn btn-success btn-lg">
+                        <i class="fas fa-play"></i> Start Exercise
+                    </a>
+                    <a href="{% url 'exercise_library' %}" class="btn btn-outline-secondary btn-lg">
+                        <i class="fas fa-arrow-left"></i> Back to Library
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <!-- Quick Info -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-info-circle"></i> Quick Info</h6>
+            </div>
+            <div class="card-body">
+                <p class="small"><strong>Exercise ID:</strong> {{ exercise_id }}</p>
+                <p class="small"><strong>Category:</strong> {{ exercise.category|title }}</p>
+                <p class="small"><strong>Level:</strong> {{ exercise.level|title }}</p>
+                <p class="small"><strong>Type:</strong> 
+                    {% if exercise.unilateral %}Unilateral{% else %}Bilateral{% endif %}
+                </p>
+            </div>
+        </div>
+        
+        <!-- Tips -->
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-lightbulb"></i> Tips</h6>
+            </div>
+            <div class="card-body">
+                <ul class="small mb-0">
+                    <li>Warm up before starting</li>
+                    <li>Focus on form over speed</li>
+                    <li>Listen to your body</li>
+                    <li>Practice mode helps learn proper form</li>
+                    <li>Green reps count toward total</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

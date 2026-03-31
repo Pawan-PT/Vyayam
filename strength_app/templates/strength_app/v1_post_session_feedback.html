@@ -1,0 +1,143 @@
+{% extends 'strength_app/base.html' %}
+{% block title %}Session Check-In — VYAYAM{% endblock %}
+
+{% block extra_css %}
+<style>
+  body { background: #0a0e27; color: #fff; }
+  .fb-wrap { max-width: 640px; margin: 0 auto; padding: 24px 16px; }
+  .top-bar { background: #1a1f3a; border-radius: 14px; padding: 16px 20px;
+    margin-bottom: 24px; }
+  .q-card { background: #1a1f3a; border-radius: 16px; padding: 22px; margin-bottom: 16px; }
+  .q-label { font-weight: 700; font-size: .95rem; margin-bottom: 14px; }
+  .q-sub { font-size: .8rem; opacity: .6; margin-top: 4px; }
+  .opt-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .opt-btn { background: #2a2f4a; border: 2px solid transparent; border-radius: 12px;
+    padding: 12px 14px; text-align: left; cursor: pointer; transition: all .2s;
+    font-size: .88rem; font-weight: 600; color: #fff; }
+  .opt-btn:hover, .opt-btn.sel { border-color: #667eea; background: rgba(102,126,234,.15); }
+  .opt-btn input[type=radio] { display: none; }
+  .pain-fields { display: none; background: rgba(239,68,68,.08);
+    border: 1px solid rgba(239,68,68,.3); border-radius: 12px; padding: 18px; margin-top: 12px; }
+  .pain-fields.show { display: block; }
+  .form-label-sm { font-size: .82rem; font-weight: 600; opacity: .8; margin-bottom: 6px; display: block; }
+  .form-ctrl { width: 100%; background: #2a2f4a; border: 1px solid rgba(255,255,255,.1);
+    border-radius: 10px; padding: 10px 14px; color: #fff; font-size: .9rem; }
+  .form-ctrl:focus { outline: none; border-color: #667eea; }
+  .range-row { display: flex; align-items: center; gap: 12px; }
+  .range-input { flex: 1; }
+  .submit-btn { width: 100%; padding: 16px; font-size: 1rem; font-weight: 700;
+    background: linear-gradient(135deg, #11998e, #38ef7d);
+    border: none; border-radius: 14px; color: white; cursor: pointer; margin-top: 8px; }
+  .submit-btn:disabled { opacity: .5; cursor: not-allowed; }
+  @media(max-width:480px){
+    .q-label { font-size: 1rem; }
+    .q-sub { font-size: .85rem; }
+    .opt-btn { font-size: .95rem; padding: 12px 14px; }
+    .form-label-sm { font-size: .9rem; }
+    .form-ctrl { font-size: .95rem; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="fb-wrap">
+  <div class="top-bar">
+    <div style="font-size:1.1rem;font-weight:800;">Post-Session Check-In</div>
+    <div style="font-size:.8rem;opacity:.6;margin-top:4px;">How did today go, {{ patient.name }}?</div>
+  </div>
+
+  <form method="post">
+    {% csrf_token %}
+
+    <!-- Q1: Difficulty -->
+    <div class="q-card">
+      <div class="q-label">1. How was today's session intensity?</div>
+      <div class="opt-grid">
+        {% for val, label in difficulty_choices %}
+        <label class="opt-btn" id="diff_{{ val }}">
+          <input type="radio" name="perceived_difficulty" value="{{ val }}" onchange="sel('diff','{{ val }}')">
+          {{ label }}
+        </label>
+        {% empty %}
+        <label class="opt-btn" id="diff_too_easy"><input type="radio" name="perceived_difficulty" value="too_easy" onchange="sel('diff','too_easy')">😴 Too Easy</label>
+        <label class="opt-btn" id="diff_just_right"><input type="radio" name="perceived_difficulty" value="just_right" onchange="sel('diff','just_right')">✅ Just Right</label>
+        <label class="opt-btn" id="diff_hard"><input type="radio" name="perceived_difficulty" value="hard" onchange="sel('diff','hard')">💪 Hard</label>
+        <label class="opt-btn" id="diff_too_hard"><input type="radio" name="perceived_difficulty" value="too_hard" onchange="sel('diff','too_hard')">😰 Too Hard</label>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Q2: Sleep -->
+    <div class="q-card">
+      <div class="q-label">2. How did you sleep last night?</div>
+      <div class="opt-grid">
+        <label class="opt-btn" id="sleep_under_5"><input type="radio" name="sleep_last_night" value="under_5" onchange="sel('sleep','under_5')">😔 Under 5 hrs</label>
+        <label class="opt-btn" id="sleep_5_to_6"><input type="radio" name="sleep_last_night" value="5_to_6" onchange="sel('sleep','5_to_6')">😐 5–6 hrs</label>
+        <label class="opt-btn" id="sleep_7_to_8"><input type="radio" name="sleep_last_night" value="7_to_8" onchange="sel('sleep','7_to_8')">😊 7–8 hrs</label>
+        <label class="opt-btn" id="sleep_over_8"><input type="radio" name="sleep_last_night" value="over_8" onchange="sel('sleep','over_8')">😄 8+ hrs</label>
+      </div>
+    </div>
+
+    <!-- Q3: Pain -->
+    <div class="q-card">
+      <div class="q-label">3. Did you experience any pain or discomfort?
+        <div class="q-sub">Sharp, unexpected, or joint pain — not normal muscle burn</div>
+      </div>
+      <div class="opt-grid">
+        <label class="opt-btn" id="pain_none"><input type="radio" name="pain_reported" value="none" onchange="sel('pain','none');hidePain()">✅ None</label>
+        <label class="opt-btn" id="pain_mild"><input type="radio" name="pain_reported" value="mild" onchange="sel('pain','mild');showPain()">😐 Mild</label>
+        <label class="opt-btn" id="pain_moderate"><input type="radio" name="pain_reported" value="moderate" onchange="sel('pain','moderate');showPain()">😟 Moderate</label>
+        <label class="opt-btn" id="pain_severe"><input type="radio" name="pain_reported" value="severe" onchange="sel('pain','severe');showPain()">🔴 Severe</label>
+      </div>
+      <div class="pain-fields" id="painFields">
+        <label class="form-label-sm">Which area?</label>
+        <input type="text" name="pain_location" class="form-ctrl mb-3" placeholder="e.g. left knee, lower back">
+        <label class="form-label-sm">During which exercise?</label>
+        <select name="pain_exercise" class="form-ctrl mb-3">
+          <option value="">— select —</option>
+          {% for ex in working_sets %}
+          <option value="{{ ex.exercise_id }}">{{ ex.exercise_name }}</option>
+          {% endfor %}
+        </select>
+        <label class="form-label-sm">Severity (1–10)</label>
+        <div class="range-row">
+          <input type="range" name="pain_severity" class="range-input" min="1" max="10" value="3" oninput="document.getElementById('painVal').textContent=this.value">
+          <span id="painVal" style="font-weight:800;color:#ef4444;">3</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Q4: Energy (+ hormonal conditional) -->
+    <div class="q-card">
+      <div class="q-label">4. Overall energy level today?
+        {% if show_hormonal %}
+        <div class="q-sub" style="color:#f093fb;">Tracking this during your {{ hormonal_phase|title }} phase</div>
+        {% endif %}
+      </div>
+      <div class="opt-grid">
+        <label class="opt-btn" id="energy_low"><input type="radio" name="energy_level" value="low" onchange="sel('energy','low')">😴 Low</label>
+        <label class="opt-btn" id="energy_moderate"><input type="radio" name="energy_level" value="moderate" onchange="sel('energy','moderate')">😐 Moderate</label>
+        <label class="opt-btn" id="energy_good"><input type="radio" name="energy_level" value="good" onchange="sel('energy','good')">😊 Good</label>
+        <label class="opt-btn" id="energy_great"><input type="radio" name="energy_level" value="great" onchange="sel('energy','great')">🔥 Great</label>
+      </div>
+    </div>
+
+    <button type="submit" class="submit-btn"><i class="fas fa-check me-2"></i>Submit &amp; See Results</button>
+  </form>
+</div>
+
+<script>
+function sel(group, val) {
+  document.querySelectorAll('[id^="' + group + '_"]').forEach(el => el.classList.remove('sel'));
+  const el = document.getElementById(group + '_' + val);
+  if (el) el.classList.add('sel');
+}
+function showPain() { document.getElementById('painFields').classList.add('show'); }
+function hidePain() { document.getElementById('painFields').classList.remove('show'); }
+// Default selections
+sel('diff', 'just_right');
+sel('sleep', '7_to_8');
+sel('pain', 'none');
+sel('energy', 'good');
+</script>
+{% endblock %}

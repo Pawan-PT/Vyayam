@@ -1,0 +1,232 @@
+{% extends 'strength_app/base.html' %}
+{% block title %}Food Log — VYAYAM{% endblock %}
+
+{% block extra_css %}
+<style>
+  body { background: #0a0e27; color: #fff; }
+  .fl-container { max-width: 900px; margin: 0 auto; padding: 24px 20px; }
+  h1 { font-size: 1.5rem; font-weight: 800; margin-bottom: 4px; }
+  .card { background: #1a1f3a; border-radius: 16px; padding: 20px; margin-bottom: 18px; }
+  .card-label { font-size: .7rem; text-transform: uppercase; letter-spacing: 1px; opacity: .5; margin-bottom: 12px; }
+  label { font-size: .85rem; opacity: .7; margin-bottom: 4px; display: block; }
+  input[type=text], input[type=number], select {
+    width: 100%; background: #2a2f4a; border: 1px solid rgba(255,255,255,.1);
+    color: #fff; border-radius: 10px; padding: 10px 14px; font-size: .9rem;
+  }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+  @media (max-width: 580px) { .form-row { grid-template-columns: 1fr; } }
+  .search-results { background: #252b4a; border-radius: 10px; margin-top: 6px; overflow: hidden; display: none; }
+  .search-result-item {
+    padding: 10px 14px; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,.06);
+    transition: background .15s;
+  }
+  .search-result-item:hover { background: rgba(102,126,234,.15); }
+  .result-name { font-weight: 600; font-size: .9rem; }
+  .result-meta { font-size: .75rem; opacity: .55; margin-top: 2px; }
+  .selected-food-card {
+    background: rgba(102,126,234,.1); border: 1px solid rgba(102,126,234,.3);
+    border-radius: 10px; padding: 12px 16px; margin: 10px 0;
+    display: none;
+  }
+  .btn-log {
+    width: 100%; padding: 13px; font-weight: 700; font-size: 1rem;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border: none; border-radius: 12px; color: #fff; cursor: pointer; margin-top: 8px;
+  }
+  .btn-log:disabled { opacity: .5; cursor: default; }
+  .macro-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
+  .chip {
+    background: rgba(255,255,255,.08); border-radius: 20px;
+    padding: 3px 12px; font-size: .75rem;
+  }
+  /* Summary strip */
+  .summary-strip {
+    display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 18px;
+    background: #1a1f3a; border-radius: 14px; padding: 14px 18px; align-items: center;
+  }
+  .summary-strip .ss-item { text-align: center; }
+  .ss-val { font-size: 1.3rem; font-weight: 800; }
+  .ss-lbl { font-size: .7rem; opacity: .5; }
+  .back-link { color: rgba(255,255,255,.4); font-size: .85rem; text-decoration: none; display: inline-block; margin-bottom: 16px; }
+  .back-link:hover { color: #fff; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="fl-container">
+  <a href="{% url 'v1_nutrition_dashboard' %}" class="back-link"><i class="fas fa-arrow-left me-1"></i> Back to Nutrition</a>
+  <h1>Log Food</h1>
+  <p style="opacity:.55;font-size:.9rem;margin-bottom:20px;">{{ selected_date|date:"D, d M Y" }}</p>
+
+  <!-- Daily summary strip -->
+  <div class="summary-strip">
+    <div class="ss-item">
+      <div class="ss-val">{{ summary.total_calories|floatformat:0 }}</div>
+      <div class="ss-lbl">kcal eaten</div>
+    </div>
+    <div class="ss-item">
+      <div class="ss-val" style="color:#667eea;">{{ summary.remaining_calories }}</div>
+      <div class="ss-lbl">kcal left</div>
+    </div>
+    <div class="ss-item">
+      <div class="ss-val">{{ summary.total_protein|floatformat:0 }}g</div>
+      <div class="ss-lbl">protein</div>
+    </div>
+    <div class="ss-item">
+      <div class="ss-val">{{ summary.total_carbs|floatformat:0 }}g</div>
+      <div class="ss-lbl">carbs</div>
+    </div>
+    <div class="ss-item">
+      <div class="ss-val">{{ summary.total_fat|floatformat:0 }}g</div>
+      <div class="ss-lbl">fat</div>
+    </div>
+  </div>
+
+  <!-- Log food form -->
+  <div class="card">
+    <div class="card-label">Add a food item</div>
+    <form method="post" id="logForm">
+      {% csrf_token %}
+      <input type="hidden" name="log_date" value="{{ selected_date|date:'Y-m-d' }}">
+      <input type="hidden" name="food_id" id="selectedFoodId">
+
+      <label>Search food</label>
+      <input type="text" id="foodSearch" placeholder="Type food name (e.g. dal, roti, chicken...)" autocomplete="off">
+      <div class="search-results" id="searchResults"></div>
+
+      <div class="selected-food-card" id="selectedFoodCard">
+        <div id="selectedFoodName" style="font-weight:700;"></div>
+        <div class="macro-chips" id="selectedFoodMacros"></div>
+      </div>
+
+      <div class="form-row mt-3">
+        <div>
+          <label>Quantity (grams)</label>
+          <input type="number" name="quantity_g" id="quantityInput" min="1" max="2000" step="1" value="100">
+        </div>
+        <div>
+          <label>Meal</label>
+          <select name="meal_type">
+            {% for m in meal_types %}
+            <option value="{{ m }}" {% if m == 'lunch' %}selected{% endif %}>{{ m|capfirst }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div style="display:flex;align-items:flex-end;">
+          <button type="submit" class="btn-log" id="logBtn" disabled>
+            <i class="fas fa-plus me-2"></i>Log it
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <!-- Quick add: common items -->
+  <div class="card">
+    <div class="card-label">Quick Add — Common Items</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;">
+      {% for food in top_foods %}
+      <div style="background:#252b4a;border-radius:10px;padding:10px 12px;cursor:pointer;transition:background .2s;"
+           onclick="quickSelect({{ food.id }}, '{{ food.name|escapejs }}', {{ food.calories_per_100g }}, {{ food.protein_per_100g }}, {{ food.carbs_per_100g }}, {{ food.fat_per_100g }}, {{ food.serving_size_g }}, '{{ food.serving_description|escapejs }}')">
+        <div style="font-weight:600;font-size:.88rem;">{{ food.name }}</div>
+        <div style="font-size:.72rem;opacity:.5;margin-top:2px;">
+          {{ food.calories_per_serving|floatformat:0 }} kcal · {{ food.protein_per_serving|floatformat:1 }}g P · {{ food.serving_description }}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Today's log -->
+  {% if summary.by_meal %}
+  <div class="card">
+    <div class="card-label">Today's Entries</div>
+    {% for meal, items in summary.by_meal.items %}
+    <div style="margin-bottom:12px;">
+      <div style="font-size:.8rem;font-weight:700;text-transform:capitalize;opacity:.65;margin-bottom:6px;">{{ meal }}</div>
+      {% for entry in items %}
+      <div style="display:flex;justify-content:space-between;font-size:.85rem;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.05);">
+        <span>{{ entry.food }}</span>
+        <span style="opacity:.5;">{{ entry.qty_g|floatformat:0 }}g · {{ entry.calories|floatformat:0 }} kcal · {{ entry.protein|floatformat:1 }}g P</span>
+      </div>
+      {% endfor %}
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>
+
+<script>
+let selectedFoodData = null;
+
+function quickSelect(id, name, cal, pro, carb, fat, servingG, servingDesc) {
+  selectedFoodData = { id, name, cal, pro, carb, fat };
+  document.getElementById('selectedFoodId').value = id;
+  document.getElementById('quantityInput').value = servingG;
+  document.getElementById('selectedFoodName').textContent = name + (servingDesc ? ' — ' + servingDesc : '');
+  document.getElementById('selectedFoodMacros').innerHTML =
+    `<span class="chip">${cal} kcal/100g</span>
+     <span class="chip">${pro}g protein</span>
+     <span class="chip">${carb}g carbs</span>
+     <span class="chip">${fat}g fat</span>`;
+  document.getElementById('selectedFoodCard').style.display = 'block';
+  document.getElementById('logBtn').disabled = false;
+  document.getElementById('foodSearch').value = name;
+  document.getElementById('searchResults').style.display = 'none';
+}
+
+let searchTimeout;
+document.getElementById('foodSearch').addEventListener('input', function() {
+  clearTimeout(searchTimeout);
+  const q = this.value.trim();
+  if (q.length < 2) {
+    document.getElementById('searchResults').style.display = 'none';
+    return;
+  }
+  searchTimeout = setTimeout(() => {
+    fetch(`/nutrition/api/search/?q=${encodeURIComponent(q)}`)
+      .then(r => r.json())
+      .then(data => {
+        const box = document.getElementById('searchResults');
+        if (!data.results.length) { box.style.display = 'none'; return; }
+        box.innerHTML = '';
+        data.results.forEach(function(f) {
+          var item = document.createElement('div');
+          item.className = 'search-result-item';
+
+          var nameDiv = document.createElement('div');
+          nameDiv.className = 'result-name';
+          nameDiv.textContent = f.name;
+          if (f.name_hindi) {
+            var hindiSpan = document.createElement('span');
+            hindiSpan.style.opacity = '0.45';
+            hindiSpan.style.fontSize = '0.8em';
+            hindiSpan.textContent = ' (' + f.name_hindi + ')';
+            nameDiv.appendChild(hindiSpan);
+          }
+
+          var metaDiv = document.createElement('div');
+          metaDiv.className = 'result-meta';
+          metaDiv.textContent = f.cal_per_100g + ' kcal/100g · ' + f.protein_per_100g + 'g P · ' + f.category;
+
+          item.appendChild(nameDiv);
+          item.appendChild(metaDiv);
+
+          item.addEventListener('click', function() {
+            quickSelect(f.id, f.name, f.cal_per_100g, f.protein_per_100g, f.carbs_per_100g, f.fat_per_100g, f.serving_g, f.serving_desc);
+          });
+
+          box.appendChild(item);
+        });
+        box.style.display = 'block';
+      });
+  }, 300);
+});
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('#foodSearch') && !e.target.closest('#searchResults')) {
+    document.getElementById('searchResults').style.display = 'none';
+  }
+});
+</script>
+{% endblock %}

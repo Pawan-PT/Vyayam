@@ -1,0 +1,144 @@
+{% extends 'strength_app/coach_base.html' %}
+{% block title %}Override Prescription — {{ patient.name }}{% endblock %}
+{% block page_title %}
+  <a href="{% url 'coach_athlete_detail' patient.patient_id %}" style="color:rgba(255,255,255,.5);text-decoration:none;font-size:.85rem;">← {{ patient.name }}</a>
+  &nbsp;/&nbsp; Override Prescription
+{% endblock %}
+
+{% block extra_css %}
+<style>
+  .ex-row { display: flex; align-items: center; gap: 12px; padding: 12px;
+    background: #0d1117; border-radius: 10px; margin-bottom: 8px; }
+  .ex-row label { flex: 1; font-size: .88rem; cursor: pointer; }
+  .ex-check { width: 18px; height: 18px; accent-color: #667eea; flex-shrink: 0; }
+  .remove-row { border-left: 3px solid #ef4444; }
+  .keep-row   { border-left: 3px solid #22c55e; }
+  .notes-area { width: 100%; background: #0d1117; border: 1px solid rgba(255,255,255,.1);
+    border-radius: 10px; padding: 10px 14px; color: #fff; font-size: .85rem;
+    min-height: 80px; resize: vertical; }
+  .field-row { margin-bottom: 14px; }
+  .field-label { font-size: .78rem; font-weight: 600; opacity: .65; margin-bottom: 6px; display: block; }
+  .field-input { background: #0d1117; border: 1px solid rgba(255,255,255,.1); border-radius: 8px;
+    padding: 9px 14px; color: #fff; font-size: .85rem; width: 100%; }
+</style>
+{% endblock %}
+
+{% block content %}
+<form method="POST">
+  {% csrf_token %}
+  <input type="hidden" name="exercises_json" id="exercisesJson" value="[]">
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+
+    <!-- AI prescription (checkboxes to exclude) -->
+    <div class="c-card">
+      <div class="c-card-title">AI-Generated Exercises <span style="font-weight:400;opacity:.5;">(uncheck to remove)</span></div>
+      {% if ai_session and ai_session.working_sets %}
+        {% for ex in ai_session.working_sets %}
+        <div class="ex-row keep-row" id="row_ai_{{ forloop.counter }}">
+          <input type="checkbox" class="ex-check ai-ex" id="ai_{{ forloop.counter }}"
+            data-ex='{"action":"keep","exercise_id":"{{ ex.exercise_id }}","exercise_name":"{{ ex.exercise_name|default:ex.exercise_id }}","movement_pattern":"{{ ex.movement_pattern }}","sets":{{ ex.sets|default:3 }},"reps":{{ ex.reps|default:10 }},"rest":{{ ex.rest_seconds|default:75 }}}'
+            checked onchange="updateRow(this)">
+          <label for="ai_{{ forloop.counter }}">
+            <strong>{{ ex.exercise_name|default:ex.exercise_id }}</strong>
+            <span style="opacity:.6;font-size:.78rem;"> — {{ ex.sets }}×{{ ex.reps }} · {{ ex.movement_pattern }}</span>
+          </label>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div style="opacity:.45;font-size:.85rem;">No AI session available for this patient.</div>
+      {% endif %}
+    </div>
+
+    <!-- Override controls -->
+    <div>
+      <div class="c-card">
+        <div class="c-card-title">Add Custom Exercise</div>
+        <div class="field-row">
+          <label class="field-label">Exercise ID (from library)</label>
+          <input type="text" id="addExId" class="field-input" placeholder="e.g. full_squats">
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px;">
+          <div><label class="field-label">Sets</label><input type="number" id="addSets" class="field-input" value="3" min="1" max="10"></div>
+          <div><label class="field-label">Reps</label><input type="number" id="addReps" class="field-input" value="10" min="1" max="50"></div>
+          <div><label class="field-label">Rest (s)</label><input type="number" id="addRest" class="field-input" value="75" min="15" max="300"></div>
+        </div>
+        <button type="button" class="btn-coach btn-outline-c" onclick="addCustomExercise()">
+          <i class="fas fa-plus me-1"></i> Add Exercise
+        </button>
+        <div id="customExList" style="margin-top:12px;"></div>
+      </div>
+
+      <div class="c-card">
+        <div class="c-card-title">Prescription Details</div>
+        <div class="field-row">
+          <label class="field-label">Duration (weeks)</label>
+          <input type="number" name="duration_weeks" class="field-input" value="4" min="1" max="16">
+        </div>
+        <div class="field-row">
+          <label class="field-label">Clinical Reasoning</label>
+          <textarea name="clinical_reasoning" class="notes-area" placeholder="Why are you overriding the AI prescription?"></textarea>
+        </div>
+        <div class="field-row">
+          <label class="field-label">Special Instructions for Patient</label>
+          <textarea name="special_instructions" class="notes-area" placeholder="Any specific cues, modifications, or notes the patient should see..."></textarea>
+        </div>
+        <button type="submit" class="btn-coach btn-primary-c" onclick="buildExercisesJson()">
+          <i class="fas fa-save me-1"></i> Save Override
+        </button>
+      </div>
+    </div>
+
+  </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let customExercises = [];
+
+function updateRow(checkbox) {
+  const row = checkbox.closest('.ex-row');
+  if (checkbox.checked) {
+    row.classList.remove('remove-row');
+    row.classList.add('keep-row');
+  } else {
+    row.classList.remove('keep-row');
+    row.classList.add('remove-row');
+  }
+}
+
+function addCustomExercise() {
+  const id = document.getElementById('addExId').value.trim();
+  if (!id) { alert('Enter an exercise ID'); return; }
+  const ex = {
+    action: 'add',
+    exercise_id: id,
+    sets: parseInt(document.getElementById('addSets').value),
+    reps: parseInt(document.getElementById('addReps').value),
+    rest: parseInt(document.getElementById('addRest').value),
+  };
+  customExercises.push(ex);
+  const list = document.getElementById('customExList');
+  const div = document.createElement('div');
+  div.className = 'ex-row keep-row';
+  div.innerHTML = `<span style="flex:1;font-size:.85rem;">+ ${id} · ${ex.sets}×${ex.reps}</span>
+    <button type="button" style="background:none;border:none;color:#ef4444;cursor:pointer;" onclick="this.parentElement.remove();customExercises=customExercises.filter(e=>e.exercise_id!=='${id}')">✕</button>`;
+  list.appendChild(div);
+  document.getElementById('addExId').value = '';
+}
+
+function buildExercisesJson() {
+  const exercises = [];
+  // AI exercises — checked = keep, unchecked = remove
+  document.querySelectorAll('.ai-ex').forEach(cb => {
+    const data = JSON.parse(cb.dataset.ex);
+    data.action = cb.checked ? 'keep' : 'remove';
+    exercises.push(data);
+  });
+  // Custom adds
+  customExercises.forEach(ex => exercises.push(ex));
+  document.getElementById('exercisesJson').value = JSON.stringify(exercises);
+}
+</script>
+{% endblock %}

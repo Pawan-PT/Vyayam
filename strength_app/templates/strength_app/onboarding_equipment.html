@@ -1,0 +1,140 @@
+{% extends 'strength_app/base.html' %}
+{% block title %}Equipment — VYAYAM Assessment{% endblock %}
+
+{% block extra_css %}
+<style>
+.session-opt {
+  border: 2px solid #dee2e6;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.session-opt:hover {
+  border-color: #667eea;
+  background: rgba(102,126,234,0.04);
+}
+.session-opt.active {
+  border-color: #667eea;
+  background: rgba(102,126,234,0.1);
+  box-shadow: 0 0 0 3px rgba(102,126,234,0.15);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+  <div class="row justify-content-center">
+    <div class="col-lg-6">
+
+      <div class="mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <span class="text-muted small fw-600">Step {{ step }} of {{ total }}</span>
+          <span class="text-muted small">Equipment &amp; Schedule</span>
+        </div>
+        <div class="progress" style="height:6px;border-radius:6px;">
+          <div class="progress-bar" style="width:{% widthratio step total 100 %}%;background:var(--primary-gradient);"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-body p-4">
+          <h4 class="fw-700 mb-1">Equipment &amp; Training Setup</h4>
+          <p class="text-muted mb-4">This ensures every exercise prescribed is one you can actually do.</p>
+
+          <form method="post">
+            {% csrf_token %}
+
+            <div class="mb-4">
+              <label class="form-label fw-600">Available Equipment <span class="text-muted">(select all that apply)</span></label>
+              <div class="row g-2">
+                {% for val, label in equipment_choices %}
+                <div class="col-6">
+                  <label class="p-3 rounded-3 border d-flex align-items-center gap-2" style="cursor:pointer;">
+                    <input type="checkbox" name="equipment" value="{{ val }}" class="form-check-input mt-0"
+                      {% if val in patient.equipment_available_json %}checked{% endif %}>
+                    <span class="small fw-500">{{ label }}</span>
+                  </label>
+                </div>
+                {% endfor %}
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-600">Where do you mainly train?</label>
+              <select name="training_location" class="form-select">
+                {% for val, label in location_choices %}
+                <option value="{{ val }}" {% if patient.training_location == val %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="mb-4">
+              <label class="form-label fw-600">Session duration: <span id="durationLabel">{{ patient.session_duration_minutes|default:45 }} minutes</span></label>
+              <input type="range" name="session_duration_minutes" id="durationSlider"
+                     min="20" max="90" step="5" value="{{ patient.session_duration_minutes|default:45 }}"
+                     class="form-range"
+                     oninput="document.getElementById('durationLabel').textContent = this.value + ' minutes'">
+              <div class="d-flex justify-content-between text-muted small">
+                <span>20 min</span><span>45 min</span><span>90 min</span>
+              </div>
+            </div>
+
+            <div class="mb-4">
+              <label class="form-label fw-600">Sessions per week</label>
+              <div class="d-flex gap-2" id="sessionsGroup">
+                <label class="flex-fill text-center p-3 rounded-3 session-opt" onclick="pickSession(this)">
+                  <input type="radio" name="sessions_per_week" value="2" class="d-none"
+                    {% if patient.sessions_per_week == 2 %}checked{% endif %}>
+                  <span class="fw-700 fs-5">2</span><br><small class="text-muted">days</small>
+                </label>
+                <label class="flex-fill text-center p-3 rounded-3 session-opt" onclick="pickSession(this)">
+                  <input type="radio" name="sessions_per_week" value="3" class="d-none"
+                    {% if patient.sessions_per_week == 3 or not patient.sessions_per_week %}checked{% endif %}>
+                  <span class="fw-700 fs-5">3</span><br><small class="text-muted">days</small>
+                </label>
+                <label class="flex-fill text-center p-3 rounded-3 session-opt" onclick="pickSession(this)">
+                  <input type="radio" name="sessions_per_week" value="4" class="d-none"
+                    {% if patient.sessions_per_week == 4 %}checked{% endif %}>
+                  <span class="fw-700 fs-5">4</span><br><small class="text-muted">days</small>
+                </label>
+                <label class="flex-fill text-center p-3 rounded-3 session-opt" onclick="pickSession(this)">
+                  <input type="radio" name="sessions_per_week" value="5" class="d-none"
+                    {% if patient.sessions_per_week == 5 %}checked{% endif %}>
+                  <span class="fw-700 fs-5">5</span><br><small class="text-muted">days</small>
+                </label>
+                <label class="flex-fill text-center p-3 rounded-3 session-opt" onclick="pickSession(this)">
+                  <input type="radio" name="sessions_per_week" value="6" class="d-none"
+                    {% if patient.sessions_per_week == 6 %}checked{% endif %}>
+                  <span class="fw-700 fs-5">6</span><br><small class="text-muted">days</small>
+                </label>
+              </div>
+            </div>
+
+            <button type="submit" class="btn w-100 py-3 fw-700" style="background:var(--primary-gradient);color:white;border:none;border-radius:10px;">
+              Save &amp; Continue <i class="fas fa-arrow-right ms-2"></i>
+            </button>
+          </form>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+<script>
+function pickSession(el) {
+    document.querySelectorAll('.session-opt').forEach(function(opt) {
+        opt.classList.remove('active');
+        opt.querySelector('input').checked = false;
+    });
+    el.querySelector('input').checked = true;
+    el.classList.add('active');
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.session-opt').forEach(function(opt) {
+        if (opt.querySelector('input').checked) {
+            opt.classList.add('active');
+        }
+    });
+});
+</script>
+{% endblock %}

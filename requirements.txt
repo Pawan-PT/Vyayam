@@ -1,0 +1,14 @@
+Django>=4.2,<5.0
+numpy>=1.26,<2.0
+opencv-python-headless>=4.8
+Pillow>=10.0
+
+# Server-side CV analysis — NOT used in V1 (MediaPipe runs client-side via CDN)
+# mediapipe>=0.10
+# tensorflow>=2.16
+# tensorflow-hub>=0.16
+
+# Production server
+gunicorn>=21.0
+whitenoise>=6.0
+psycopg2-binary>=2.9

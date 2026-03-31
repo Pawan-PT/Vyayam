@@ -1,0 +1,138 @@
+{% extends 'strength_app/base.html' %}
+
+{% block title %}Pre-Match Stretching Protocol — VYAYAM{% endblock %}
+
+{% block extra_css %}
+<style>
+    .protocol-hero {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 20px;
+        padding: 2.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
+    }
+    .stretch-card {
+        border: none;
+        border-radius: 16px;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+        transition: all 0.3s ease;
+        height: 100%;
+    }
+    .stretch-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    }
+    .stretch-icon {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+    }
+    .side-badge-left   { background: #dbeafe; color: #1d4ed8; }
+    .side-badge-right  { background: #fef3c7; color: #b45309; }
+    .side-badge-both   { background: #dcfce7; color: #15803d; }
+    .side-badge {
+        font-size: 0.75rem;
+        font-weight: 600;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        display: inline-block;
+    }
+    .duration-chip {
+        font-size: 0.8rem;
+        background: #f1f5f9;
+        color: #64748b;
+        padding: 0.2rem 0.6rem;
+        border-radius: 20px;
+    }
+    .session-row {
+        border-radius: 12px;
+        background: #f8fafc;
+        padding: 0.75rem 1rem;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+    <!-- Hero -->
+    <div class="protocol-hero">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="fw-bold mb-2"><i class="fas fa-spa me-2"></i> Pre-Match Stretching</h1>
+                <p class="mb-3" style="opacity:0.9;">A complete {{ total_stretches }}-stretch warm-up protocol designed to prepare your lower body for peak performance.</p>
+                <div class="d-flex gap-3 flex-wrap">
+                    <span class="badge bg-white text-dark fs-6"><i class="fas fa-list me-1"></i> {{ total_stretches }} stretches</span>
+                    <span class="badge bg-white text-dark fs-6"><i class="fas fa-clock me-1"></i> ~{{ total_duration }}s total</span>
+                    <span class="badge bg-white text-dark fs-6"><i class="fas fa-camera me-1"></i> Camera optional</span>
+                </div>
+            </div>
+            <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                <form method="post">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-lg" style="background:white; color:#667eea; font-weight:700; border-radius:14px; padding:1rem 2rem;">
+                        <i class="fas fa-play-circle me-2"></i> Start Stretching
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stretch Cards -->
+    <h4 class="fw-bold mb-3"><i class="fas fa-dumbbell me-2 text-primary"></i> Protocol Overview</h4>
+    <div class="row g-3 mb-5">
+        {% for stretch in stretches %}
+        <div class="col-md-4 col-lg-3">
+            <div class="stretch-card card p-3">
+                <div class="stretch-icon">{{ stretch.icon }}</div>
+                <h6 class="fw-bold mb-1">{{ stretch.name }}</h6>
+                <p class="text-muted small mb-2">{{ stretch.muscle_group }}</p>
+                <div class="d-flex gap-2 align-items-center flex-wrap">
+                    <span class="side-badge side-badge-{{ stretch.side }}">{{ stretch.side|capfirst }}</span>
+                    <span class="duration-chip"><i class="fas fa-clock me-1"></i>{{ stretch.duration_seconds }}s</span>
+                </div>
+                <p class="small text-muted mt-2 mb-0" style="font-size:0.78rem;">{{ stretch.coaching_cue }}</p>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Start Button (repeat at bottom) -->
+    <div class="text-center mb-5">
+        <form method="post">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-primary btn-lg px-5">
+                <i class="fas fa-play me-2"></i> Begin Protocol Now
+            </button>
+        </form>
+    </div>
+
+    <!-- Past Sessions -->
+    {% if past_sessions %}
+    <div class="card">
+        <div class="card-header">
+            <i class="fas fa-history me-2"></i> Past Stretching Sessions
+        </div>
+        <div class="card-body">
+            {% for s in past_sessions %}
+            <div class="session-row">
+                <div>
+                    <strong>{{ s.protocol_name }}</strong>
+                    <span class="text-muted ms-2 small">{{ s.session_date|date:"M d, Y" }}</span>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-success">{{ s.stretches_completed }}/{{ s.total_stretches }} done</span>
+                    <a href="{% url 'stretch_download_pdf' s.id %}" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-download me-1"></i> PDF
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

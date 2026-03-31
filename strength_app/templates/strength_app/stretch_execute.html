@@ -1,0 +1,548 @@
+{% extends 'strength_app/base.html' %}
+{% load static %}
+
+{% block title %}{{ stretch.name }} — VYAYAM Stretching{% endblock %}
+
+{% block extra_css %}
+<style>
+    body {
+        background: #0a0e27;
+        color: #fff;
+        font-family: 'Inter', sans-serif;
+    }
+
+    .stretch-container {
+        max-width: 1300px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    /* Progress bar at top */
+    .top-bar {
+        background: #1a1f3a;
+        border-radius: 16px;
+        padding: 16px 24px;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        flex-wrap: wrap;
+    }
+
+    .stretch-title {
+        font-size: 1.4rem;
+        font-weight: 700;
+    }
+
+    .progress-info {
+        font-size: 0.9rem;
+        opacity: 0.7;
+        margin-top: 2px;
+    }
+
+    .progress-bar-outer {
+        flex: 1;
+        min-width: 120px;
+        height: 8px;
+        background: rgba(255,255,255,0.1);
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .progress-bar-inner {
+        height: 100%;
+        background: linear-gradient(90deg, #667eea, #764ba2);
+        border-radius: 8px;
+        transition: width 0.5s ease;
+    }
+
+    /* Side badges */
+    .side-badge {
+        font-size: 0.8rem;
+        font-weight: 700;
+        padding: 4px 14px;
+        border-radius: 20px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .side-left  { background: #1d4ed8; color: #fff; }
+    .side-right { background: #b45309; color: #fff; }
+    .side-both  { background: #15803d; color: #fff; }
+
+    /* Layout columns */
+    .main-layout {
+        display: grid;
+        grid-template-columns: 1fr 420px;
+        gap: 20px;
+    }
+
+    @media (max-width: 900px) {
+        .main-layout { grid-template-columns: 1fr; }
+    }
+
+    /* Camera section */
+    .video-section {
+        position: relative;
+        background: #1a1f3a;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+        min-height: 360px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    #cameraFeed { display: none; }
+
+    #videoCanvas {
+        width: 100%;
+        height: auto;
+        display: none;
+        background: #000;
+        border-radius: 20px;
+    }
+
+    .camera-placeholder {
+        text-align: center;
+        padding: 60px 40px;
+        color: rgba(255,255,255,0.4);
+    }
+
+    .camera-placeholder i {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        display: block;
+    }
+
+    #startCameraBtn {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        border: none;
+        color: white;
+        padding: 12px 28px;
+        border-radius: 12px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        margin-top: 16px;
+        transition: all 0.3s;
+    }
+
+    #startCameraBtn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(102,126,234,0.4);
+    }
+
+    #startCameraBtn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    /* Right panel */
+    .right-panel {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .panel-card {
+        background: #1a1f3a;
+        border-radius: 16px;
+        padding: 20px;
+        border: 1px solid rgba(255,255,255,0.07);
+    }
+
+    .panel-card h5 {
+        font-size: 0.8rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        opacity: 0.5;
+        margin-bottom: 8px;
+    }
+
+    /* Countdown timer */
+    .timer-display {
+        font-size: 5rem;
+        font-weight: 800;
+        text-align: center;
+        line-height: 1;
+        color: #667eea;
+        font-variant-numeric: tabular-nums;
+        transition: color 0.3s;
+    }
+
+    .timer-display.warning { color: #f59e0b; }
+    .timer-display.done    { color: #22c55e; }
+
+    @keyframes timerPulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.06); }
+    }
+
+    .timer-display.pulsing {
+        animation: timerPulse 0.8s ease infinite;
+    }
+
+    .timer-label {
+        text-align: center;
+        font-size: 0.8rem;
+        opacity: 0.5;
+        margin-top: 4px;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+    }
+
+    /* Coaching cue */
+    .cue-text {
+        font-size: 0.95rem;
+        line-height: 1.6;
+        color: #cbd5e1;
+    }
+
+    .muscle-chip {
+        display: inline-block;
+        background: rgba(102,126,234,0.15);
+        color: #a5b4fc;
+        border: 1px solid rgba(102,126,234,0.3);
+        border-radius: 20px;
+        padding: 4px 14px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        margin-top: 8px;
+    }
+
+    /* Action buttons */
+    .btn-complete {
+        width: 100%;
+        padding: 16px;
+        font-size: 1rem;
+        font-weight: 700;
+        border: none;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.3s;
+        background: linear-gradient(135deg, #22c55e, #16a34a);
+        color: white;
+    }
+
+    .btn-complete:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(34,197,94,0.4);
+    }
+
+    .btn-skip {
+        width: 100%;
+        padding: 12px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        border: 2px solid rgba(255,255,255,0.15);
+        border-radius: 12px;
+        cursor: pointer;
+        background: transparent;
+        color: rgba(255,255,255,0.6);
+        transition: all 0.3s;
+    }
+
+    .btn-skip:hover {
+        border-color: rgba(255,255,255,0.4);
+        color: white;
+    }
+
+    .time-up-msg {
+        text-align: center;
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #22c55e;
+        padding: 8px;
+        display: none;
+    }
+
+    /* Loading spinner */
+    .loading-spinner {
+        border: 3px solid rgba(255,255,255,0.1);
+        border-top: 3px solid #667eea;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 12px;
+    }
+
+    @keyframes spin {
+        0%   { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="stretch-container">
+
+    <!-- Top progress bar -->
+    <div class="top-bar">
+        <div>
+            <div class="stretch-title">
+                {{ stretch.icon }} {{ stretch.name }}
+                <span class="side-badge side-{{ stretch.side }} ms-2">{{ stretch.side }}</span>
+            </div>
+            <div class="progress-info">Stretch {{ stretch_index|add:1 }} of {{ total_stretches }}</div>
+        </div>
+        <div class="progress-bar-outer">
+            <div class="progress-bar-inner" style="width: {{ progress_percent }}%"></div>
+        </div>
+        <div style="font-size:0.85rem; opacity:0.6; white-space:nowrap;">
+            {{ progress_percent }}% complete
+        </div>
+    </div>
+
+    <!-- Main layout -->
+    <div class="main-layout">
+
+        <!-- LEFT: Camera -->
+        <div class="video-section" id="videoSection">
+            <video id="cameraFeed" autoplay playsinline></video>
+            <canvas id="videoCanvas" width="1280" height="720"></canvas>
+
+            <div class="camera-placeholder" id="cameraPlaceholder">
+                <i class="fas fa-camera"></i>
+                <div style="font-size:1rem; margin-bottom:8px;">Camera monitoring (optional)</div>
+                <div style="font-size:0.85rem; margin-bottom:16px; opacity:0.6;">
+                    Enable camera to see real-time pose feedback
+                </div>
+                <button id="startCameraBtn">
+                    <i class="fas fa-video me-2"></i> Start Camera
+                </button>
+                <div id="cameraLoadingMsg" style="display:none; margin-top:12px; font-size:0.85rem; opacity:0.7;">
+                    <div class="loading-spinner"></div>
+                    Starting camera…
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT: Controls -->
+        <div class="right-panel">
+
+            <!-- Coaching cue -->
+            <div class="panel-card">
+                <h5><i class="fas fa-comment-dots me-1"></i> Coaching Cue</h5>
+                <p class="cue-text mb-0">{{ stretch.coaching_cue }}</p>
+                <div class="muscle-chip"><i class="fas fa-bullseye me-1"></i> {{ stretch.muscle_group }}</div>
+            </div>
+
+            <!-- Timer -->
+            <div class="panel-card text-center">
+                <h5><i class="fas fa-stopwatch me-1"></i> Timer</h5>
+                <div class="timer-display" id="timerDisplay">{{ stretch.duration_seconds }}</div>
+                <div class="timer-label">seconds remaining</div>
+                <div class="time-up-msg" id="timeUpMsg">
+                    <i class="fas fa-check-circle me-1"></i> Time's Up!
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="panel-card">
+                <h5><i class="fas fa-hand-pointer me-1"></i> Actions</h5>
+                <button class="btn-complete mb-3" id="completeBtn">
+                    <i class="fas fa-check me-2"></i> Complete Stretch
+                </button>
+                <button class="btn-skip" id="skipBtn">
+                    <i class="fas fa-forward me-1"></i> Skip This Stretch
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- MediaPipe -->
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
+
+<script>
+// ── Configuration ──────────────────────────────────────────────────────────
+const STRETCH_INDEX      = {{ stretch_index }};
+const DURATION_SECONDS   = {{ stretch.duration_seconds }};
+const IS_LAST            = {{ is_last_stretch|yesno:"true,false" }};
+const STRETCH_COMPLETE_URL = "{% url 'stretch_complete' %}";
+
+// ── State ──────────────────────────────────────────────────────────────────
+let cameraActive  = false;
+let timerInterval = null;
+let remaining     = DURATION_SECONDS;
+let startTime     = null;   // wall-clock ms when timer began (set on first user action)
+let timerStarted  = false;
+
+// MediaPipe objects
+let pose, camera;
+const videoElement  = document.getElementById('cameraFeed');
+const canvasElement = document.getElementById('videoCanvas');
+
+// ── DOM refs ───────────────────────────────────────────────────────────────
+const timerDisplay   = document.getElementById('timerDisplay');
+const timeUpMsg      = document.getElementById('timeUpMsg');
+const completeBtn    = document.getElementById('completeBtn');
+const skipBtn        = document.getElementById('skipBtn');
+const startCameraBtn = document.getElementById('startCameraBtn');
+
+// ── Timer logic ────────────────────────────────────────────────────────────
+function startTimer() {
+    if (timerStarted) return;
+    timerStarted = true;
+    startTime    = Date.now();
+
+    timerInterval = setInterval(() => {
+        remaining--;
+        updateTimerDisplay();
+
+        if (remaining <= 5 && remaining > 0) {
+            timerDisplay.classList.add('pulsing', 'warning');
+        }
+        if (remaining <= 0) {
+            clearInterval(timerInterval);
+            timerDisplay.textContent = '0';
+            timerDisplay.classList.remove('pulsing', 'warning');
+            timerDisplay.classList.add('done');
+            timeUpMsg.style.display = 'block';
+        }
+    }, 1000);
+}
+
+function updateTimerDisplay() {
+    timerDisplay.textContent = remaining > 0 ? remaining : 0;
+}
+
+function getElapsed() {
+    if (!startTime) return 0;
+    return Math.round((Date.now() - startTime) / 1000);
+}
+
+// ── MediaPipe ──────────────────────────────────────────────────────────────
+function onPoseResults(results) {
+    const ctx = canvasElement.getContext('2d');
+    ctx.save();
+    ctx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+    ctx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
+
+    if (results.poseLandmarks) {
+        // Draw green skeleton — no scoring, no rep counting
+        drawConnectors(ctx, results.poseLandmarks, POSE_CONNECTIONS, {
+            color: '#00e676',
+            lineWidth: 3
+        });
+        drawLandmarks(ctx, results.poseLandmarks, {
+            color: '#00e676',
+            fillColor: '#00e676',
+            lineWidth: 2,
+            radius: 4
+        });
+    }
+    ctx.restore();
+}
+
+function initMediaPipe() {
+    pose = new Pose({
+        locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`
+    });
+
+    pose.setOptions({
+        modelComplexity: 1,
+        smoothLandmarks: true,
+        enableSegmentation: false,
+        smoothSegmentation: false,
+        minDetectionConfidence: 0.6,
+        minTrackingConfidence: 0.6
+    });
+
+    pose.onResults(onPoseResults);
+
+    camera = new Camera(videoElement, {
+        onFrame: async () => {
+            await pose.send({ image: videoElement });
+        },
+        width: 1280,
+        height: 720
+    });
+}
+
+// ── Start Camera Button ────────────────────────────────────────────────────
+startCameraBtn.addEventListener('click', async function () {
+    this.disabled = true;
+    document.getElementById('cameraLoadingMsg').style.display = 'block';
+
+    try {
+        initMediaPipe();
+        await camera.start();
+
+        cameraActive = true;
+        document.getElementById('cameraPlaceholder').style.display = 'none';
+        canvasElement.style.display = 'block';
+    } catch (err) {
+        console.error('Camera error:', err);
+        this.disabled = false;
+        document.getElementById('cameraLoadingMsg').style.display = 'none';
+        alert('Could not start camera. Please check permissions.');
+    }
+
+    // Start timer on first camera activation if not started yet
+    startTimer();
+});
+
+// ── Save & Navigate ────────────────────────────────────────────────────────
+async function saveAndNavigate(completed) {
+    const elapsed = getElapsed();
+
+    try {
+        const resp = await fetch('/save-stretch-result/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                stretch_index:   STRETCH_INDEX,
+                actual_duration: completed ? elapsed : 0,
+                completed:       completed,
+                posture_note:    '',
+                camera_used:     cameraActive,
+            })
+        });
+        const data = await resp.json();
+        if (data.success) {
+            window.location.href = data.next_url;
+        }
+    } catch (err) {
+        console.error('Save error:', err);
+        // Navigate anyway so user is not stuck
+        const next = IS_LAST ? STRETCH_COMPLETE_URL : `/stretch-execute/${STRETCH_INDEX + 1}/`;
+        window.location.href = next;
+    }
+}
+
+completeBtn.addEventListener('click', function () {
+    if (!timerStarted) startTimer();  // register start if they click straight away
+    saveAndNavigate(true);
+});
+
+skipBtn.addEventListener('click', function () {
+    if (confirm('Skip this stretch?')) {
+        saveAndNavigate(false);
+    }
+});
+
+// ── Auto-start timer when page loads (countdown begins without camera) ─────
+// Timer starts on load so the user can stretch without camera
+window.addEventListener('load', () => {
+    startTimer();
+});
+
+// ── Cleanup ────────────────────────────────────────────────────────────────
+window.addEventListener('beforeunload', () => {
+    if (camera) camera.stop();
+    if (timerInterval) clearInterval(timerInterval);
+});
+</script>
+{% endblock %}

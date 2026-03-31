@@ -1,0 +1,498 @@
+{% extends 'strength_app/base.html' %}
+{% load static %}
+{% block title %}{{ test.name }} — VYAYAM Assessment{% endblock %}
+
+{% block extra_css %}
+<style>
+  body { background: #0a0e27; color: #fff; }
+  .test-container { max-width: 1100px; margin: 0 auto; padding: 20px; }
+  .top-bar {
+    background: #1a1f3a; border-radius: 14px; padding: 14px 20px;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px; margin-bottom: 18px; flex-wrap: wrap;
+  }
+  .main-layout {
+    display: grid; grid-template-columns: 1fr 380px; gap: 18px;
+  }
+  @media (max-width: 860px) { .main-layout { grid-template-columns: 1fr; } }
+  .video-section {
+    background: #1a1f3a; border-radius: 18px; overflow: hidden;
+    position: relative; min-height: 360px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  #cameraFeed { display: none; }
+  #videoCanvas { width: 100%; max-height: 480px; display: block; border-radius: 18px; }
+  .camera-placeholder {
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; gap: 16px; padding: 40px; text-align: center;
+  }
+  .right-panel { display: flex; flex-direction: column; gap: 14px; }
+  .info-card { background: #1a1f3a; border-radius: 14px; padding: 18px; }
+  .countdown-ring {
+    width: 110px; height: 110px; position: relative; margin: 0 auto 8px;
+  }
+  .countdown-svg { transform: rotate(-90deg); }
+  .countdown-bg { fill: none; stroke: rgba(255,255,255,.1); stroke-width: 8; }
+  .countdown-fg { fill: none; stroke: #667eea; stroke-width: 8; stroke-linecap: round;
+    stroke-dasharray: 283; stroke-dashoffset: 283; transition: stroke-dashoffset .5s linear; }
+  .countdown-text {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+    font-size: 2rem; font-weight: 800;
+  }
+  .score-grid { display: flex; flex-direction: column; gap: 8px; }
+  .score-btn {
+    background: #2a2f4a; border: 2px solid transparent; border-radius: 10px;
+    padding: 10px 14px; display: flex; align-items: center; gap: 14px;
+    cursor: pointer; transition: all .2s;
+  }
+  .score-btn:hover, .score-btn.selected {
+    border-color: #667eea; background: rgba(102,126,234,.15);
+  }
+  .score-btn .score-num { font-size: 1.5rem; font-weight: 800; color: #667eea; flex-shrink: 0; min-width: 28px; }
+  .score-desc { font-size: .82rem; color: rgba(255,255,255,.7); line-height: 1.4; }
+  .variant-picker { display: flex; flex-direction: column; gap: 12px; }
+  .variant-btn {
+    background: #2a2f4a; border: 2px solid rgba(102,126,234,.3); border-radius: 12px;
+    padding: 16px 18px; color: #fff; text-align: left; cursor: pointer;
+    font-size: .95rem; font-weight: 600; transition: all .2s; text-decoration: none;
+    display: block;
+  }
+  .variant-btn:hover { border-color: #667eea; background: rgba(102,126,234,.18); color: #fff; }
+  .variant-btn i { margin-right: 10px; color: #667eea; }
+  .side-badge {
+    display: inline-block; padding: 4px 14px; border-radius: 20px;
+    font-size: .8rem; font-weight: 700; text-transform: uppercase;
+  }
+  .side-left  { background: #1d4ed8; }
+  .side-right { background: #b45309; }
+  .start-btn {
+    width: 100%; padding: 14px; font-size: 1rem; font-weight: 700;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border: none; border-radius: 12px; color: white; cursor: pointer;
+    transition: opacity .2s;
+  }
+  .start-btn:hover { opacity: .9; }
+  .submit-btn {
+    width: 100%; padding: 14px; font-size: 1rem; font-weight: 700;
+    background: linear-gradient(135deg, #11998e, #38ef7d);
+    border: none; border-radius: 12px; color: white; cursor: pointer;
+    display: none;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="test-container">
+  <!-- Top bar -->
+  <div class="top-bar">
+    <div>
+      <div class="fw-700" style="font-size:1.1rem;">{{ test.name }}</div>
+      <div style="font-size:.85rem;opacity:.6;">Test {{ test_index|add:1 }} of {{ total_tests }}</div>
+    </div>
+    {% if is_bilateral %}
+      <span class="side-badge {% if side == 'left' %}side-left{% else %}side-right{% endif %}">
+        {{ side|upper }} SIDE
+      </span>
+    {% endif %}
+    <div style="flex:1;min-width:100px;">
+      <div class="progress" style="height:6px;border-radius:6px;background:rgba(255,255,255,.1);">
+        <div class="progress-bar" style="width:{{ progress_pct }}%;background:linear-gradient(90deg,#667eea,#764ba2);"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="main-layout">
+
+    <!-- Camera -->
+    <div class="video-section">
+      <video id="cameraFeed" autoplay playsinline></video>
+      <canvas id="videoCanvas"></canvas>
+      <button id="testVoiceToggle" onclick="toggleVoice()" title="Voice on"
+        style="position:absolute;top:10px;right:10px;z-index:25;border-radius:50%;
+          width:36px;height:36px;padding:0;border:1px solid rgba(255,255,255,.3);
+          background:rgba(0,0,0,.4);color:#fff;cursor:pointer;display:none;">
+        <i id="testVoiceIcon" class="fas fa-volume-up" style="font-size:.85rem;"></i>
+      </button>
+
+      <div class="camera-placeholder" id="cameraPlaceholder">
+        <i class="fas fa-camera fa-3x" style="opacity:.4"></i>
+        <p style="opacity:.6;">Click "Start Test" to activate camera</p>
+      </div>
+    </div>
+
+    <!-- Right panel -->
+    <div class="right-panel">
+
+      {% if show_variant_picker %}
+      <!-- Variant picker — shown before test begins -->
+      <div class="info-card">
+        <div class="text-muted small mb-1 text-uppercase fw-600" style="letter-spacing:1px;font-size:.65rem;">Equipment Check</div>
+        <div class="fw-700 mb-3" style="font-size:1rem;">{{ test.variant_question }}</div>
+        <div class="variant-picker">
+          {% for opt in variant_options %}
+          <a href="?variant={{ opt.key }}" class="variant-btn">
+            <i class="fas fa-check-circle"></i>{{ opt.label }}
+          </a>
+          {% endfor %}
+        </div>
+      </div>
+      {% else %}
+
+      <!-- Exercise -->
+      <div class="info-card">
+        <div class="text-muted small mb-1 text-uppercase fw-600" style="letter-spacing:1px;font-size:.65rem;">Exercise</div>
+        <div class="fw-700 mb-2">{{ test.exercise }}</div>
+        <ol class="mb-0" style="font-size:.85rem;opacity:.8;padding-left:1.2rem;line-height:1.8;">
+          {% for instr in test.instructions %}
+          <li>{{ instr }}</li>
+          {% endfor %}
+        </ol>
+      </div>
+
+      <!-- Countdown -->
+      <div class="info-card text-center">
+        <div class="countdown-ring">
+          <svg class="countdown-svg" viewBox="0 0 100 100" width="110" height="110">
+            <circle class="countdown-bg" cx="50" cy="50" r="45"></circle>
+            <circle class="countdown-fg" id="countdownRing" cx="50" cy="50" r="45"></circle>
+          </svg>
+          <div class="countdown-text" id="countdownText">{{ test.duration_seconds }}</div>
+        </div>
+        <div style="font-size:.8rem;opacity:.6;">seconds</div>
+        <button class="start-btn mt-3" id="startBtn" onclick="startTest()">
+          <i class="fas fa-play me-2"></i>Start {{ test.exercise|truncatechars:20 }}
+        </button>
+      </div>
+
+      <!-- Score -->
+      <div class="info-card">
+        <div class="text-muted small mb-2 text-uppercase fw-600" style="letter-spacing:1px;font-size:.65rem;">Select your score (1–5)</div>
+        <div class="score-grid">
+          {% for item in scoring_items %}
+          <div class="score-btn" onclick="selectScore({{ item.score }})" id="scoreBtn{{ item.score }}">
+            <div class="score-num">{{ item.score }}</div>
+            <div class="score-desc">{{ item.desc }}</div>
+          </div>
+          {% endfor %}
+        </div>
+        <button class="submit-btn mt-3" id="submitBtn" onclick="submitScore()">
+          <i class="fas fa-check me-2"></i>Confirm Score &amp; Continue
+        </button>
+      </div>
+
+      {% endif %}
+    </div><!-- right-panel -->
+  </div><!-- main-layout -->
+</div><!-- test-container -->
+
+
+<!-- MediaPipe CDN for pose skeleton overlay -->
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
+
+<script>
+
+  const DURATION = {{ test.duration_seconds }};
+  const TEST_INDEX = {{ test_index }};
+  const SIDE = "{{ side }}";
+  const VARIANT = "{{ variant }}";
+  const CIRCUMFERENCE = 283;
+  let selectedScore = null;
+  let timerInterval = null;
+  let timeLeft = DURATION;
+  let stream = null;
+  let testAligned = false;
+
+  const ring = document.getElementById('countdownRing');
+  const countdownText = document.getElementById('countdownText');
+  const startBtn = document.getElementById('startBtn');
+  const submitBtn = document.getElementById('submitBtn');
+  const cameraFeed = document.getElementById('cameraFeed');
+  const videoCanvas = document.getElementById('videoCanvas');
+  const placeholder = document.getElementById('cameraPlaceholder');
+
+  function updateRing(seconds) {
+    const fraction = seconds / DURATION;
+    ring.style.strokeDashoffset = CIRCUMFERENCE * (1 - fraction);
+    countdownText.textContent = seconds;
+    if (seconds <= 5) ring.style.stroke = '#ef4444';
+    else if (seconds <= 10) ring.style.stroke = '#f59e0b';
+    else ring.style.stroke = '#667eea';
+  }
+
+  const TEST_ID = "{{ test.test_id }}";
+
+  // ── Voice Coach ───────────────────────────────────────────────────────────
+  const VoiceCoach = {
+    enabled: true,
+    lastSpoken: '', lastSpokenTime: 0, cooldownMs: 3000,
+    init: function() {
+      if (!('speechSynthesis' in window)) { this.enabled = false; return; }
+      var w = new SpeechSynthesisUtterance(''); w.volume = 0; speechSynthesis.speak(w);
+    },
+    speak: function(text, priority) {
+      if (!this.enabled || !text) return;
+      var now = Date.now();
+      if (text === this.lastSpoken && (now - this.lastSpokenTime) < this.cooldownMs) return;
+      if (speechSynthesis.speaking && !priority) return;
+      if (priority && speechSynthesis.speaking) speechSynthesis.cancel();
+      var utt = new SpeechSynthesisUtterance(text);
+      utt.rate = 1.05; utt.pitch = 1.0; utt.volume = 0.9; utt.lang = 'en-IN';
+      var voices = speechSynthesis.getVoices();
+      var v = voices.find(function(v) { return v.lang === 'en-IN'; })
+           || voices.find(function(v) { return v.lang.startsWith('en'); });
+      if (v) utt.voice = v;
+      speechSynthesis.speak(utt);
+      this.lastSpoken = text; this.lastSpokenTime = now;
+    },
+    toggle: function() {
+      this.enabled = !this.enabled;
+      if (!this.enabled && speechSynthesis.speaking) speechSynthesis.cancel();
+      return this.enabled;
+    }
+  };
+
+  document.addEventListener('DOMContentLoaded', function() {
+    VoiceCoach.init();
+    if (speechSynthesis.onvoiceschanged !== undefined) {
+      speechSynthesis.onvoiceschanged = function() { VoiceCoach.init(); };
+    }
+    setTimeout(function() {
+      VoiceCoach.speak('Test: {{ test.name|escapejs }}. Get into position.', true);
+    }, 600);
+  });
+
+  function toggleVoice() {
+    var on = VoiceCoach.toggle();
+    document.getElementById('testVoiceIcon').className = on ? 'fas fa-volume-up' : 'fas fa-volume-mute';
+  }
+  // ─────────────────────────────────────────────────────────────────────────
+
+  function calculateAngle(a, b, c) {
+    const radians = Math.atan2(c.y - b.y, c.x - b.x) - Math.atan2(a.y - b.y, a.x - b.x);
+    let angle = Math.abs(radians * 180 / Math.PI);
+    if (angle > 180) angle = 360 - angle;
+    return angle;
+  }
+
+  function computeTestFeedback(lm) {
+    const L = { lSh:11, rSh:12, lHip:23, rHip:24, lKnee:25, rKnee:26, lAnk:27, rAnk:28 };
+    switch(TEST_ID) {
+      case 'squat_test': {
+        const knee = calculateAngle(lm[L.lHip], lm[L.lKnee], lm[L.lAnk]);
+        if (knee < 120) return { color: '#22c55e', text: 'Good depth — hold it' };
+        if (knee < 150) return { color: '#f59e0b', text: 'Squat a little deeper' };
+        return { color: 'rgba(102,126,234,.8)', text: 'Start squatting down' };
+      }
+      case 'core_test': {
+        const line = calculateAngle(lm[L.lSh], lm[L.lHip], lm[L.lAnk]);
+        if (line > 165) return { color: '#22c55e', text: 'Perfect plank — hold it' };
+        if (line > 150) return { color: '#f59e0b', text: 'Adjust your hips' };
+        return { color: '#ef4444', text: 'Straighten your body line' };
+      }
+      case 'rotate_test': {
+        const line = calculateAngle(lm[L.lSh], lm[L.lHip], lm[L.lAnk]);
+        if (line > 160) return { color: '#22c55e', text: 'Good side plank — hold' };
+        return { color: '#f59e0b', text: 'Lift your hip higher' };
+      }
+      case 'hinge_test': {
+        const hip = calculateAngle(lm[L.lSh], lm[L.lHip], lm[L.lKnee]);
+        if (hip < 100) return { color: '#22c55e', text: 'Good hinge — hold it' };
+        if (hip < 130) return { color: '#f59e0b', text: 'Hinge forward more' };
+        return { color: 'rgba(102,126,234,.8)', text: 'Bend forward from your hips' };
+      }
+      case 'push_test': {
+        const bodyLine = calculateAngle(lm[L.lSh], lm[L.lHip], lm[L.lAnk]);
+        const elbow = calculateAngle(lm[L.lSh], lm[13] || lm[L.lSh], lm[15] || lm[L.lSh]);
+        if (bodyLine > 165 && elbow < 120) return { color: '#22c55e', text: 'Good push-up — keep going' };
+        if (bodyLine > 155) return { color: '#f59e0b', text: 'Lower your chest more' };
+        return { color: 'rgba(102,126,234,.8)', text: 'Get into push-up position' };
+      }
+      case 'pull_test': {
+        const armHeight = (lm[15] ? lm[15].y : 1) + (lm[16] ? lm[16].y : 1);
+        const shoulderHeight = lm[L.lSh].y + lm[L.rSh].y;
+        if (armHeight < shoulderHeight) return { color: '#22c55e', text: 'Good hang — hold it' };
+        const bodyLine = calculateAngle(lm[L.lSh], lm[L.lHip], lm[L.lAnk]);
+        if (bodyLine > 160) return { color: '#22c55e', text: 'Good position — hold it' };
+        return { color: 'rgba(102,126,234,.8)', text: 'Get into test position' };
+      }
+      case 'lunge_test': {
+        const knee = calculateAngle(lm[L.lHip], lm[L.lKnee], lm[L.lAnk]);
+        const trunk = calculateAngle(lm[L.lSh], lm[L.lHip], lm[L.lKnee]);
+        if (knee < 110 && trunk > 155) return { color: '#22c55e', text: 'Good split squat — hold it' };
+        if (knee < 130) return { color: '#f59e0b', text: 'Go a little deeper' };
+        return { color: 'rgba(102,126,234,.8)', text: 'Lower into split squat position' };
+      }
+      default:
+        return { color: 'rgba(102,126,234,.8)', text: 'Position detected — begin test' };
+    }
+  }
+
+  function initPoseOverlay() {
+    const ctx = videoCanvas.getContext('2d');
+    const pose = new Pose({ locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${f}` });
+    pose.setOptions({ modelComplexity: 1, smoothLandmarks: true, minDetectionConfidence: 0.6, minTrackingConfidence: 0.6 });
+    pose.onResults(results => {
+      const W = cameraFeed.videoWidth  || 640;
+      const H = cameraFeed.videoHeight || 480;
+      videoCanvas.width = W; videoCanvas.height = H;
+      ctx.save();
+      ctx.scale(-1, 1);
+      ctx.drawImage(results.image, -W, 0, W, H);
+      ctx.restore();
+      if (results.poseLandmarks) {
+        const fb = computeTestFeedback(results.poseLandmarks);
+        // Voice feedback on color change
+        if (fb.color !== window._lastFbColor) {
+          VoiceCoach.speak(fb.text, false);
+          window._lastFbColor = fb.color;
+        }
+        drawConnectors(ctx, results.poseLandmarks, POSE_CONNECTIONS, { color: fb.color, lineWidth: 3 });
+        drawLandmarks(ctx, results.poseLandmarks, { color: fb.color, fillColor: fb.color + '66', lineWidth: 1, radius: 5 });
+
+        // Ghost glow overlay
+        testAligned = (fb.color === '#22c55e');
+        const lm = results.poseLandmarks;
+        let gr, gg, gb;
+        if (fb.color === '#22c55e') { gr=34; gg=197; gb=94; }
+        else if (fb.color === '#f59e0b') { gr=245; gg=158; gb=11; }
+        else if (fb.color === '#ef4444') { gr=239; gg=68; gb=68; }
+        else { gr=102; gg=126; gb=234; }
+        const conns = [[11,12],[11,23],[12,24],[23,24],[11,13],[13,15],[12,14],[14,16],[23,25],[25,27],[24,26],[26,28]];
+        [{ blur:18, lw:14, a:0.15 }, { blur:8, lw:6, a:0.4 }, { blur:3, lw:3, a:0.85 }].forEach(function(pass) {
+          ctx.save();
+          ctx.shadowBlur = pass.blur;
+          ctx.shadowColor = 'rgba('+gr+','+gg+','+gb+',0.8)';
+          ctx.strokeStyle = 'rgba('+gr+','+gg+','+gb+','+pass.a+')';
+          ctx.lineWidth = pass.lw;
+          ctx.lineCap = 'round';
+          conns.forEach(function(c) {
+            var a = lm[c[0]], b = lm[c[1]];
+            if (!a || !b) return;
+            ctx.beginPath();
+            ctx.moveTo(W - a.x*W, a.y*H);
+            ctx.lineTo(W - b.x*W, b.y*H);
+            ctx.stroke();
+          });
+          ctx.restore();
+        });
+
+        ctx.save();
+        ctx.fillStyle = 'rgba(0,0,0,0.55)';
+        ctx.fillRect(0, 0, 320, 44);
+        ctx.fillStyle = fb.color;
+        ctx.font = 'bold 16px Inter, sans-serif';
+        ctx.fillText(fb.text, 12, 28);
+        ctx.restore();
+
+      }
+    });
+    const camera = new Camera(cameraFeed, {
+      onFrame: async () => { await pose.send({ image: cameraFeed }); },
+      width: 640, height: 480
+    });
+    camera.start();
+  }
+
+  async function startTest() {
+    startBtn.disabled = true;
+    startBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Starting...';
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: 640, height: 480 } });
+      cameraFeed.srcObject = stream;
+      placeholder.style.display = 'none';
+      videoCanvas.style.display = 'block';
+      document.getElementById('testVoiceToggle').style.display = 'block';
+      // Try to init MediaPipe pose skeleton; fall back to plain mirrored feed
+      try {
+        initPoseOverlay();
+      } catch(poseErr) {
+        const ctx = videoCanvas.getContext('2d');
+        function drawFrame() {
+          if (cameraFeed.readyState >= 2) {
+            videoCanvas.width = cameraFeed.videoWidth || 640;
+            videoCanvas.height = cameraFeed.videoHeight || 480;
+            ctx.save(); ctx.scale(-1,1);
+            ctx.drawImage(cameraFeed, -videoCanvas.width, 0, videoCanvas.width, videoCanvas.height);
+            ctx.restore();
+          }
+          requestAnimationFrame(drawFrame);
+        }
+        drawFrame();
+      }
+    } catch(e) {
+      placeholder.innerHTML = `
+        <i class="fas fa-video-slash fa-2x" style="color:#f59e0b"></i>
+        <p style="opacity:.7">Camera unavailable — select your score manually below.</p>
+        <div style="margin-top:12px;font-size:.85rem;opacity:.8;">
+          <p>Score guide: 1=Cannot do &nbsp;|&nbsp; 2=Partial &nbsp;|&nbsp; 3=Full form &nbsp;|&nbsp; 4=Easy &nbsp;|&nbsp; 5=Very easy</p>
+        </div>`;
+    }
+
+    startBtn.style.display = 'none';
+    timeLeft = DURATION;
+    updateRing(timeLeft);
+    const HOLD_TESTS = ['squat_test', 'core_test', 'rotate_test', 'hinge_test', 'pull_test', 'lunge_test'];
+    let testSeconds = 0;
+    timerInterval = setInterval(() => {
+      if (HOLD_TESTS.includes(TEST_ID) && !testAligned) return;
+      timeLeft--;
+      testSeconds++;
+      updateRing(timeLeft);
+      // Voice hold milestones
+      if (testSeconds === 5)  VoiceCoach.speak('Five seconds', false);
+      else if (testSeconds === 10) VoiceCoach.speak('Ten seconds. Keep going.', false);
+      else if (testSeconds === 20) VoiceCoach.speak('Twenty seconds.', false);
+      else if (testSeconds === 30) VoiceCoach.speak('Thirty. Hold strong.', false);
+      if (timeLeft <= 0) {
+        clearInterval(timerInterval);
+        countdownText.textContent = '✓';
+        ring.style.stroke = '#38ef7d';
+        VoiceCoach.speak('Time is up. Score yourself.', true);
+        revealScoring();
+      }
+    }, 1000);
+  }
+
+  function revealScoring() {
+    document.querySelector('.score-grid').scrollIntoView({ behavior: 'smooth' });
+    document.querySelectorAll('.score-btn').forEach(b => b.style.opacity = '1');
+  }
+
+  function selectScore(score) {
+    selectedScore = score;
+    document.querySelectorAll('.score-btn').forEach(b => b.classList.remove('selected'));
+    document.getElementById('scoreBtn' + score).classList.add('selected');
+    submitBtn.style.display = 'block';
+  }
+
+  function submitScore() {
+    if (!selectedScore) { alert('Please select a score 1–5 first.'); return; }
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Saving...';
+
+    // Stop camera
+    if (stream) stream.getTracks().forEach(t => t.stop());
+
+    fetch('{% url "onboarding_save_test_result" %}', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrf() },
+      body: JSON.stringify({ test_index: TEST_INDEX, score: selectedScore, side: SIDE, variant: VARIANT })
+    })
+    .then(r => r.json())
+    .then(data => { window.location.href = data.next_url; })
+    .catch(() => { window.location.href = '{% url "onboarding_asymmetry" %}'; });
+
+  }
+
+  function getCsrf() {
+    const cookies = document.cookie.split(';');
+    for (const c of cookies) {
+      const [k, v] = c.trim().split('=');
+      if (k === 'csrftoken') return v;
+    }
+    return '';
+  }
+</script>
+{% endblock %}

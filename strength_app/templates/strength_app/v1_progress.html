@@ -1,0 +1,237 @@
+{% extends 'strength_app/base.html' %}
+{% block title %}Progress — VYAYAM{% endblock %}
+
+{% block extra_css %}
+<style>
+  body { background: #0a0e27; color: #fff; }
+  .pg-wrap { max-width: 900px; margin: 0 auto; padding: 24px 16px; }
+  .top-bar { background: #1a1f3a; border-radius: 14px; padding: 16px 20px;
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 24px; flex-wrap: wrap; gap: 10px; }
+  .section-title { font-size: .7rem; font-weight: 800; text-transform: uppercase;
+    letter-spacing: 1.5px; opacity: .5; margin: 24px 0 12px; }
+  .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+  @media(max-width:640px){ .stat-grid { grid-template-columns: repeat(2, 1fr); } }
+  .stat-box { background: #1a1f3a; border-radius: 14px; padding: 18px; text-align: center; }
+  .stat-box .val { font-size: 2rem; font-weight: 800; color: #667eea; }
+  .stat-box .lbl { font-size: .75rem; opacity: .6; margin-top: 4px; }
+  .chart-card { background: #1a1f3a; border-radius: 16px; padding: 20px; margin-bottom: 16px; }
+  .chart-card h6 { font-size: .8rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 1px; opacity: .6; margin-bottom: 16px; }
+  .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media(max-width:700px){ .charts-grid { grid-template-columns: 1fr; } }
+  /* Adherence ring */
+  .adherence-wrap { display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 8px; padding: 12px; }
+  .ring-svg { transform: rotate(-90deg); }
+  .ring-bg { fill: none; stroke: rgba(255,255,255,.08); stroke-width: 10; }
+  .ring-fg { fill: none; stroke: #667eea; stroke-width: 10; stroke-linecap: round;
+    stroke-dasharray: 283; transition: stroke-dashoffset 1s ease; }
+  .ring-text { font-size: 1.4rem; font-weight: 800; fill: #fff; text-anchor: middle; dominant-baseline: central; }
+  .ring-label { font-size: .65rem; fill: rgba(255,255,255,.5); text-anchor: middle; }
+  /* Milestones */
+  .milestone-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+  .milestone-card { background: #1a1f3a; border-radius: 14px; padding: 16px;
+    border: 2px solid transparent; transition: all .3s; }
+  .milestone-card.achieved { border-color: rgba(102,126,234,.4); background: rgba(102,126,234,.08); }
+  .milestone-card.locked { opacity: .45; }
+  .milestone-icon { font-size: 2rem; display: block; margin-bottom: 8px; }
+  .milestone-name { font-size: .85rem; font-weight: 700; margin-bottom: 4px; }
+  .milestone-status { font-size: .75rem; opacity: .6; }
+  /* Animation */
+  @keyframes popIn { from { transform: scale(.7); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .animate-pop { animation: popIn .4s ease; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="pg-wrap">
+
+  <div class="top-bar">
+    <div>
+      <div style="font-size:1.1rem;font-weight:800;"><i class="fas fa-chart-line me-2" style="color:#667eea;"></i>Progress</div>
+      <div style="font-size:.8rem;opacity:.6;">{{ patient.name }}</div>
+    </div>
+    <a href="{% url 'v1_dashboard' %}" style="font-size:.82rem;color:#667eea;text-decoration:none;">
+      ← Dashboard
+    </a>
+  </div>
+
+  <!-- Stats row -->
+  <div class="stat-grid">
+    <div class="stat-box">
+      <div class="val">{{ total_sessions }}</div>
+      <div class="lbl">Total Sessions</div>
+    </div>
+    <div class="stat-box">
+      <div class="val">🔥 {{ streak_weeks }}w</div>
+      <div class="lbl">Current Streak</div>
+    </div>
+    <div class="stat-box">
+      <div class="val">{{ sessions_this_month }}</div>
+      <div class="lbl">Sessions This Month</div>
+    </div>
+    <div class="stat-box">
+      <div class="val">{{ adherence_percent }}%</div>
+      <div class="lbl">Adherence</div>
+    </div>
+  </div>
+
+  <!-- Charts -->
+  <div class="charts-grid">
+
+    <!-- Radar chart -->
+    <div class="chart-card">
+      <h6>Strength Areas</h6>
+      {% if has_comparison %}
+      <div style="font-size:.75rem;opacity:.6;margin-bottom:10px;">
+        <span style="color:#667eea;">■</span> Current &nbsp;
+        <span style="color:rgba(102,126,234,.35);">■</span> First assessment (dashed)
+      </div>
+      {% endif %}
+      <div style="position:relative;max-height:280px;">
+        <canvas id="radarChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Adherence ring -->
+    <div class="chart-card" style="display:flex;align-items:center;justify-content:center;flex-direction:column;">
+      <h6>This Month's Adherence</h6>
+      <div class="adherence-wrap">
+        <svg width="140" height="140" viewBox="0 0 100 100">
+          <circle class="ring-bg" cx="50" cy="50" r="45"></circle>
+          <circle class="ring-fg" id="adherenceRing" cx="50" cy="50" r="45"
+            style="stroke-dashoffset:{{ adherence_ring_offset|default:283 }};"></circle>
+        </svg>
+        <div style="position:relative;margin-top:-85px;text-align:center;pointer-events:none;">
+          <div style="font-size:2rem;font-weight:800;">{{ adherence_percent }}%</div>
+          <div style="font-size:.7rem;opacity:.5;">adherence</div>
+        </div>
+        <div style="margin-top:64px;font-size:.8rem;opacity:.65;text-align:center;">
+          {{ sessions_this_month }} of {{ patient.sessions_per_week|default:3 }} sessions/week prescribed
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Pattern trend lines -->
+  {% if profiles|length > 1 %}
+  <div class="chart-card">
+    <h6>Pattern Capability Over Time</h6>
+    <div style="max-height:260px;">
+      <canvas id="trendChart"></canvas>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Milestones -->
+  <div class="section-title">Milestones</div>
+  <div class="milestone-grid">
+    {% for m in milestones %}
+    <div class="milestone-card {% if m.achieved %}achieved animate-pop{% else %}locked{% endif %}">
+      <span class="milestone-icon">{{ m.icon }}</span>
+      <div class="milestone-name">{{ m.name }}</div>
+      <div class="milestone-status">
+        {% if m.achieved %}✓ Achieved{% else %}Not yet{% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+const RADAR_LABELS  = {{ radar_labels_json }};
+const RADAR_CURRENT = {{ radar_current_json }};
+const RADAR_FIRST   = {{ radar_first_json }};
+const HAS_COMPARISON = {{ has_comparison|yesno:"true,false" }};
+
+// Set adherence ring offset
+const adherencePct = {{ adherence_percent }};
+const circumference = 283;
+document.getElementById('adherenceRing').style.strokeDashoffset =
+  circumference * (1 - adherencePct / 100);
+
+// Radar chart
+const radarCtx = document.getElementById('radarChart').getContext('2d');
+const radarDatasets = [{
+  label: 'Current',
+  data: RADAR_CURRENT,
+  backgroundColor: 'rgba(102,126,234,.15)',
+  borderColor: '#667eea',
+  borderWidth: 2,
+  pointBackgroundColor: '#667eea',
+  pointRadius: 4,
+}];
+if (HAS_COMPARISON) {
+  radarDatasets.push({
+    label: 'First Assessment',
+    data: RADAR_FIRST,
+    backgroundColor: 'rgba(102,126,234,.04)',
+    borderColor: 'rgba(102,126,234,.35)',
+    borderWidth: 2,
+    borderDash: [6,4],
+    pointBackgroundColor: 'rgba(102,126,234,.35)',
+    pointRadius: 3,
+  });
+}
+new Chart(radarCtx, {
+  type: 'radar',
+  data: { labels: RADAR_LABELS, datasets: radarDatasets },
+  options: {
+    responsive: true,
+    maintainAspectRatio: true,
+    scales: {
+      r: {
+        min: 0, max: 5,
+        ticks: { stepSize: 1, color: 'rgba(255,255,255,.4)', font: { size: 10 } },
+        grid: { color: 'rgba(255,255,255,.08)' },
+        pointLabels: { color: '#a5b4fc', font: { size: 11, weight: '700' } },
+        angleLines: { color: 'rgba(255,255,255,.08)' },
+      }
+    },
+    plugins: { legend: { display: HAS_COMPARISON, labels: { color: 'rgba(255,255,255,.6)', boxWidth: 14, font: { size: 11 } } } }
+  }
+});
+
+// Trend chart (only if we have history data)
+{% if profiles|length > 1 %}
+fetch('{% url "v1_progress_api" %}')
+  .then(r => r.json())
+  .then(data => {
+    if (!data.history || data.history.length < 2) return;
+    const labels = data.history.map(h => h.date.slice(0,10));
+    const patterns = ['squat','hinge','push','pull','core','rotate','lunge'];
+    const colors = ['#667eea','#38ef7d','#f093fb','#54a0ff','#f59e0b','#ff6b6b','#a8edea'];
+    const datasets = patterns.map((p, i) => ({
+      label: p.charAt(0).toUpperCase() + p.slice(1),
+      data: data.history.map(h => h[p]),
+      borderColor: colors[i],
+      backgroundColor: 'transparent',
+      borderWidth: 2,
+      pointRadius: 4,
+      tension: 0.3,
+    }));
+    const trendCtx = document.getElementById('trendChart').getContext('2d');
+    new Chart(trendCtx, {
+      type: 'line',
+      data: { labels, datasets },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        scales: {
+          y: { min: 0, max: 5, ticks: { stepSize: 1, color: 'rgba(255,255,255,.4)' },
+               grid: { color: 'rgba(255,255,255,.06)' } },
+          x: { ticks: { color: 'rgba(255,255,255,.4)', font: { size: 10 } },
+               grid: { color: 'rgba(255,255,255,.04)' } }
+        },
+        plugins: {
+          legend: { labels: { color: 'rgba(255,255,255,.6)', boxWidth: 12, font: { size: 10 } } }
+        }
+      }
+    });
+  });
+{% endif %}
+</script>
+{% endblock %}

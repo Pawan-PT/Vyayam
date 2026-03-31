@@ -1,0 +1,155 @@
+{% extends 'strength_app/base.html' %}
+{% block title %}Goals — VYAYAM Assessment{% endblock %}
+
+{% block extra_css %}
+<style>
+  .goal-card { cursor: pointer; border: 2px solid transparent; border-radius: 14px; transition: all .2s; padding: 16px; position: relative; }
+  .goal-card:hover { border-color: #667eea; background: rgba(102,126,234,.04); }
+  .goal-card.selected { border-color: #667eea; background: rgba(102,126,234,.1); }
+  .goal-badge {
+    display: none; position: absolute; top: -8px; right: -8px;
+    width: 24px; height: 24px; border-radius: 50%;
+    background: var(--primary-gradient); color: white;
+    font-size: .72rem; font-weight: 700;
+    align-items: center; justify-content: center;
+  }
+  .goal-card.selected .goal-badge { display: flex; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+
+      <div class="mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <span class="text-muted small fw-600">Step {{ step }} of {{ total }}</span>
+          <span class="text-muted small">Goals</span>
+        </div>
+        <div class="progress" style="height:6px;border-radius:6px;">
+          <div class="progress-bar" style="width:{% widthratio step total 100 %}%;background:var(--primary-gradient);"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-body p-4">
+          <h4 class="fw-700 mb-1">What Are Your Goals?</h4>
+          <p class="text-muted mb-1">Select up to 3 goals in order of priority. Your first pick is the primary focus.</p>
+          <p id="hintText" class="small mb-4" style="color:#667eea;font-weight:600;">Tap to select — order matters</p>
+
+          <form method="post" id="goalsForm">
+            {% csrf_token %}
+            <input type="hidden" name="goal_type"      id="goalPrimary"   value="{{ initial_goal_type }}">
+            <input type="hidden" name="goal_secondary" id="goalSecondary" value="{{ initial_goal_secondary }}">
+            <input type="hidden" name="goal_tertiary"  id="goalTertiary"  value="">
+
+            <div class="row g-2 mb-4">
+              {% for goal in goals %}
+              <div class="col-md-4 col-6">
+                <div class="goal-card" data-key="{{ goal.key }}" onclick="toggleGoal('{{ goal.key }}', this)">
+                  <span class="goal-badge" id="badge-{{ goal.key }}"></span>
+                  <div class="fw-700 mb-1">{{ goal.label }}</div>
+                  {% if goal.notes %}
+                  <div class="text-muted" style="font-size:.75rem;">{{ goal.notes|truncatechars:60 }}</div>
+                  {% endif %}
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+
+            <div id="athleticExtra" class="mb-3" style="display:none;">
+              <label class="form-label fw-600">Sport / Activity</label>
+              <input type="text" name="sport_type" class="form-control" placeholder="e.g. Football, Cycling, Tennis"
+                     value="{{ patient.sport_type }}">
+            </div>
+
+            <div id="athleticDate" class="mb-3" style="display:none;">
+              <label class="form-label fw-600">Next competition / event date <span class="text-muted">(optional)</span></label>
+              <input type="date" name="competition_date" class="form-control"
+                     value="{{ patient.competition_date|date:'Y-m-d' }}">
+            </div>
+
+            <button type="submit" id="submitBtn" class="btn w-100 py-3 fw-700" disabled
+                    style="background:var(--primary-gradient);color:white;border:none;border-radius:10px;opacity:.5;">
+              Save &amp; Continue <i class="fas fa-arrow-right ms-2"></i>
+            </button>
+          </form>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+<script>
+  const MAX_GOALS = 3;
+  let selectedGoals = [];
+
+  const HINTS = [
+    'Tap to select — order matters',
+    '✓ Primary goal set — tap more to add secondary goals',
+    '✓ 2 goals selected',
+    '✓ 3 goals selected — tap any to change',
+  ];
+
+  function toggleGoal(key, el) {
+    const idx = selectedGoals.indexOf(key);
+    if (idx !== -1) {
+      // deselect
+      selectedGoals.splice(idx, 1);
+    } else {
+      if (selectedGoals.length >= MAX_GOALS) {
+        // drop the last selected
+        const dropped = selectedGoals.pop();
+        document.querySelector('[data-key="' + dropped + '"]').classList.remove('selected');
+      }
+      selectedGoals.push(key);
+    }
+    refreshUI();
+  }
+
+  function refreshUI() {
+    // Update card states and badges
+    document.querySelectorAll('.goal-card').forEach(card => {
+      const key = card.dataset.key;
+      const pos = selectedGoals.indexOf(key);
+      if (pos !== -1) {
+        card.classList.add('selected');
+        document.getElementById('badge-' + key).textContent = pos + 1;
+      } else {
+        card.classList.remove('selected');
+        document.getElementById('badge-' + key).textContent = '';
+      }
+    });
+
+    // Update hidden inputs
+    document.getElementById('goalPrimary').value   = selectedGoals[0] || '';
+    document.getElementById('goalSecondary').value = selectedGoals[1] || '';
+    document.getElementById('goalTertiary').value  = selectedGoals[2] || '';
+
+    // Hint text
+    document.getElementById('hintText').textContent = HINTS[selectedGoals.length] || HINTS[3];
+
+    // Submit button
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = selectedGoals.length === 0;
+    btn.style.opacity = selectedGoals.length === 0 ? '.5' : '1';
+
+    // Athletic/calisthenics extra fields
+    const hasAthletic = selectedGoals.some(k => k === 'athletic' || k === 'calisthenics');
+    const hasPureAthletic = selectedGoals.includes('athletic');
+    document.getElementById('athleticExtra').style.display = hasAthletic ? 'block' : 'none';
+    document.getElementById('athleticDate').style.display  = hasPureAthletic ? 'block' : 'none';
+  }
+
+  // Init: restore previously saved goals (empty on first visit)
+  document.addEventListener('DOMContentLoaded', function() {
+    var existing = ['{{ initial_goal_type }}', '{{ initial_goal_secondary }}'].filter(function(g) { return g; });
+    existing.forEach(function(key) {
+      var card = document.querySelector('.goal-card[data-key="' + key + '"]');
+      if (card && !selectedGoals.includes(key)) selectedGoals.push(key);
+    });
+    refreshUI();
+  });
+</script>
+{% endblock %}

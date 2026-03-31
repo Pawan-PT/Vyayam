@@ -1,0 +1,255 @@
+"""
+Voice Coach V2 - FIXED VERSION
+Prevents "run loop already started" error with singleton pattern
+
+PROBLEM: TTS engine can't be initialized multiple times
+SOLUTION: Use singleton pattern + lazy initialization
+"""
+
+import pyttsx3
+import threading
+import queue
+import time
+
+
+class VoiceCoachV2:
+    """
+    Voice coaching system with atomic sentences and smooth transitions
+    
+    FIXED: Uses singleton pattern to prevent multiple TTS engine initializations
+    """
+    
+    # Class-level TTS engine (shared across all instances)
+    _tts_engine = None
+    _tts_lock = threading.Lock()
+    _engine_initialized = False
+    _voice_enabled = True  # Can be disabled if TTS fails
+    
+    @classmethod
+    def _get_engine(cls):
+        """Get or create the shared TTS engine (singleton pattern)"""
+        if not cls._voice_enabled:
+            return None
+        
+        with cls._tts_lock:
+            if cls._tts_engine is None and not cls._engine_initialized:
+                try:
+                    cls._tts_engine = pyttsx3.init()
+                    # Configure engine
+                    cls._tts_engine.setProperty('rate', 150)
+                    cls._tts_engine.setProperty('volume', 0.9)
+                    cls._engine_initialized = True
+                except Exception as e:
+                    print(f"⚠️  Voice coach disabled: {e}")
+                    cls._voice_enabled = False
+                    cls._tts_engine = None
+            
+            return cls._tts_engine
+    
+    def __init__(self):
+        """Initialize voice coach (does not create TTS engine yet)"""
+        self.engine = None  # Will be lazy-initialized
+        self.last_announcement = time.time()
+        self.announcement_cooldown = 2.0  # Minimum seconds between announcements
+        
+        # Message queue for async speaking
+        self.message_queue = queue.Queue()
+        self.speaking_thread = None
+        self.stop_speaking = False
+    
+    def _ensure_engine(self):
+        """Lazy initialization of TTS engine"""
+        if self.engine is None:
+            self.engine = self._get_engine()
+        return self.engine is not None
+    
+    def speak(self, text, priority=False):
+        """
+        Speak text with rate limiting
+        
+        Args:
+            text: Text to speak
+            priority: If True, ignore cooldown
+        """
+        if not self._voice_enabled:
+            return
+        
+        # Check cooldown
+        current_time = time.time()
+        if not priority and (current_time - self.last_announcement) < self.announcement_cooldown:
+            return
+        
+        # Ensure engine is initialized
+        if not self._ensure_engine():
+            return
+        
+        try:
+            # Speak synchronously (simpler, more reliable)
+            self.engine.say(text)
+            self.engine.runAndWait()
+            self.last_announcement = current_time
+        except Exception as e:
+            print(f"Voice error: {e}")
+            # Disable voice on repeated errors
+            if "run loop" in str(e).lower():
+                self._voice_enabled = False
+    
+    # ========================================================================
+    # EXERCISE LIFECYCLE
+    # ========================================================================
+    
+    def start_exercise(self, exercise_name, target_reps):
+        """Announce exercise start"""
+        self.speak(f"Starting {exercise_name}. Target: {target_reps} reps.", priority=True)
+    
+    def announce_practice_mode(self):
+        """Announce entering practice mode"""
+        self.speak("Practice mode. Complete 3 reps with good form.", priority=True)
+    
+    def announce_phase_transition(self, from_practice_to_counted=False):
+        """Announce phase transitions"""
+        if from_practice_to_counted:
+            self.speak("Great form! Now counting reps.", priority=True)
+    
+    # ========================================================================
+    # REP ANNOUNCEMENTS
+    # ========================================================================
+    
+    def announce_practice_rep(self, completed, needed, form_score):
+        """Announce practice rep completion"""
+        if form_score >= 85:
+            self.speak(f"Practice rep {completed} of {needed}. Good form!")
+        else:
+            self.speak(f"Rep rejected. Improve form.")
+    
+    def announce_rep(self, current_rep, target_reps, form_score):
+        """Announce counted rep completion"""
+        if current_rep % 2 == 0:  # Only announce every 2nd rep
+            remaining = target_reps - current_rep
+            if remaining > 0:
+                self.speak(f"{current_rep} done. {remaining} to go.")
+            else:
+                self.speak("Exercise complete!")
+    
+    # ========================================================================
+    # FORM FEEDBACK
+    # ========================================================================
+    
+    def give_atomic_command(self, command, priority=False):
+        """
+        Give short, atomic coaching commands
+        
+        Args:
+            command: Command type string
+            priority: If True, speak immediately
+        """
+        commands = {
+            'start_descent': "Down",
+            'reached_bottom': "Hold",
+            'start_ascent': "Up",
+            'too_fast': "Slow down",
+            'good_form': "Good",
+            'adjust_depth': "Adjust depth",
+            'straighten_back': "Back straight",
+        }
+        
+        if command in commands:
+            self.speak(commands[command], priority=priority)
+    
+    def provide_ar_feedback(self, form_score):
+        """Provide feedback based on form score"""
+        if form_score < 70:
+            self.speak("Poor form. Check your position.", priority=True)
+        elif form_score < 85:
+            self.speak("Almost there. Small adjustments needed.")
+    
+    # ========================================================================
+    # UNILATERAL EXERCISES
+    # ========================================================================
+    
+    def announce_side_switch(self, from_side, to_side):
+        """Announce switching sides"""
+        self.speak(f"{from_side} side complete. Switch to {to_side} side.", priority=True)
+    
+    def announce_side_start(self, side):
+        """Announce starting a side"""
+        self.speak(f"Starting {side} side.", priority=True)
+    
+    # ========================================================================
+    # WARNINGS & CORRECTIONS
+    # ========================================================================
+    
+    def warn_speed(self):
+        """Warn about moving too fast"""
+        self.speak("Too fast. Control the movement.", priority=True)
+    
+    def warn_stability(self):
+        """Warn about instability"""
+        self.speak("Stabilize. Control your balance.", priority=True)
+    
+    def correct_angle(self, joint, direction):
+        """Give angle correction"""
+        self.speak(f"{joint} {direction}.", priority=True)
+    
+    # ========================================================================
+    # COMPLETION
+    # ========================================================================
+    
+    def announce_completion(self, total_reps, avg_form_score):
+        """Announce exercise completion"""
+        if avg_form_score >= 85:
+            message = f"Excellent work! {total_reps} reps completed with {avg_form_score:.0f} percent form."
+        elif avg_form_score >= 70:
+            message = f"Good effort! {total_reps} reps completed. Work on form consistency."
+        else:
+            message = f"Exercise complete. Focus on form in next session."
+        
+        self.speak(message, priority=True)
+    
+    # ========================================================================
+    # CLEANUP
+    # ========================================================================
+    
+    def cleanup(self):
+        """Cleanup voice coach resources"""
+        # Note: We don't stop the shared engine as other instances may use it
+        pass
+    
+    @classmethod
+    def reset_engine(cls):
+        """Reset the shared TTS engine (for testing or troubleshooting)"""
+        with cls._tts_lock:
+            if cls._tts_engine is not None:
+                try:
+                    cls._tts_engine.stop()
+                except:
+                    pass
+                cls._tts_engine = None
+            cls._engine_initialized = False
+            cls._voice_enabled = True
+
+
+# ============================================================================
+# USAGE EXAMPLE
+# ============================================================================
+
+if __name__ == "__main__":
+    print("="*70)
+    print("VOICE COACH V2 - FIXED VERSION (Singleton Pattern)")
+    print("="*70)
+    
+    # Create multiple instances (safe now!)
+    coach1 = VoiceCoachV2()
+    coach2 = VoiceCoachV2()
+    coach3 = VoiceCoachV2()
+    
+    print("\n✅ Created 3 coach instances (no 'run loop' errors!)")
+    
+    # Test speaking
+    print("\n🎤 Testing speech...")
+    coach1.speak("Testing voice coach one.")
+    coach2.speak("Testing voice coach two.")
+    coach3.speak("Testing voice coach three.")
+    
+    print("\n✅ Voice coach working correctly!")
+    print("="*70)

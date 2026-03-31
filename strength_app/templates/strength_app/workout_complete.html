@@ -1,0 +1,130 @@
+{% extends 'strength_app/base.html' %}
+
+{% block title %}Workout Complete - VYAYAM{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+    <div class="row mb-5">
+        <div class="col-12 text-center">
+            <div class="mb-4" style="font-size: 5rem;">
+                <i class="fas fa-trophy text-warning"></i>
+            </div>
+            <h1 class="display-4 gradient-text mb-3">Workout Complete!</h1>
+            <p class="lead text-muted">Excellent work! Here's your session summary</p>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <!-- Session Summary Card -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0 text-white">
+                        <i class="fas fa-chart-pie me-2"></i>Session Summary
+                    </h5>
+                </div>
+                <div class="card-body p-5">
+                    <div class="row g-4 text-center">
+                        <div class="col-md-3">
+                            <div class="p-4 rounded" style="background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);">
+                                <i class="fas fa-clock fa-2x text-primary mb-3"></i>
+                                <h3 class="mb-1">{{ session.total_duration_minutes }}</h3>
+                                <p class="text-muted mb-0">Minutes</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="p-4 rounded" style="background: linear-gradient(135deg, rgba(17, 153, 142, 0.1) 0%, rgba(56, 239, 125, 0.1) 100%);">
+                                <i class="fas fa-list-check fa-2x text-success mb-3"></i>
+                                <h3 class="mb-1">{{ session.total_exercises_completed }}</h3>
+                                <p class="text-muted mb-0">Exercises</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="p-4 rounded" style="background: linear-gradient(135deg, rgba(17, 153, 142, 0.1) 0%, rgba(56, 239, 125, 0.1) 100%);">
+                                <i class="fas fa-check-circle fa-2x text-success mb-3"></i>
+                                <h3 class="mb-1 text-success">{{ session.total_green_reps_all }}</h3>
+                                <p class="text-muted mb-0">Green Reps</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="p-4 rounded" style="background: linear-gradient(135deg, rgba(240, 147, 251, 0.1) 0%, rgba(245, 87, 108, 0.1) 100%);">
+                                <i class="fas fa-star fa-2x text-warning mb-3"></i>
+                                <h3 class="mb-1">{{ session.overall_session_form_score|floatformat:1 }}%</h3>
+                                <p class="text-muted mb-0">Form Score</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Feedback Card -->
+            <div class="card mb-4" style="border-left: 4px solid #11998e;">
+                <div class="card-body">
+                    <h6 class="mb-3">
+                        <i class="fas fa-comment-dots me-2"></i>Your Feedback
+                    </h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p class="mb-2">
+                                <strong>Comfort Level:</strong>
+                                {% if session.patient_comfortable %}
+                                    <span class="badge bg-success ms-2">
+                                        <i class="fas fa-smile me-1"></i>Comfortable
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-warning ms-2">
+                                        <i class="fas fa-meh me-1"></i>Some Discomfort
+                                    </span>
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <p class="mb-2">
+                                <strong>Difficulty Rating:</strong>
+                                <span class="badge bg-primary ms-2">{{ session.difficulty_rating }}/5</span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Achievements -->
+            <div class="card mb-4" style="background: var(--primary-gradient); color: white;">
+                <div class="card-body p-4">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h5 class="mb-2">
+                                <i class="fas fa-fire me-2"></i>Keep the Momentum Going!
+                            </h5>
+                            <p class="mb-0 opacity-75">
+                                Every session gets you closer to your fitness goals. Your progress is being tracked and your program will adapt based on your performance.
+                            </p>
+                        </div>
+                        <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                            <div class="d-flex justify-content-md-end gap-2">
+                                <i class="fas fa-trophy fa-2x opacity-50"></i>
+                                <i class="fas fa-medal fa-2x opacity-50"></i>
+                                <i class="fas fa-award fa-2x opacity-50"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <a href="{% url 'dashboard' %}" class="btn btn-outline-primary btn-lg w-100">
+                        <i class="fas fa-home me-2"></i>Back to Dashboard
+                    </a>
+                </div>
+                <div class="col-md-6">
+                    <a href="{% url 'daily_workout' %}" class="btn btn-success btn-lg w-100">
+                        <i class="fas fa-redo me-2"></i>Do Another Session
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

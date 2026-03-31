@@ -1,0 +1,157 @@
+{% extends 'strength_app/base.html' %}
+{% block title %}Warm-Up — VYAYAM{% endblock %}
+
+{% block extra_css %}
+<style>
+  body { background: #0a0e27; color: #fff; }
+  .wu-wrap { max-width: 760px; margin: 0 auto; padding: 24px 16px; }
+  .top-bar { background: #1a1f3a; border-radius: 14px; padding: 16px 20px;
+    display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; flex-wrap: wrap; gap: 10px; }
+  .phase-card { background: #1a1f3a; border-radius: 16px; margin-bottom: 16px; overflow: hidden; }
+  .phase-header { padding: 14px 20px; display: flex; align-items: center; justify-content: space-between;
+    cursor: pointer; font-weight: 700; font-size: 1rem; }
+  .phase-header:hover { background: rgba(102,126,234,.1); }
+  .phase-body { padding: 0 20px 16px; display: none; }
+  .phase-body.open { display: block; }
+  .phase-num { display: inline-flex; width: 28px; height: 28px; border-radius: 50%;
+    background: rgba(102,126,234,.2); border: 2px solid #667eea;
+    align-items: center; justify-content: center; font-size: .8rem; font-weight: 800; margin-right: 10px; }
+  .ex-row { display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,.06); }
+  .ex-row:last-child { border-bottom: none; }
+  .ex-name { font-weight: 600; font-size: .9rem; }
+  .ex-detail { font-size: .8rem; opacity: .6; margin-top: 2px; }
+  .ex-badge { background: rgba(102,126,234,.2); color: #a5b4fc; border-radius: 8px;
+    padding: 4px 10px; font-size: .75rem; font-weight: 700; white-space: nowrap; }
+  .phase-icon { font-size: 1.2rem; margin-right: 8px; }
+  .chevron { transition: transform .3s; }
+  .chevron.open { transform: rotate(180deg); }
+  .cta-btn { display: block; width: 100%; padding: 16px; font-size: 1rem; font-weight: 700;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border: none; border-radius: 14px; color: white; cursor: pointer; text-align: center;
+    text-decoration: none; margin-top: 24px; }
+  .skip-link { display: block; text-align: center; margin-top: 12px; font-size: .85rem;
+    opacity: .5; color: #fff; text-decoration: none; }
+  .skip-link:hover { opacity: .8; color: #fff; }
+  .empty-note { padding: 12px; opacity: .5; font-size: .85rem; font-style: italic; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="wu-wrap">
+  <div class="top-bar">
+    <div>
+      <div style="font-size:1.1rem;font-weight:800;">Warm-Up</div>
+      <div style="font-size:.8rem;opacity:.6;">4 phases · ~8 min</div>
+    </div>
+    <div style="font-size:.85rem;opacity:.6;"><i class="fas fa-user me-1"></i>{{ patient.name }}</div>
+  </div>
+
+  <!-- Phase 1: Elevate -->
+  <div class="phase-card">
+    <div class="phase-header" onclick="toggle('phase1')">
+      <div><span class="phase-num">1</span><span class="phase-icon">🔥</span>Elevate Heart Rate</div>
+      <i class="fas fa-chevron-down chevron" id="chevron1"></i>
+    </div>
+    <div class="phase-body open" id="phase1">
+      {% if elevate %}
+        {% for ex in elevate %}
+        <div class="ex-row">
+          <div>
+            <div class="ex-name">{{ ex.name }}</div>
+            <div class="ex-detail">{{ ex.duration|default:"90 sec" }}{% if ex.notes %} · {{ ex.notes }}{% endif %}</div>
+          </div>
+          <span class="ex-badge">{{ ex.duration|default:"90s" }}</span>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="empty-note">Light cardio of your choice — brisk walk, bike or jog for 5 min.</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Phase 2: Mobilise -->
+  <div class="phase-card">
+    <div class="phase-header" onclick="toggle('phase2')">
+      <div><span class="phase-num">2</span><span class="phase-icon">🔄</span>Mobilise Joints</div>
+      <i class="fas fa-chevron-down chevron" id="chevron2"></i>
+    </div>
+    <div class="phase-body" id="phase2">
+      {% if mobilise %}
+        {% for ex in mobilise %}
+        <div class="ex-row">
+          <div>
+            <div class="ex-name">{{ ex.name }}</div>
+            <div class="ex-detail">{{ ex.reps|default:"8" }} reps{% if ex.notes %} · {{ ex.notes }}{% endif %}</div>
+          </div>
+          <span class="ex-badge">{{ ex.reps|default:"8" }} reps</span>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="empty-note">Hip circles, shoulder rolls, ankle mobility — 8 reps each.</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Phase 3: Activate -->
+  <div class="phase-card">
+    <div class="phase-header" onclick="toggle('phase3')">
+      <div><span class="phase-num">3</span><span class="phase-icon">⚡</span>Activate Key Muscles</div>
+      <i class="fas fa-chevron-down chevron" id="chevron3"></i>
+    </div>
+    <div class="phase-body" id="phase3">
+      {% if activate %}
+        {% for ex in activate %}
+        <div class="ex-row">
+          <div>
+            <div class="ex-name">{{ ex.name }}</div>
+            <div class="ex-detail">{{ ex.sets|default:2 }}×{{ ex.reps|default:12 }}{% if ex.notes %} · {{ ex.notes }}{% endif %}</div>
+          </div>
+          <span class="ex-badge">{{ ex.sets|default:2 }}×{{ ex.reps|default:12 }}</span>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="empty-note">Glute bridges × 15, clamshells × 12, dead bugs × 10.</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Phase 4: Prime -->
+  <div class="phase-card">
+    <div class="phase-header" onclick="toggle('phase4')">
+      <div><span class="phase-num">4</span><span class="phase-icon">🎯</span>Prime Movement Patterns</div>
+      <i class="fas fa-chevron-down chevron" id="chevron4"></i>
+    </div>
+    <div class="phase-body" id="phase4">
+      {% if prime %}
+        {% for ex in prime %}
+        <div class="ex-row">
+          <div>
+            <div class="ex-name">{{ ex.name }}</div>
+            <div class="ex-detail">{{ ex.sets|default:2 }}×{{ ex.reps|default:5 }} light{% if ex.notes %} · {{ ex.notes }}{% endif %}</div>
+          </div>
+          <span class="ex-badge">{{ ex.sets|default:2 }}×{{ ex.reps|default:5 }}</span>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="empty-note">Bodyweight versions of today's main lifts — 2 sets × 5 reps.</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <a href="{% url 'v1_execute_exercise' 0 %}" class="cta-btn">
+    <i class="fas fa-play me-2"></i>Start Working Sets
+  </a>
+  <a href="{% url 'v1_execute_exercise' 0 %}" class="skip-link">Skip warm-up</a>
+</div>
+
+<script>
+function toggle(id) {
+  const body = document.getElementById(id);
+  const num = id.replace('phase','');
+  const chevron = document.getElementById('chevron' + num);
+  body.classList.toggle('open');
+  chevron.classList.toggle('open');
+}
+</script>
+{% endblock %}

@@ -1,0 +1,182 @@
+{% extends 'strength_app/base.html' %}
+
+{% block title %}Progress Report - VYAYAM{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="display-6 gradient-text mb-2">
+                        <i class="fas fa-file-medical-alt me-2"></i>Progress Report
+                    </h1>
+                    <p class="text-muted mb-0">{{ report.report_period }}</p>
+                </div>
+                <div>
+                    <a href="{% url 'download_report' report.id %}" class="btn btn-primary">
+                        <i class="fas fa-download me-2"></i>Download PDF
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Patient Info -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <p class="mb-2"><strong>Patient:</strong> {{ patient.name }}</p>
+                    <p class="mb-2"><strong>Age:</strong> {{ patient.age }} years</p>
+                    <p class="mb-0"><strong>Report Date:</strong> {{ report.report_date|date:"F d, Y" }}</p>
+                </div>
+                <div class="col-md-6">
+                    <p class="mb-2"><strong>Prescription Mode:</strong> 
+                        {% if patient.prescription_mode == 'ai_auto' %}
+                            <span class="badge bg-primary">AI Auto</span>
+                        {% else %}
+                            <span class="badge bg-info">Therapist</span>
+                        {% endif %}
+                    </p>
+                    <p class="mb-0"><strong>Program Start:</strong> {{ patient.program_start_date|date:"F d, Y"|default:"N/A" }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overall Outcomes -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0 text-white">
+                <i class="fas fa-chart-pie me-2"></i>Overall Outcomes
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="row g-3 text-center">
+                <div class="col-md-3">
+                    <div class="p-4 rounded" style="background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);">
+                        <i class="fas fa-calendar-check fa-2x text-primary mb-3"></i>
+                        <h3 class="mb-1">{{ report.total_sessions_completed }}<span class="text-muted h5">/{{ report.total_sessions_prescribed }}</span></h3>
+                        <p class="text-muted mb-0 small">Sessions Completed</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="p-4 rounded" style="background: linear-gradient(135deg, rgba(17, 153, 142, 0.1) 0%, rgba(56, 239, 125, 0.1) 100%);">
+                        <i class="fas fa-percentage fa-2x text-success mb-3"></i>
+                        <h3 class="mb-1">{{ report.overall_adherence_rate|floatformat:1 }}%</h3>
+                        <p class="text-muted mb-0 small">Adherence Rate</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="p-4 rounded" style="background: linear-gradient(135deg, rgba(17, 153, 142, 0.1) 0%, rgba(56, 239, 125, 0.1) 100%);">
+                        <i class="fas fa-check-circle fa-2x text-success mb-3"></i>
+                        <h3 class="mb-1 text-success">{{ report.total_green_reps_period }}</h3>
+                        <p class="text-muted mb-0 small">Total Green Reps</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="p-4 rounded" style="background: linear-gradient(135deg, rgba(240, 147, 251, 0.1) 0%, rgba(245, 87, 108, 0.1) 100%);">
+                        <i class="fas fa-star fa-2x text-warning mb-3"></i>
+                        <h3 class="mb-1">{{ report.average_form_score_period|floatformat:1 }}%</h3>
+                        <p class="text-muted mb-0 small">Average Form Score</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Initial Fitness Levels -->
+    <div class="card mb-4">
+        <div class="card-header bg-info">
+            <h5 class="mb-0 text-white">
+                <i class="fas fa-chart-bar me-2"></i>Initial Fitness Levels
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                {% for category, level in report.initial_fitness_levels.items %}
+                    <div class="col-md-3">
+                        <div class="text-center p-3 rounded" style="background: linear-gradient(135deg, rgba(79, 172, 254, 0.05) 0%, rgba(0, 242, 254, 0.05) 100%);">
+                            <strong class="d-block mb-2">{{ category|title }}</strong>
+                            <span class="badge bg-secondary" style="padding: 0.5rem 1rem;">{{ level|upper }}</span>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Exercise Progressions -->
+    {% if report.exercises_advanced %}
+    <div class="card mb-4">
+        <div class="card-header bg-success">
+            <h5 class="mb-0 text-white">
+                <i class="fas fa-arrow-up me-2"></i>Exercise Progressions
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="list-group list-group-flush">
+                {% for advancement in report.exercises_advanced %}
+                    <div class="list-group-item px-0">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>Week {{ advancement.week }}:</strong> {{ advancement.exercise }}
+                            </div>
+                            <div>
+                                <span class="badge bg-secondary me-2">{{ advancement.from }}</span>
+                                <i class="fas fa-arrow-right text-success mx-2"></i>
+                                <span class="badge bg-success">{{ advancement.to }}</span>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Recommendations -->
+    <div class="card mb-4">
+        <div class="card-header {% if report.continue_current_program %}bg-success{% else %}bg-warning{% endif %}">
+            <h5 class="mb-0 text-white">
+                <i class="fas fa-lightbulb me-2"></i>Recommendations
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="alert {% if report.continue_current_program %}alert-success{% else %}alert-warning{% endif %} mb-3">
+                <h6 class="mb-2">
+                    <i class="fas fa-{% if report.continue_current_program %}check-circle{% else %}exclamation-triangle{% endif %} me-2"></i>
+                    Program Status
+                </h6>
+                <p class="mb-0">
+                    {% if report.continue_current_program %}
+                        ✓ Continue with current program - you're making great progress!
+                    {% else %}
+                        ⚠️ Program adjustments recommended based on your recent performance.
+                    {% endif %}
+                </p>
+            </div>
+            {% if report.recommended_next_steps %}
+                <h6 class="mb-2">Next Steps:</h6>
+                <p class="mb-0">{{ report.recommended_next_steps }}</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="row g-3">
+        <div class="col-md-6">
+            <a href="{% url 'progress_reports' %}" class="btn btn-outline-secondary btn-lg w-100">
+                <i class="fas fa-arrow-left me-2"></i>Back to Reports
+            </a>
+        </div>
+        <div class="col-md-6">
+            <a href="{% url 'download_report' report.id %}" class="btn btn-primary btn-lg w-100">
+                <i class="fas fa-download me-2"></i>Download PDF
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,4052 @@
+{% extends 'strength_app/base.html' %}
+{% load vyayam_filters %}
+{% load static %}
+{% block title %}{{ exercise.exercise_name }} — VYAYAM{% endblock %}
+
+{% block extra_css %}
+<style>
+  body { background: #0a0e27; color: #fff; }
+  .ex-wrap { max-width: 1100px; margin: 0 auto; padding: 20px 16px; }
+  .top-bar { background: #1a1f3a; border-radius: 14px; padding: 14px 20px;
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    margin-bottom: 18px; flex-wrap: wrap; }
+  .progress-text { font-size: .85rem; opacity: .6; }
+  .main-layout { display: grid; grid-template-columns: 1fr 360px; gap: 18px; }
+  @media(max-width:860px){ .main-layout { grid-template-columns: 1fr; } .right-panel { order: -1; } }
+  @media(max-width:480px){
+    .ex-wrap { padding: 8px; }
+    .top-bar { padding: 10px 12px; font-size: .95rem; }
+    .info-card { padding: 14px; font-size: .95rem; }
+    .tempo-phase .t-val { font-size: 1.4rem; }
+    .tempo-phase .t-lbl { font-size: .72rem; }
+    .set-done-btn { padding: 10px 14px; font-size: .88rem; }
+    .start-cam-btn { width: 100%; font-size: 1rem; }
+  }
+
+  /* Camera */
+  .video-section { background: #1a1f3a; border-radius: 18px; overflow: hidden;
+    position: relative; min-height: 360px;
+    display: flex; align-items: center; justify-content: center; }
+  #cameraFeed { display: none; }
+  #videoCanvas { width: 100%; max-height: 70vh; display: block; }
+  .cam-placeholder { display: flex; flex-direction: column; align-items: center;
+    gap: 14px; padding: 40px; text-align: center; }
+  .form-overlay { position: absolute; top: 12px; right: 12px;
+    background: rgba(0,0,0,.6); border-radius: 12px; padding: 8px 14px;
+    font-size: 1.1rem; font-weight: 800; }
+  .start-cam-btn { padding: 10px 24px; background: linear-gradient(135deg,#667eea,#764ba2);
+    border: none; border-radius: 10px; color: #fff; font-weight: 700; cursor: pointer; font-size: .9rem; }
+
+  /* Right panel */
+  .right-panel { display: flex; flex-direction: column; gap: 14px; }
+  .info-card { background: #1a1f3a; border-radius: 14px; padding: 18px; }
+  .card-label { font-size: .65rem; font-weight: 800; text-transform: uppercase;
+    letter-spacing: 1px; opacity: .5; margin-bottom: 8px; }
+
+  /* Tempo visual */
+  .tempo-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 6px; }
+  .tempo-phase { background: #2a2f4a; border-radius: 10px; padding: 10px 4px; text-align: center; transition: all .3s; }
+  .tempo-phase.active { background: rgba(102,126,234,.3); border: 2px solid #667eea; }
+  .tempo-phase .t-val { font-size: 1.5rem; font-weight: 800; color: #667eea; }
+  .tempo-phase .t-lbl { font-size: .6rem; opacity: .5; margin-top: 2px; }
+
+  /* Set tracker */
+  .set-row { display: flex; align-items: center; gap: 10px; padding: 8px 0;
+    border-bottom: 1px solid rgba(255,255,255,.06); }
+  .set-row:last-child { border-bottom: none; }
+  .set-num { width: 28px; font-weight: 700; font-size: .85rem; opacity: .7; }
+  .reps-input { flex: 1; background: #2a2f4a; border: 1px solid rgba(255,255,255,.1);
+    border-radius: 8px; padding: 7px 12px; color: #fff; font-size: .9rem; text-align: center; }
+  .reps-input:focus { outline: none; border-color: #667eea; }
+  .set-done-btn { padding: 7px 14px; background: rgba(17,153,142,.2); border: 1px solid #11998e;
+    border-radius: 8px; color: #6ee7b7; font-weight: 700; font-size: .8rem; cursor: pointer; }
+  .set-done-btn.done { background: #11998e; color: #fff; }
+
+  /* Rest timer */
+  #restTimerWrap { display: none; text-align: center; padding: 12px 0; }
+  #restTimerWrap .rest-val { font-size: 2.5rem; font-weight: 800; color: #38ef7d; }
+  .rest-label { font-size: .8rem; opacity: .6; }
+  .skip-rest { background: none; border: 1px solid rgba(255,255,255,.2); border-radius: 8px;
+    padding: 5px 16px; color: rgba(255,255,255,.6); cursor: pointer; font-size: .8rem; margin-top: 8px; }
+
+  /* Mind-muscle cue */
+  .mmc-card { background: rgba(240,147,251,.08); border: 1px solid rgba(240,147,251,.2);
+    border-radius: 12px; padding: 14px; font-size: .85rem; font-style: italic; }
+  .mmc-card i { color: #f093fb; }
+
+  /* Pain protocol */
+  .pain-toggle { background: rgba(239,68,68,.1); border: 1px solid rgba(239,68,68,.25);
+    border-radius: 10px; padding: 10px 16px; font-size: .82rem; font-weight: 700;
+    color: #fca5a5; cursor: pointer; width: 100%; text-align: left; }
+  #painProtocol { display: none; background: rgba(239,68,68,.08); border-radius: 10px;
+    padding: 14px; margin-top: 8px; }
+  #painProtocol.show { display: block; }
+  .pain-step { display: none; }
+  .pain-step.active { display: block; }
+  .pain-option { display: block; padding: 10px 14px; margin: 6px 0;
+    background: #2a2f4a; border-radius: 10px; cursor: pointer; border: 2px solid transparent; }
+  .pain-option:has(input:checked) { border-color: #ff4757; background: rgba(255,71,87,.15); }
+  .pain-option input[type=radio] { margin-right: 6px; accent-color: #ff4757; }
+  .pain-label { font-size: .85rem; }
+  .loc-btn { padding: 8px 14px; margin: 4px; background: #2a2f4a;
+    border: 1px solid rgba(255,255,255,.1); border-radius: 8px; color: #fff; cursor: pointer; font-size: .8rem; }
+  .loc-btn.selected { background: rgba(255,71,87,.2); border-color: #ff4757; }
+  .pain-next-btn, .pain-submit-btn { padding: 8px 18px; background: rgba(255,71,87,.3);
+    border: 1px solid #ff4757; border-radius: 8px; color: #fca5a5; font-weight: 700;
+    font-size: .8rem; cursor: pointer; margin-top: 10px; }
+  .guidance-box { padding: 14px; border-radius: 10px; margin-top: 12px; font-size: .82rem; }
+  .guidance-skip_exercise { background: rgba(255,71,87,.15); border-left: 4px solid #ff4757; }
+  .guidance-reduce_volume { background: rgba(255,165,0,.15); border-left: 4px solid orange; }
+  .guidance-continue { background: rgba(56,239,125,.15); border-left: 4px solid #38ef7d; }
+  #painSeverity { width: 100%; accent-color: #ff4757; margin: 8px 0; }
+  .sev-display { font-size: 1.4rem; font-weight: 800; color: #ff4757; }
+
+  /* Submit */
+  .submit-btn { width: 100%; padding: 14px; font-size: 1rem; font-weight: 700;
+    background: linear-gradient(135deg, #11998e, #38ef7d);
+    border: none; border-radius: 12px; color: white; cursor: pointer; }
+  .submit-btn:disabled { opacity: .5; cursor: not-allowed; }
+  .skip-btn { width: 100%; padding: 10px; font-size: .85rem; font-weight: 600;
+    background: none; border: 1px solid rgba(255,255,255,.15); border-radius: 10px;
+    color: rgba(255,255,255,.5); cursor: pointer; margin-top: 8px; }
+
+  /* Asymmetry badge */
+  .asym-badge { display: inline-block; padding: 3px 10px; border-radius: 16px;
+    font-size: .75rem; font-weight: 700; text-transform: uppercase; }
+  .asym-left  { background: #1d4ed8; }
+  .asym-right { background: #b45309; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="ex-wrap">
+  <!-- Top bar -->
+  <div class="top-bar">
+    <div>
+      <div style="font-weight:800;font-size:1.05rem;">
+        {{ exercise.exercise_name|default:exercise.exercise_id }}
+        {% if exercise.asymmetry_side %}
+        <span class="asym-badge {% if exercise.asymmetry_side == 'left' %}asym-left{% else %}asym-right{% endif %}">
+          {{ exercise.asymmetry_side|upper }} FOCUS
+        </span>
+        {% endif %}
+      </div>
+      <div class="progress-text">Exercise {{ exercise_index|add:1 }} of {{ total_exercises }} · {{ exercise.movement_pattern|title }}</div>
+    </div>
+    <div style="flex:1;min-width:80px;">
+      <div style="height:5px;border-radius:5px;background:rgba(255,255,255,.1);">
+        <div style="height:100%;border-radius:5px;background:linear-gradient(90deg,#667eea,#764ba2);width:{% widthratio exercise_index|add:1 total_exercises 100 %}%;"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="main-layout">
+    <!-- Camera -->
+    <div class="video-section">
+      <video id="cameraFeed" autoplay playsinline></video>
+      <canvas id="videoCanvas"></canvas>
+      <div class="form-overlay" id="formOverlay" style="display:none;">
+        <span id="formScore" style="color:#22c55e;">—%</span>
+      </div>
+      <div class="cam-placeholder" id="camPlaceholder">
+        <i class="fas fa-camera fa-3x" style="opacity:.3;"></i>
+        <p style="opacity:.5;font-size:.88rem;">Enable camera for form feedback</p>
+        <button class="start-cam-btn" onclick="startCamera()">
+          <i class="fas fa-video me-2"></i>Start Camera
+        </button>
+      </div>
+      <!-- Demo overlay — covers camera during "watch first" phase -->
+      <div id="demoOverlay" style="display:none;position:absolute;top:0;left:0;right:0;bottom:0;
+        background:rgba(0,0,0,0.65);z-index:20;flex-direction:column;align-items:center;
+        justify-content:center;border-radius:18px;pointer-events:none;">
+        <div style="font-size:1.6rem;font-weight:800;color:#38bdf8;margin-bottom:10px;">
+          👀 Watch First
+        </div>
+        <div class="demo-text" style="font-size:1rem;color:#fff;opacity:.85;text-align:center;padding:0 20px;">
+          Get ready...
+        </div>
+      </div>
+
+      <!-- Voice mute/unmute toggle -->
+      <button id="voiceToggle" onclick="toggleVoice()" title="Voice on"
+        style="position:absolute;top:10px;right:10px;z-index:25;border-radius:50%;
+          width:36px;height:36px;padding:0;border:1px solid rgba(255,255,255,.3);
+          background:rgba(0,0,0,.4);color:#fff;cursor:pointer;display:none;">
+        <i id="voiceIcon" class="fas fa-volume-up" style="font-size:.85rem;"></i>
+      </button>
+    </div>
+
+    <!-- Right panel -->
+    <div class="right-panel">
+
+      <!-- Tempo -->
+      <div class="info-card">
+        <div class="card-label">Tempo — {{ exercise.tempo|default:"3-1-2-0" }}</div>
+        <div class="tempo-grid">
+          <div class="tempo-phase" id="tp0">
+            <div class="t-val">{{ exercise.tempo_parts.0|default:"3" }}</div>
+            <div class="t-lbl">Down</div>
+          </div>
+          <div class="tempo-phase" id="tp1">
+            <div class="t-val">{{ exercise.tempo_parts.1|default:"1" }}</div>
+            <div class="t-lbl">Hold</div>
+          </div>
+          <div class="tempo-phase" id="tp2">
+            <div class="t-val">{{ exercise.tempo_parts.2|default:"2" }}</div>
+            <div class="t-lbl">Up</div>
+          </div>
+          <div class="tempo-phase" id="tp3">
+            <div class="t-val">{{ exercise.tempo_parts.3|default:"0" }}</div>
+            <div class="t-lbl">Reset</div>
+          </div>
+        </div>
+        <div id="tempoGuide" style="text-align:center;font-size:.8rem;opacity:.5;margin-top:10px;">Press Start Set to activate tempo guide</div>
+      </div>
+
+      <!-- Ghost Alignment Status (only shown for pilot exercises) -->
+      <div class="info-card" id="ghostStatusCard" style="display:none;">
+        <div class="card-label">Position Guide</div>
+        <div style="text-align:center;margin-bottom:8px;">
+          <span id="repCountDisplay" style="font-size:2.5rem;font-weight:800;transition:all .3s;">0</span>
+          <span style="font-size:.85rem;opacity:.6;margin-left:4px;" id="repOrHoldLabel">reps</span>
+        </div>
+        <div id="holdTimerDisplay" style="font-size:1.8rem;font-weight:800;color:#38ef7d;text-align:center;display:none;">0s</div>
+
+        <!-- Assessment mode: countdown + auto-score -->
+        <div id="assessmentOverlay" style="display:none;text-align:center;">
+          <div id="assessmentCountdown" style="font-size:2.5rem;font-weight:800;color:#f59e0b;">60</div>
+          <div style="font-size:.75rem;opacity:.5;margin-bottom:8px;">seconds remaining</div>
+          <div id="assessmentMeasured" style="font-size:1.6rem;font-weight:800;color:#38ef7d;">0</div>
+          <div id="assessmentMeasuredLabel" style="font-size:.75rem;opacity:.5;">reps</div>
+          <div id="assessmentScoreResult" style="display:none;margin-top:12px;">
+            <div style="font-size:.7rem;opacity:.5;text-transform:uppercase;">Your Score</div>
+            <div id="assessmentScoreValue" style="font-size:3rem;font-weight:800;color:#667eea;">-</div>
+            <button onclick="saveAssessmentScore()" class="btn w-100 mt-2"
+              style="background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;padding:14px;font-weight:700;border-radius:12px;border:none;">
+              Save &amp; Continue
+            </button>
+          </div>
+        </div>
+        <div id="alignmentCue" style="text-align:center;font-size:.85rem;padding:8px;border-radius:8px;
+          background:rgba(102,126,234,.1);margin-top:8px;transition:color .3s;">
+          Start camera to activate ghost guide
+        </div>
+        <button onclick="ghostState.mode='DEMO';ghostState.currentPhaseIndex=0;ghostState.phaseStartTime=Date.now();ghostState.demoRepsDone=0;VoiceCoach.speak('Watch me first.',true);" class="btn btn-sm btn-outline-primary mt-2 w-100"
+          style="font-size:.75rem;border-radius:8px;">
+          <i class="fas fa-redo me-1"></i>Watch Demo Again
+        </button>
+      </div>
+
+      <!-- Set tracker -->
+      <div class="info-card">
+        <div class="card-label">{{ exercise.sets }}×{% if exercise.hold_duration %}{{ exercise.hold_duration }}s hold{% else %}{{ exercise.reps }} reps{% endif %} · Rest {{ exercise.rest_seconds|default:75 }}s</div>
+        {% for i in exercise.sets|get_range %}
+        <div class="set-row" id="setRow{{ forloop.counter }}">
+          <span class="set-num">Set {{ forloop.counter }}</span>
+          <input type="number" class="reps-input" id="reps{{ forloop.counter }}" placeholder="{{ exercise.reps }}" min="0" max="30">
+          <button class="set-done-btn" id="doneBtn{{ forloop.counter }}" onclick="completeSet({{ forloop.counter }})">
+            Done
+          </button>
+        </div>
+        {% empty %}
+        {% for i in "123" %}
+        <div class="set-row" id="setRow{{ forloop.counter }}">
+          <span class="set-num">Set {{ forloop.counter }}</span>
+          <input type="number" class="reps-input" id="reps{{ forloop.counter }}" placeholder="{{ exercise.reps }}" min="0" max="30">
+          <button class="set-done-btn" id="doneBtn{{ forloop.counter }}" onclick="completeSet({{ forloop.counter }})">Done</button>
+        </div>
+        {% endfor %}
+        {% endfor %}
+
+        <!-- Rest timer -->
+        <div id="restTimerWrap">
+          <div class="rest-val" id="restVal">{{ exercise.rest_seconds|default:75 }}</div>
+          <div class="rest-label">seconds rest</div>
+          <button class="skip-rest" onclick="skipRest()">Skip Rest</button>
+        </div>
+      </div>
+
+      <!-- Mind-muscle cue -->
+      {% if exercise.mind_muscle_cue %}
+      <div class="mmc-card">
+        <i class="fas fa-brain me-2"></i>{{ exercise.mind_muscle_cue.during|default:exercise.mind_muscle_cue }}
+      </div>
+      {% endif %}
+
+      <!-- Pain protocol (3-step structured) -->
+      <div>
+        <button class="pain-toggle" onclick="togglePain()">
+          <i class="fas fa-exclamation-triangle me-2"></i>Report Pain / Discomfort
+        </button>
+        <div id="painProtocol">
+
+          <!-- Step 1: Pain type -->
+          <div class="pain-step active" id="painStep1">
+            <div style="font-size:.8rem;font-weight:700;opacity:.8;margin-bottom:8px;">What type of pain?</div>
+            <label class="pain-option"><input type="radio" name="painType" value="sharp"><span class="pain-label">⚡ Sharp or stabbing</span></label>
+            <label class="pain-option"><input type="radio" name="painType" value="aching"><span class="pain-label">🔥 Aching or burning</span></label>
+            <label class="pain-option"><input type="radio" name="painType" value="joint"><span class="pain-label">🦴 Joint pain (not muscle)</span></label>
+            <label class="pain-option"><input type="radio" name="painType" value="unusual"><span class="pain-label">❓ Unusual sensation</span></label>
+            <button class="pain-next-btn" onclick="painStep2()">Next →</button>
+          </div>
+
+          <!-- Step 2: Location -->
+          <div class="pain-step" id="painStep2">
+            <div style="font-size:.8rem;font-weight:700;opacity:.8;margin-bottom:8px;">Where exactly?</div>
+            <div style="display:flex;flex-wrap:wrap;gap:2px;">
+              <button class="loc-btn" onclick="selectLoc(this,'left_knee')">Left Knee</button>
+              <button class="loc-btn" onclick="selectLoc(this,'right_knee')">Right Knee</button>
+              <button class="loc-btn" onclick="selectLoc(this,'left_hip')">Left Hip</button>
+              <button class="loc-btn" onclick="selectLoc(this,'right_hip')">Right Hip</button>
+              <button class="loc-btn" onclick="selectLoc(this,'lower_back')">Lower Back</button>
+              <button class="loc-btn" onclick="selectLoc(this,'upper_back')">Upper Back</button>
+              <button class="loc-btn" onclick="selectLoc(this,'left_shoulder')">Left Shoulder</button>
+              <button class="loc-btn" onclick="selectLoc(this,'right_shoulder')">Right Shoulder</button>
+              <button class="loc-btn" onclick="selectLoc(this,'left_ankle')">Left Ankle</button>
+              <button class="loc-btn" onclick="selectLoc(this,'right_ankle')">Right Ankle</button>
+              <button class="loc-btn" onclick="selectLoc(this,'left_wrist')">Left Wrist</button>
+              <button class="loc-btn" onclick="selectLoc(this,'right_wrist')">Right Wrist</button>
+              <button class="loc-btn" onclick="selectLoc(this,'neck')">Neck</button>
+              <button class="loc-btn" onclick="selectLoc(this,'left_elbow')">Left Elbow</button>
+              <button class="loc-btn" onclick="selectLoc(this,'right_elbow')">Right Elbow</button>
+              <button class="loc-btn" onclick="selectLoc(this,'other')">Other</button>
+            </div>
+          </div>
+
+          <!-- Step 3: Severity + guidance -->
+          <div class="pain-step" id="painStep3">
+            <div style="font-size:.8rem;font-weight:700;opacity:.8;margin-bottom:8px;">How severe? (1–10)</div>
+            <div style="display:flex;align-items:center;gap:12px;">
+              <input type="range" min="1" max="10" value="3" id="painSeverity"
+                     oninput="updateSevAndGuidance()">
+              <span class="sev-display" id="sevVal">3</span>
+            </div>
+            <div id="painGuidance"></div>
+            <button class="pain-submit-btn" onclick="submitPain()">Report &amp; Continue</button>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Submit -->
+      <button class="submit-btn" id="submitBtn" onclick="saveAndNext()">
+        <i class="fas fa-check me-2"></i>
+        {% if is_last_exercise %}Finish &amp; Cool Down{% else %}Next Exercise{% endif %}
+      </button>
+      <button class="skip-btn" onclick="skipExercise()">Skip this exercise</button>
+
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<!-- MediaPipe CDN -->
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
+
+<script>
+  const EXERCISE_ID   = "{{ exercise.exercise_id }}";
+  const EXERCISE_NAME = "{{ exercise.exercise_name|default:exercise.exercise_id }}";
+  const PATTERN       = "{{ exercise.movement_pattern }}";
+  const PRESCRIBED_SETS = "{{ exercise.sets|default:3 }}";
+  const PRESCRIBED_REPS = "{{ exercise.reps|default:10 }}";
+  const REST_SECS       = "{{ exercise.rest_seconds|default:75 }}";
+
+  // ── Assessment mode ──────────────────────────────────────────────────────
+  const ASSESSMENT_MODE     = {{ assessment_mode|yesno:"true,false" }};
+  const ASSESSMENT_TYPE     = "{{ assessment_type|default:'' }}";
+  const ASSESSMENT_DURATION = {{ assessment_duration|default:60 }};
+  const ASSESSMENT_TEST_ID  = "{{ assessment_test_id|default:'' }}";
+  const ASSESSMENT_TEST_INDEX = {{ assessment_test_index|default:0 }};
+  const ASSESSMENT_SIDE     = "{{ assessment_side|default:'' }}";
+  const ASSESSMENT_VARIANT  = "{{ assessment_variant|default:'' }}";
+  const ASSESSMENT_SCORING  = {{ assessment_scoring_json|default:"{}" }};
+  const EXERCISE_INDEX  = "{{ exercise_index }}";
+  const TEMPO_PARTS     = ["{{ exercise.tempo_parts.0|default:3 }}, {{ exercise.tempo_parts.1|default:1 }}, {{ exercise.tempo_parts.2|default:2 }}, {{ exercise.tempo_parts.3|default:0 }}"];
+  const IS_TEST_MODE = (window.location.pathname.indexOf('/test-exercise/') !== -1);
+  const CAPABILITY_LEVEL = "{{ exercise.capability_level|default:2 }}";
+  const EXERCISE_FORM_CUES = [{% for cue in exercise.form_cues %}"{{ cue|escapejs }}"{% if not forloop.last %},{% endif %}{% endfor %}];
+  const MIND_MUSCLE_CUE = "{{ exercise.mind_muscle_cue.during|default:''|escapejs }}";
+
+  let stream = null;
+  let pose   = null;
+  let completedSets = 0;
+  let repsPerSet = [];
+  let formScores = [];
+  let restInterval = null;
+  let tempoInterval = null;
+  let painReported = false;
+  let selectedLocation = '';
+  let painAction = 'continue';
+  let remainingSets = PRESCRIBED_SETS;
+  const csrfToken = getCsrf();
+
+  // ---- Camera ----
+  async function startCamera() {
+    console.log('startCamera called, EXERCISE_ID:', EXERCISE_ID);
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: 640, height: 480 } });
+      const video = document.getElementById('cameraFeed');
+      video.srcObject = stream;
+      document.getElementById('camPlaceholder').style.display = 'none';
+      document.getElementById('formOverlay').style.display = 'block';
+      initPose(video);
+      // Show ghost status card for exercises with pose guidance
+      document.getElementById('voiceToggle').style.display = 'block';
+
+      if (EXERCISE_ID in EXERCISE_TYPE_MAP) {
+        document.getElementById('ghostStatusCard').style.display = 'block';
+        // initGhostAnimator is called inside initPose — demo starts automatically
+        var phaseType = EXERCISE_PHASES[EXERCISE_TYPE_MAP[EXERCISE_ID]];
+        if (phaseType && phaseType.phases.length <= 1) {
+          // Hold exercise — show hold timer, hide rep counter
+          document.getElementById('holdTimerDisplay').style.display = 'block';
+          document.getElementById('repCountDisplay').style.display = 'none';
+          document.getElementById('repOrHoldLabel').style.display = 'none';
+        }
+      }
+    } catch(e) {
+      console.error('Camera error:', e);
+      document.getElementById('cameraSection').innerHTML = `
+        <div class="cam-placeholder" style="flex-direction:column;gap:14px;padding:32px;text-align:center;">
+          <i class="fas fa-video-slash" style="font-size:3rem;opacity:.3;"></i>
+          <h6 class="mt-2" style="color:#fff;">Camera not available</h6>
+          <p style="opacity:.6;font-size:.85rem;">You can still complete this exercise. Count your reps manually and rate your form below.</p>
+          <div style="text-align:left;width:100%;max-width:280px;">
+            <label style="font-size:.82rem;opacity:.7;display:block;margin-bottom:4px;">Reps completed:</label>
+            <input type="number" id="manualReps" value="0" min="0" max="50"
+              style="width:100%;background:#2a2f4a;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:8px 12px;color:#fff;font-size:.9rem;margin-bottom:10px;">
+            <label style="font-size:.82rem;opacity:.7;display:block;margin-bottom:4px;">Form quality (1–5):</label>
+            <select id="manualForm"
+              style="width:100%;background:#2a2f4a;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:8px 12px;color:#fff;font-size:.85rem;">
+              <option value="100">5 — Perfect form</option>
+              <option value="85">4 — Good, minor deviation</option>
+              <option value="70" selected>3 — Adequate</option>
+              <option value="50">2 — Significant compensation</option>
+              <option value="30">1 — Poor form</option>
+            </select>
+          </div>
+        </div>`;
+      // Override saveAndNext to use manual values
+      window._cameraFailed = true;
+    }
+  }
+
+  // ============================================================================
+  // EXERCISE PHASE DEFINITIONS — Joint angles for each phase of each exercise type
+  // Angles are in degrees. Each exercise has phases the ghost moves through.
+  // ============================================================================
+
+  const EXERCISE_PHASES = {
+
+    SQUAT: {
+      name: 'Squat',
+      bodyOrientation: 'standing',
+      cameraPosition: { view: 'front', instruction: 'Place camera in front of you at waist height. Step back so your full body is visible.' },
+      setupCues: [
+        'Stand with your feet shoulder width apart.',
+        'Point your toes slightly outward. About fifteen degrees.',
+        'Weight in the middle of your feet. Not your toes.',
+        'Chest up. Look straight ahead.',
+      ],
+      stanceCheck: {
+        ankleToShoulderRatio: { min: 0.7, max: 1.4 },
+        maxFootRotation: 0.20,
+        kneeOverAnkle: true,
+        label: 'Feet shoulder width apart, toes slightly out',
+      },
+      phases: [
+        { name: 'stand',  duration: 0,    joints: { knee: 175, hip: 175, trunk: 175 }, voice: 'Stand tall' },
+        { name: 'down',   duration: 3000, joints: { knee: 90,  hip: 90,  trunk: 160 }, voice: 'Go down slowly' },
+        { name: 'hold',   duration: 1000, joints: { knee: 90,  hip: 90,  trunk: 160 }, voice: 'Hold' },
+        { name: 'up',     duration: 2000, joints: { knee: 175, hip: 175, trunk: 175 }, voice: 'Come back up' },
+      ],
+      checkAngles: function(lm) {
+        var knee = (calcAngle(lm[LM.leftHip], lm[LM.leftKnee], lm[LM.leftAnkle]) +
+                    calcAngle(lm[LM.rightHip], lm[LM.rightKnee], lm[LM.rightAnkle])) / 2;
+        var hip  = (calcAngle(lm[LM.leftShoulder],  lm[LM.leftHip],  lm[LM.leftKnee]) +
+                    calcAngle(lm[LM.rightShoulder], lm[LM.rightHip], lm[LM.rightKnee])) / 2;
+        var trunk = calcAngle(lm[LM.leftShoulder], lm[LM.leftHip], lm[LM.leftAnkle]);
+        return { knee: knee, hip: hip, trunk: trunk };
+      },
+      cues: { knee: 'Bend your knees more', hip: 'Sit your hips back', trunk: 'Keep chest up' },
+      forceArrows: [
+        { joint: 23, dir: { x: 0, y: -0.06 }, label: 'Press your back into the wall' },
+        { joint: 27, dir: { x: 0, y: 0.06 }, label: 'Drive your feet into the floor' },
+      ],
+    },
+
+    SQUAT_SINGLE: {
+      name: 'Single Leg Squat',
+      bodyOrientation: 'standing',
+      cameraPosition: { view: 'front', instruction: 'Place camera in front of you at waist height. Full body visible including feet.' },
+      setupCues: [
+        'Stand on one leg. Lift the other foot slightly off the ground.',
+        'Arms out in front for balance.',
+        'Standing foot flat. Weight through the whole foot.',
+        'Lower yourself slowly on one leg. As deep as you can control.',
+      ],
+      stanceCheck: {
+        maxFootRotation: 0.20,
+        hipLevel: true,
+        label: 'Standing foot straight, hips level',
+      },
+      phases: [
+        { name: 'stand',  duration: 0,    joints: { workingKnee: 175, hip: 175 }, voice: 'Stand tall on one leg' },
+        { name: 'down',   duration: 3000, joints: { workingKnee: 90,  hip: 90 },  voice: 'Lower down slowly on one leg' },
+        { name: 'hold',   duration: 1000, joints: { workingKnee: 90,  hip: 90 },  voice: 'Hold at the bottom' },
+        { name: 'up',     duration: 2000, joints: { workingKnee: 175, hip: 175 }, voice: 'Push back up to standing' },
+      ],
+      checkAngles: function(lm) {
+        // Detect which leg is the working leg (the one with MORE knee bend)
+        var leftKnee  = calcAngle(lm[LM.leftHip],  lm[LM.leftKnee],  lm[LM.leftAnkle]);
+        var rightKnee = calcAngle(lm[LM.rightHip], lm[LM.rightKnee], lm[LM.rightAnkle]);
+        // Working leg = the one with smaller angle (more bent)
+        var workingKnee = Math.min(leftKnee, rightKnee);
+        // Use working side hip only (same side as the more bent knee)
+        var hip;
+        if (leftKnee <= rightKnee) {
+          hip = calcAngle(lm[LM.leftShoulder], lm[LM.leftHip], lm[LM.leftKnee]);
+        } else {
+          hip = calcAngle(lm[LM.rightShoulder], lm[LM.rightHip], lm[LM.rightKnee]);
+        }
+        return { workingKnee: workingKnee, hip: hip };
+      },
+      cues: { workingKnee: 'Bend your knee more — go deeper', hip: 'Sit your hips back' },
+      forceArrows: [],
+    },
+
+    PUSH_UP: {
+      name: 'Push-Up',
+      bodyOrientation: 'prone',
+      cameraPosition: { view: 'side', instruction: 'Place camera to your side. Your whole body from head to feet must be visible.' },
+      setupCues: [
+        'Get into plank position. Hands under your shoulders.',
+        'Fingers spread wide. Elbows pointing back, not out.',
+        'Body in a straight line from head to heels.',
+        'Squeeze your core. Do not let your hips sag.',
+      ],
+      stanceCheck: {
+        wristToShoulderRatio: { min: 0.8, max: 1.5 },
+        shoulderShrug: true,
+        bodyLine: true,
+        label: 'Hands under shoulders, body straight',
+      },
+      phases: [
+        { name: 'plank',  duration: 0,    joints: { elbow: 175, bodyLine: 180 }, voice: 'Start in plank' },
+        { name: 'down',   duration: 3000, joints: { elbow: 90,  bodyLine: 178 }, voice: 'Lower your chest' },
+        { name: 'hold',   duration: 1000, joints: { elbow: 90,  bodyLine: 178 }, voice: 'Hold at the bottom' },
+        { name: 'up',     duration: 2000, joints: { elbow: 175, bodyLine: 180 }, voice: 'Push back up' },
+      ],
+      checkAngles: function(lm) {
+        var elbow = (calcAngle(lm[LM.leftShoulder],  lm[LM.leftElbow],  lm[LM.leftWrist]) +
+                     calcAngle(lm[LM.rightShoulder], lm[LM.rightElbow], lm[LM.rightWrist])) / 2;
+        var bodyLine = calcAngle(lm[LM.leftShoulder], lm[LM.leftHip], lm[LM.leftAnkle]);
+        return { elbow: elbow, bodyLine: bodyLine };
+      },
+      cues: { elbow: 'Lower more', bodyLine: 'Keep body straight' },
+      forceArrows: [],
+    },
+
+    PLANK: {
+      name: 'Plank Hold',
+      bodyOrientation: 'prone',
+      cameraPosition: { view: 'side', instruction: 'Place camera to your side so your full body is visible from head to feet.' },
+      setupCues: [
+        'Forearms on the ground. Elbows under your shoulders.',
+        'Body in a straight line. Squeeze your core tight.',
+        'Do not let your hips drop or pike up.',
+        'Breathe steadily. Hold this position.',
+      ],
+      stanceCheck: {
+        shoulderShrug: true,
+        bodyLine: true,
+        label: 'Elbows under shoulders, body in a straight line',
+      },
+      phases: [
+        { name: 'hold', duration: 0, joints: { bodyLine: 180, plankLevel: 0.15 }, voice: 'Hold a straight line' },
+      ],
+      checkAngles: function(lm) {
+        var bodyLine = (calcAngle(lm[LM.leftShoulder],  lm[LM.leftHip],  lm[LM.leftAnkle]) +
+                        calcAngle(lm[LM.rightShoulder], lm[LM.rightHip], lm[LM.rightAnkle])) / 2;
+        // plankLevel: difference between shoulder Y and ankle Y
+        // In plank (horizontal): shoulder and ankle at ~same Y → diff ≈ 0.05-0.15
+        // Standing upright: ankle Y >> shoulder Y → diff ≈ 0.5+
+        // Target 0.15 means shoulders and ankles must be roughly at same height
+        var plankLevel = Math.abs(
+          (lm[LM.leftShoulder].y + lm[LM.rightShoulder].y) / 2 -
+          (lm[LM.leftAnkle].y + lm[LM.rightAnkle].y) / 2
+        );
+        return { bodyLine: bodyLine, plankLevel: plankLevel };
+      },
+      cues: { bodyLine: 'Straighten your body', plankLevel: 'Get into plank position on the floor' },
+      forceArrows: [
+        { joint: 13, dir: { x: 0, y: 0.06 }, label: 'Pull elbows toward toes' },
+        { joint: 27, dir: { x: 0, y: -0.06 }, label: 'Drive toes toward elbows' },
+      ],
+    },
+
+    SIDE_PLANK: {
+      name: 'Side Plank',
+      bodyOrientation: 'sidelying',
+      cameraPosition: { view: 'front', instruction: 'Place camera in front of you so it can see your full body stacked sideways.' },
+      setupCues: [
+        'Lie on your side. Elbow directly under your shoulder.',
+        'Stack your feet or stagger them for balance.',
+        'Push your hip up toward the ceiling.',
+        'Body in a straight line from head to feet.',
+      ],
+      stanceCheck: {
+        hipLevel: true,
+        label: 'Elbow under shoulder, hips lifted',
+      },
+      phases: [
+        { name: 'hold', duration: 0, joints: { lateralLine: 180, plankLevel: 0.15 }, voice: 'Hold your hips up' },
+      ],
+      checkAngles: function(lm) {
+        // Measure both sides — use the one closer to straight (180°)
+        // The bottom side (supporting side) should form a straight line
+        var leftLine  = calcAngle(lm[LM.leftShoulder],  lm[LM.leftHip],  lm[LM.leftAnkle]);
+        var rightLine = calcAngle(lm[LM.rightShoulder], lm[LM.rightHip], lm[LM.rightAnkle]);
+        var lateralLine = (Math.abs(leftLine - 180) < Math.abs(rightLine - 180)) ? leftLine : rightLine;
+        // plankLevel: shoulders and ankles must be at similar Y (horizontal body)
+        // Standing: ~0.55 (big diff). Side plank from front camera: ~0.10-0.15
+        var plankLevel = Math.abs(
+          (lm[LM.leftShoulder].y + lm[LM.rightShoulder].y) / 2 -
+          (lm[LM.leftAnkle].y + lm[LM.rightAnkle].y) / 2
+        );
+        return { lateralLine: lateralLine, plankLevel: plankLevel };
+      },
+      cues: { lateralLine: 'Lift your hip', plankLevel: 'Get into side plank position' },
+      forceArrows: [
+        { joint: 23, dir: { x: 0, y: -0.08 }, label: 'Push your hip up toward the ceiling' },
+      ],
+    },
+
+    HINGE: {
+      name: 'Hip Hinge',
+      bodyOrientation: 'standing',
+      cameraPosition: { view: 'side', instruction: 'Place camera to your side. It needs to see your hip hinge movement.' },
+      setupCues: [
+        'Stand with feet hip width apart. Slightly narrower than shoulders.',
+        'Soft bend in your knees. Not locked straight.',
+        'Hands on your thighs or by your sides.',
+        'Push your hips back like you are closing a car door with your backside.',
+      ],
+      stanceCheck: {
+        ankleToShoulderRatio: { min: 0.4, max: 1.1 },
+        maxFootRotation: 0.15,
+        kneeOverAnkle: true,
+        label: 'Feet hip width, toes forward',
+      },
+      phases: [
+        { name: 'start', duration: 0,    joints: { hip: 130 }, voice: 'Start position' },
+        { name: 'up',    duration: 2000, joints: { hip: 175 }, voice: 'Push hips up' },
+        { name: 'hold',  duration: 1000, joints: { hip: 175 }, voice: 'Squeeze at the top' },
+        { name: 'down',  duration: 2000, joints: { hip: 130 }, voice: 'Lower slowly' },
+      ],
+      checkAngles: function(lm) {
+        var hip = (calcAngle(lm[LM.leftShoulder],  lm[LM.leftHip],  lm[LM.leftKnee]) +
+                   calcAngle(lm[LM.rightShoulder], lm[LM.rightHip], lm[LM.rightKnee])) / 2;
+        return { hip: hip };
+      },
+      cues: { hip: 'Push your hips higher' },
+      forceArrows: [
+        { joint: 23, dir: { x: 0, y: -0.08 }, label: 'Push your hips toward the ceiling' },
+        { joint: 27, dir: { x: 0, y: 0.06 }, label: 'Press your feet into the floor' },
+      ],
+    },
+
+    HINGE_SINGLE: {
+      name: 'Single Leg Hinge',
+      bodyOrientation: 'standing',
+      cameraPosition: { view: 'side', instruction: 'Place camera to your side. Full body visible.' },
+      setupCues: [
+        'Stand on one leg. Slight bend in the knee.',
+        'Hinge forward at the hip. Back leg lifts behind you.',
+        'Keep your back flat as a table.',
+        'Arms hanging down or out to the sides for balance.',
+      ],
+      stanceCheck: {
+        maxFootRotation: 0.15,
+        label: 'Standing foot straight ahead',
+      },
+      phases: [
+        { name: 'stand',  duration: 0,    joints: { workingHip: 175 }, voice: 'Stand tall on one leg' },
+        { name: 'hinge',  duration: 2000, joints: { workingHip: 100 }, voice: 'Hinge forward slowly' },
+        { name: 'hold',   duration: 1000, joints: { workingHip: 100 }, voice: 'Hold — flat back' },
+        { name: 'up',     duration: 2000, joints: { workingHip: 175 }, voice: 'Come back up' },
+      ],
+      checkAngles: function(lm) {
+        // Working hip = the one with more flexion (smaller angle)
+        var leftHip  = calcAngle(lm[LM.leftShoulder],  lm[LM.leftHip],  lm[LM.leftKnee]);
+        var rightHip = calcAngle(lm[LM.rightShoulder], lm[LM.rightHip], lm[LM.rightKnee]);
+        var workingHip = Math.min(leftHip, rightHip);
+        return { workingHip: workingHip };
+      },
+      cues: { workingHip: 'Hinge deeper — push hips back' },
+      forceArrows: [],
+    },
+
+    LUNGE: {
+      name: 'Lunge',
+      bodyOrientation: 'standing',
+      cameraPosition: { view: 'side', instruction: 'Place camera to your side. It needs to see both legs clearly.' },
+      setupCues: [
+        'Stand tall. Take a big step forward into a split stance.',
+        'Front foot flat on the ground. Back foot on the ball of the foot.',
+        'Both feet pointing straight ahead. Not turned out.',
+        'Torso upright. Do not lean forward.',
+      ],
+      stanceCheck: {
+        maxFootRotation: 0.15,
+        kneeOverAnkle: true,
+        label: 'Front foot flat, toes pointing forward',
+      },
+      phases: [
+        { name: 'stand',  duration: 0,    joints: { knee: 170, trunk: 175 }, voice: 'Stand in split stance' },
+        { name: 'down',   duration: 3000, joints: { knee: 90,  trunk: 170 }, voice: 'Lower down' },
+        { name: 'hold',   duration: 1000, joints: { knee: 90,  trunk: 170 }, voice: 'Hold' },
+        { name: 'up',     duration: 2000, joints: { knee: 170, trunk: 175 }, voice: 'Stand back up' },
+      ],
+      checkAngles: function(lm) {
+        // Use the more bent knee (front leg) — works for both left and right leg forward
+        var leftKnee  = calcAngle(lm[LM.leftHip],  lm[LM.leftKnee],  lm[LM.leftAnkle]);
+        var rightKnee = calcAngle(lm[LM.rightHip], lm[LM.rightKnee], lm[LM.rightAnkle]);
+        var knee = Math.min(leftKnee, rightKnee);
+        var trunk = (calcAngle(lm[LM.leftShoulder], lm[LM.leftHip], lm[LM.leftKnee]) +
+                     calcAngle(lm[LM.rightShoulder], lm[LM.rightHip], lm[LM.rightKnee])) / 2;
+        return { knee: knee, trunk: trunk };
+      },
+      cues: { knee: 'Lower your back knee', trunk: 'Stand taller' },
+      forceArrows: [],
+    },
+
+    DEAD_BUG: {
+      name: 'Dead Bug',
+      bodyOrientation: 'supine',
+      cameraPosition: { view: 'side', instruction: 'Place camera to your side while you lie on your back. Full body visible.' },
+      setupCues: [
+        'Lie on your back. Arms pointing at the ceiling.',
+        'Knees bent at ninety degrees above your hips.',
+        'Press your lower back into the floor. No gap.',
+        'This is your starting position. Do not lose the back contact.',
+      ],
+      stanceCheck: {
+        symmetry: true,
+        label: 'Lie flat, arms up, knees at ninety degrees',
+      },
+      phases: [
+        { name: 'start',  duration: 0,    joints: { hip: 90 },  voice: 'Knees at 90 degrees' },
+        { name: 'extend', duration: 2000, joints: { hip: 160 }, voice: 'Extend leg slowly' },
+        { name: 'return', duration: 2000, joints: { hip: 90 },  voice: 'Bring it back' },
+      ],
+      checkAngles: function(lm) {
+        // Measure both hips — use the one further from 90° (the extending leg)
+        // At start: both at 90° (knees up). During extension: one goes to 160°
+        var leftHip  = calcAngle(lm[LM.leftShoulder],  lm[LM.leftHip],  lm[LM.leftKnee]);
+        var rightHip = calcAngle(lm[LM.rightShoulder], lm[LM.rightHip], lm[LM.rightKnee]);
+        // Pick the hip with the LARGER angle (the one extending away from 90°)
+        var hip = Math.max(leftHip, rightHip);
+        return { hip: hip };
+      },
+      cues: { hip: 'Control the movement' },
+      forceArrows: [],
+    },
+
+    PULL: {
+      name: 'Pull',
+      bodyOrientation: 'standing',
+      cameraPosition: { view: 'front', instruction: 'Place camera in front of you at chest height.' },
+      setupCues: [
+        'Stand tall. Arms in front of you holding the band.',
+        'Shoulders down and back. Not shrugged up.',
+        'Slight bend in your elbows.',
+        'Pull the band apart by squeezing your shoulder blades.',
+      ],
+      stanceCheck: {
+        ankleToShoulderRatio: { min: 0.5, max: 1.3 },
+        maxFootRotation: 0.20,
+        shoulderShrug: true,
+        label: 'Stand tall, shoulders down, feet stable',
+      },
+      phases: [
+        { name: 'start',  duration: 0,    joints: { armSpread: 1.0 }, voice: 'Arms in front' },
+        { name: 'apart',  duration: 2000, joints: { armSpread: 2.2 }, voice: 'Pull apart' },
+        { name: 'hold',   duration: 1000, joints: { armSpread: 2.2 }, voice: 'Squeeze shoulder blades' },
+        { name: 'return', duration: 2000, joints: { armSpread: 1.0 }, voice: 'Slowly return' },
+      ],
+      checkAngles: function(lm) {
+        var wristSpan    = Math.abs(lm[LM.leftWrist].x    - lm[LM.rightWrist].x);
+        var shoulderSpan = Math.abs(lm[LM.leftShoulder].x - lm[LM.rightShoulder].x);
+        return { armSpread: wristSpan / Math.max(shoulderSpan, 0.01) };
+      },
+      cues: { armSpread: 'Pull further apart' },
+      forceArrows: [],
+    },
+
+    BALANCE: {
+      name: 'Balance',
+      bodyOrientation: 'standing',
+      cameraPosition: { view: 'front', instruction: 'Place camera in front of you. Full body visible including feet.' },
+      setupCues: [
+        'Stand on one leg. The other foot just off the ground.',
+        'Standing knee slightly bent. Not locked.',
+        'Pick a spot on the wall to focus your eyes.',
+        'Hips level. Do not let one side drop.',
+      ],
+      stanceCheck: {
+        maxFootRotation: 0.18,
+        hipLevel: true,
+        label: 'Standing foot straight, hips level',
+      },
+      phases: [
+        { name: 'hold', duration: 0, joints: { hipLevel: 0.04, trunk: 165, liftedKnee: 0.08 }, voice: 'Balance — stay still' },
+      ],
+      checkAngles: function(lm) {
+        var hipLevel = Math.abs(lm[LM.leftHip].y - lm[LM.rightHip].y);
+        var trunk    = calcAngle(lm[LM.leftShoulder], lm[LM.leftHip], lm[LM.leftKnee]);
+        // Lifted knee: Y-distance between the two knees
+        // When on one leg, the raised knee is HIGHER (smaller Y) than the standing knee
+        // On two feet, knees are at the same Y → kneeYDiff ≈ 0 → fails target of 0.08
+        var kneeYDiff = Math.abs(lm[LM.leftKnee].y - lm[LM.rightKnee].y);
+        return { hipLevel: hipLevel, trunk: trunk, liftedKnee: kneeYDiff };
+      },
+      cues: { hipLevel: 'Level your hips', trunk: 'Stand tall', liftedKnee: 'Lift your foot off the ground' },
+      forceArrows: [
+        { joint: 23, dir: { x: 0, y: -0.05 }, label: 'Stand tall through your hip' },
+      ],
+    },
+
+    CARRY: {
+      name: 'Carry',
+      bodyOrientation: 'standing',
+      cameraPosition: { view: 'front', instruction: 'Place camera in front of your walking path. Walk toward the camera.' },
+      setupCues: [
+        'Stand tall with the weight at your side.',
+        'Shoulders down and level. Do not lean away from the weight.',
+        'Core tight. Walk with short controlled steps.',
+      ],
+      stanceCheck: {
+        maxFootRotation: 0.18,
+        shoulderShrug: true,
+        hipLevel: true,
+        label: 'Stand tall, shoulders level, feet forward',
+      },
+      phases: [
+        { name: 'hold', duration: 0, joints: { trunk: 170, shoulderLevel: 0.02 }, voice: 'Walk tall — shoulders level' },
+      ],
+      checkAngles: function(lm) {
+        var trunk         = calcAngle(lm[LM.leftShoulder], lm[LM.leftHip], lm[LM.leftKnee]);
+        var shoulderLevel = Math.abs(lm[LM.leftShoulder].y - lm[LM.rightShoulder].y);
+        return { trunk: trunk, shoulderLevel: shoulderLevel };
+      },
+      cues: { trunk: 'Stand taller', shoulderLevel: 'Level shoulders' },
+      forceArrows: [
+        { joint: 11, dir: { x: 0, y: -0.05 }, label: 'Pull shoulders down and back' },
+        { joint: 12, dir: { x: 0, y: -0.05 }, label: 'Pull shoulders down and back' },
+      ],
+    },
+
+    STRETCH: {
+      name: 'Stretch / Mobility',
+      bodyOrientation: 'standing',
+      cameraPosition: { view: 'front', instruction: 'Place camera where your full body is visible in the stretch position.' },
+      setupCues: [
+        'Move to your starting position for this stretch.',
+        'Relax your breathing. Do not hold your breath.',
+        'Only go as far as comfortable. No sharp pain.',
+      ],
+      stanceCheck: {
+        symmetry: true,
+        label: 'Move into position gently',
+      },
+      phases: [
+        { name: 'start', duration: 0,    joints: { shoulder: 30 },  voice: 'Starting position' },
+        { name: 'reach', duration: 3000, joints: { shoulder: 150 }, voice: 'Reach into the stretch' },
+        { name: 'hold',  duration: 0,    joints: { shoulder: 150 }, voice: 'Hold and breathe' },
+      ],
+      checkAngles: function(lm) {
+        var leftShoulder  = calcAngle(lm[LM.leftHip],  lm[LM.leftShoulder],  lm[LM.leftElbow]);
+        var rightShoulder = calcAngle(lm[LM.rightHip], lm[LM.rightShoulder], lm[LM.rightElbow]);
+        var shoulder = (leftShoulder + rightShoulder) / 2;
+        return { shoulder: shoulder };
+      },
+      cues: { shoulder: 'Reach a little further' },
+      forceArrows: [],
+    },
+
+    CRAWL: {
+      name: 'Crawl',
+      bodyOrientation: 'prone',
+      cameraPosition: { view: 'side', instruction: 'Place camera to your side at ground level. Full body visible.' },
+      setupCues: [
+        'Start on hands and knees. Wrists under shoulders, knees under hips.',
+        'Flatten your back — not arched, not rounded.',
+        'Tuck chin slightly. Eyes look at the floor in front of you.',
+        'Take a breath in. Brace your core gently.',
+      ],
+      stanceCheck: {
+        wristToShoulderRatio: { min: 0.7, max: 1.4 },
+        hipLevel: true,
+        label: 'Hands under shoulders, hips level',
+      },
+      phases: [
+        { name: 'hold', duration: 0, joints: { hipLevel: 0.02, kneeHover: 0.06 }, voice: 'Flat back — hover your knees' },
+      ],
+      checkAngles: function(lm) {
+        var hipLevel = Math.abs(lm[LM.leftHip].y - lm[LM.rightHip].y);
+        var leftKneeHover = Math.abs(lm[LM.leftKnee].y - lm[LM.leftAnkle].y);
+        var rightKneeHover = Math.abs(lm[LM.rightKnee].y - lm[LM.rightAnkle].y);
+        var kneeHover = (leftKneeHover + rightKneeHover) / 2;
+        return { hipLevel: hipLevel, kneeHover: kneeHover };
+      },
+      cues: { hipLevel: 'Keep hips level', kneeHover: 'Hover your knees off the ground' },
+      forceArrows: [
+        { joint: 23, dir: { x: 0, y: -0.04 }, label: 'Keep hips flat and hovering' },
+      ],
+    },
+
+    ROTATION: {
+      name: 'Rotation',
+      bodyOrientation: 'standing',
+      cameraPosition: { view: 'front', instruction: 'Place camera in front of you at chest height.' },
+      setupCues: [
+        'Stand tall or sit upright. Spine long.',
+        'Arms out in front or hands behind your head.',
+        'Keep your hips still as you rotate — only the trunk moves.',
+        'Breathe in at centre. Breathe out as you rotate.',
+      ],
+      stanceCheck: {
+        ankleToShoulderRatio: { min: 0.6, max: 1.3 },
+        maxFootRotation: 0.18,
+        hipLevel: true,
+        label: 'Feet stable, hips facing forward',
+      },
+      phases: [
+        { name: 'center', duration: 0,    joints: { rotation: 170 }, voice: 'Center position' },
+        { name: 'rotate', duration: 2000, joints: { rotation: 120 }, voice: 'Rotate slowly' },
+        { name: 'return', duration: 2000, joints: { rotation: 170 }, voice: 'Return to center' },
+      ],
+      checkAngles: function(lm) {
+        // Rotation = ratio of shoulder spread to hip spread, scaled ×100 to angle-scale
+        // At center (facing camera): ratio ~1.7 → scaled ~170
+        // At 45° trunk rotation: ratio ~1.2 → scaled ~120
+        // Scaling avoids the ×500 ratio multiplier (all targets > 1 → standard diff)
+        var shoulderDiffX = Math.abs(lm[LM.leftShoulder].x - lm[LM.rightShoulder].x);
+        var hipDiffX      = Math.abs(lm[LM.leftHip].x      - lm[LM.rightHip].x);
+        return { rotation: (shoulderDiffX / Math.max(hipDiffX, 0.01)) * 100 };
+      },
+      cues: { rotation: 'Rotate more' },
+      forceArrows: [],
+    },
+
+    JUMP: {
+      name: 'Jump',
+      bodyOrientation: 'standing',
+      cameraPosition: { view: 'front', instruction: 'Place camera in front of you. Step back so it can see your full jump height.' },
+      setupCues: [
+        'Feet hip-width apart. Toes pointing forward.',
+        'Slight bend in the knees. Weight through the balls of your feet.',
+        'Arms relaxed at your sides. Ready to swing.',
+        'Land softly through toes, then heel. Bend knees on contact.',
+      ],
+      stanceCheck: {
+        ankleToShoulderRatio: { min: 0.7, max: 1.4 },
+        maxFootRotation: 0.18,
+        kneeOverAnkle: true,
+        label: 'Feet shoulder width, toes forward for safe landing',
+      },
+      phases: [
+        { name: 'ready', duration: 0,    joints: { knee: 170 }, voice: 'Ready position' },
+        { name: 'load',  duration: 1000, joints: { knee: 110 }, voice: 'Bend and load' },
+        { name: 'jump',  duration: 500,  joints: { knee: 175 }, voice: 'Jump!' },
+        { name: 'land',  duration: 1000, joints: { knee: 120 }, voice: 'Soft landing — bend knees' },
+      ],
+      checkAngles: function(lm) {
+        var knee = (calcAngle(lm[LM.leftHip],  lm[LM.leftKnee],  lm[LM.leftAnkle]) +
+                    calcAngle(lm[LM.rightHip], lm[LM.rightKnee], lm[LM.rightAnkle])) / 2;
+        return { knee: knee };
+      },
+      cues: { knee: 'Bend knees on landing' },
+      forceArrows: [],
+    },
+
+    HANG: {
+      name: 'Hang/Pull-Up',
+      bodyOrientation: 'hanging',
+      cameraPosition: { view: 'front', instruction: 'Place camera in front of you showing your full body hanging.' },
+      setupCues: [
+        'Grip the bar just outside shoulder width.',
+        'Let your arms fully extend. Feel the stretch through your lats.',
+        'Pull your shoulders down and back — do not shrug.',
+        'Engage your core. Legs together or crossed behind you.',
+      ],
+      stanceCheck: {
+        wristToShoulderRatio: { min: 0.7, max: 1.5 },
+        shoulderShrug: true,
+        label: 'Hands shoulder width, shoulders pulled down',
+      },
+      phases: [
+        { name: 'hang', duration: 0,    joints: { elbow: 175 }, voice: 'Dead hang' },
+        { name: 'pull', duration: 2000, joints: { elbow: 80 },  voice: 'Pull up' },
+        { name: 'hold', duration: 1000, joints: { elbow: 80 },  voice: 'Hold at the top' },
+        { name: 'down', duration: 2000, joints: { elbow: 175 }, voice: 'Lower slowly' },
+      ],
+      checkAngles: function(lm) {
+        var elbow = (calcAngle(lm[LM.leftShoulder],  lm[LM.leftElbow],  lm[LM.leftWrist]) +
+                     calcAngle(lm[LM.rightShoulder], lm[LM.rightElbow], lm[LM.rightWrist])) / 2;
+        return { elbow: elbow };
+      },
+      cues: { elbow: 'Pull higher' },
+      forceArrows: [
+        { joint: 11, dir: { x: 0, y: 0.06 }, label: 'Pull your shoulder blades down' },
+        { joint: 12, dir: { x: 0, y: 0.06 }, label: 'Pull your shoulder blades down' },
+      ],
+    },
+
+    PRESS_VERTICAL: {
+      name: 'Overhead Press',
+      bodyOrientation: 'standing',
+      cameraPosition: { view: 'front', instruction: 'Place camera in front of you. Arms overhead must be visible.' },
+      setupCues: [
+        'Stand or sit tall. Core braced.',
+        'Hold the weight at shoulder height. Elbows just in front of body.',
+        'Wrists straight — directly above your elbows.',
+        'Breathe in before you press. Exhale at the top.',
+      ],
+      stanceCheck: {
+        ankleToShoulderRatio: { min: 0.7, max: 1.4 },
+        maxFootRotation: 0.20,
+        shoulderShrug: true,
+        label: 'Feet shoulder width, core braced',
+      },
+      phases: [
+        { name: 'rack',  duration: 0,    joints: { elbow: 90 },  voice: 'Elbows at your sides' },
+        { name: 'press', duration: 2000, joints: { elbow: 170 }, voice: 'Press overhead' },
+        { name: 'hold',  duration: 1000, joints: { elbow: 170 }, voice: 'Lock out at the top' },
+        { name: 'lower', duration: 2000, joints: { elbow: 90 },  voice: 'Lower with control' },
+      ],
+      checkAngles: function(lm) {
+        var elbow = (calcAngle(lm[LM.leftShoulder], lm[LM.leftElbow], lm[LM.leftWrist]) +
+                     calcAngle(lm[LM.rightShoulder], lm[LM.rightElbow], lm[LM.rightWrist])) / 2;
+        return { elbow: elbow };
+      },
+      cues: { elbow: 'Press higher — lock out overhead', trunk: "Brace your core — don't arch" },
+      forceArrows: [],
+    },
+
+    PRESS_HORIZONTAL: {
+      name: 'Bench/Floor Press',
+      bodyOrientation: 'supine',
+      cameraPosition: { view: 'side', instruction: 'Place camera to your side at bench height. Full arm range must be visible.' },
+      setupCues: [
+        'Lie on your back on the bench or floor.',
+        'Hands slightly wider than shoulder width.',
+        'Feet flat on the floor. Lower back with a natural arch.',
+        'Lower the weight to your chest. Press straight up.',
+      ],
+      stanceCheck: {
+        wristToShoulderRatio: { min: 0.8, max: 1.6 },
+        shoulderShrug: true,
+        label: 'Hands slightly wider than shoulders',
+      },
+      phases: [
+        { name: 'top',   duration: 0,    joints: { elbow: 170 }, voice: 'Arms extended' },
+        { name: 'down',  duration: 3000, joints: { elbow: 90 },  voice: 'Lower to your chest' },
+        { name: 'hold',  duration: 1000, joints: { elbow: 90 },  voice: 'Hold at the bottom' },
+        { name: 'up',    duration: 2000, joints: { elbow: 170 }, voice: 'Press back up' },
+      ],
+      checkAngles: function(lm) {
+        if (lm[LM.leftHip].visibility !== undefined && lm[LM.leftHip].visibility < 0.4) {
+          return { elbow: 135 };
+        }
+        var elbow = (calcAngle(lm[LM.leftShoulder], lm[LM.leftElbow], lm[LM.leftWrist]) +
+                     calcAngle(lm[LM.rightShoulder], lm[LM.rightElbow], lm[LM.rightWrist])) / 2;
+        return { elbow: elbow };
+      },
+      cues: { elbow: 'Control the bar path' },
+      forceArrows: [],
+    },
+
+    ROW: {
+      name: 'Row',
+      bodyOrientation: 'standing',
+      cameraPosition: { view: 'side', instruction: 'Place camera to your side. Your full arm range must be visible.' },
+      setupCues: [
+        'Hinge forward slightly at the hips. Back flat.',
+        'Arms hanging straight down toward the floor.',
+        'Shoulders down and back — not shrugged.',
+        'Pull your elbow straight back. Keep it close to your body.',
+      ],
+      stanceCheck: {
+        ankleToShoulderRatio: { min: 0.4, max: 1.2 },
+        maxFootRotation: 0.18,
+        label: 'Feet hip width, slight forward lean',
+      },
+      phases: [
+        { name: 'start',  duration: 0,    joints: { elbow: 170 }, voice: 'Arms extended' },
+        { name: 'pull',   duration: 2000, joints: { elbow: 60 },  voice: 'Pull your elbow back' },
+        { name: 'hold',   duration: 1000, joints: { elbow: 60 },  voice: 'Squeeze your back' },
+        { name: 'return', duration: 2000, joints: { elbow: 170 }, voice: 'Lower with control' },
+      ],
+      checkAngles: function(lm) {
+        // Use the arm that is MORE bent (the pulling arm — for unilateral rows)
+        var leftElbow  = calcAngle(lm[LM.leftShoulder],  lm[LM.leftElbow],  lm[LM.leftWrist]);
+        var rightElbow = calcAngle(lm[LM.rightShoulder], lm[LM.rightElbow], lm[LM.rightWrist]);
+        var elbow = Math.min(leftElbow, rightElbow);  // more bent = smaller angle = working arm
+        return { elbow: elbow };
+      },
+      cues: { elbow: 'Pull your elbow further back' },
+      forceArrows: [
+        { joint: 11, dir: { x: 0, y: 0.05 }, label: 'Drive your elbow toward your hip' },
+        { joint: 12, dir: { x: 0, y: 0.05 }, label: 'Drive your elbow toward your hip' },
+      ],
+    },
+
+    HANG_HOLD: {
+      name: 'Dead Hang',
+      bodyOrientation: 'hanging',
+      cameraPosition: { view: 'front', instruction: 'Place camera in front of you showing your full body hanging.' },
+      setupCues: [
+        'Grip the bar just outside shoulder width.',
+        'Let your arms fully extend. Feel the stretch.',
+        'Pull your shoulders down and back — do not shrug.',
+        'Breathe steadily. Just hang.',
+      ],
+      stanceCheck: {
+        wristToShoulderRatio: { min: 0.7, max: 1.5 },
+        shoulderShrug: true,
+        label: 'Hands shoulder width, shoulders pulled down',
+      },
+      phases: [
+        { name: 'hold', duration: 0, joints: { elbow: 175 }, voice: 'Hang — arms extended' },
+      ],
+      checkAngles: function(lm) {
+        var elbow = (calcAngle(lm[LM.leftShoulder], lm[LM.leftElbow], lm[LM.leftWrist]) +
+                     calcAngle(lm[LM.rightShoulder], lm[LM.rightElbow], lm[LM.rightWrist])) / 2;
+        return { elbow: elbow };
+      },
+      cues: { elbow: 'Extend your arms fully' },
+      forceArrows: [
+        { joint: 11, dir: { x: 0, y: 0.06 }, label: 'Pull your shoulder blades down' },
+        { joint: 12, dir: { x: 0, y: 0.06 }, label: 'Pull your shoulder blades down' },
+      ],
+    },
+
+  };  // end EXERCISE_PHASES
+
+  // ── Adjust target angles based on patient capability level ──
+  (function() {
+    // Squat depth: Level 1-2 = quarter squat (120°), Level 3 = parallel (105°), Level 4-5 = full (90°)
+    var squatDepth = CAPABILITY_LEVEL <= 2 ? 120 : (CAPABILITY_LEVEL <= 3 ? 105 : 90);
+    if (EXERCISE_PHASES.SQUAT) {
+      EXERCISE_PHASES.SQUAT.phases.forEach(function(p) {
+        if (p.joints.knee !== undefined && p.joints.knee < 175) {
+          p.joints.knee = squatDepth;
+          p.joints.hip = squatDepth;
+        }
+      });
+    }
+    if (EXERCISE_PHASES.SQUAT_SINGLE) {
+      EXERCISE_PHASES.SQUAT_SINGLE.phases.forEach(function(p) {
+        if (p.joints.workingKnee !== undefined && p.joints.workingKnee < 175) {
+          p.joints.workingKnee = squatDepth;
+          if (p.joints.hip !== undefined && p.joints.hip < 175) {
+            p.joints.hip = squatDepth;
+          }
+        }
+      });
+    }
+    var lungeDepth = CAPABILITY_LEVEL <= 2 ? 110 : (CAPABILITY_LEVEL <= 3 ? 100 : 90);
+    if (EXERCISE_PHASES.LUNGE) {
+      EXERCISE_PHASES.LUNGE.phases.forEach(function(p) {
+        if (p.joints.knee !== undefined && p.joints.knee < 170) {
+          p.joints.knee = lungeDepth;
+        }
+      });
+    }
+    var pushDepth = CAPABILITY_LEVEL <= 2 ? 120 : (CAPABILITY_LEVEL <= 3 ? 100 : 90);
+    if (EXERCISE_PHASES.PUSH_UP) {
+      EXERCISE_PHASES.PUSH_UP.phases.forEach(function(p) {
+        if (p.joints.elbow !== undefined && p.joints.elbow < 175) {
+          p.joints.elbow = pushDepth;
+        }
+      });
+    }
+  })();
+
+
+  // (EXERCISE_TEMPLATE_MAP follows — kept intact, used by EXERCISE_TYPE_MAP below)
+
+
+
+  const EXERCISE_TEMPLATE_MAP = {
+    // SQUAT_BILATERAL (25)
+    'full_squats': 'SQUAT_BILATERAL', 'partial_squats': 'SQUAT_BILATERAL', 'box_squat': 'SQUAT_BILATERAL',
+    'goblet_squat': 'SQUAT_BILATERAL', 'sit_to_stand': 'SQUAT_BILATERAL', 'wall_sit': 'PLANK_FRONT',
+    'heel_elevated_squat': 'SQUAT_BILATERAL', 'pause_squat': 'SQUAT_BILATERAL', 'prisoner_squat': 'SQUAT_BILATERAL',
+    'sumo_squat': 'SQUAT_BILATERAL', 'tempo_squat': 'SQUAT_BILATERAL', 'squat_pulse': 'SQUAT_BILATERAL',
+    'hindu_squat': 'SQUAT_BILATERAL', 'spanish_squat': 'SQUAT_BILATERAL', 'decline_squats': 'SQUAT_BILATERAL',
+    'mini_squats_with_band': 'SQUAT_BILATERAL', 'bosu_squat': 'SQUAT_BILATERAL', 'sissy_squat': 'SQUAT_BILATERAL',
+    'cossack_squat': 'SQUAT_BILATERAL', 'double_leg_balance': 'BALANCE_SINGLE', 'bosu_balance': 'BALANCE_SINGLE',
+    'knee_extension_sitting': 'SQUAT_BILATERAL', 'short_arc_quad': 'SQUAT_BILATERAL',
+    'isometric_quad_set': 'STRETCH_MOBILITY', 'terminal_knee_extension': 'SQUAT_BILATERAL',
+
+    // SQUAT_SINGLE (5)
+    'pistol_squat': 'SQUAT_SINGLE', 'single_leg_squats': 'SQUAT_SINGLE', 'single_leg_squat_to_box': 'SQUAT_SINGLE',
+    'skater_squat': 'SQUAT_SINGLE', 'bulgarian_split_squats': 'LUNGE_SPLIT',
+
+    // JUMP_LANDING (14)
+    'jump_squats': 'JUMP_LANDING', 'box_jumps': 'JUMP_LANDING', 'broad_jump': 'JUMP_LANDING',
+    'depth_jump': 'JUMP_LANDING', 'tuck_jumps': 'JUMP_LANDING', 'squat_jump_turn': 'JUMP_LANDING',
+    'hurdle_hop': 'JUMP_LANDING', 'high_knees': 'JUMP_LANDING', 'jumping_jacks': 'JUMP_LANDING',
+    'sprint_in_place': 'JUMP_LANDING', 'jumping_rope_simulation': 'JUMP_LANDING',
+    'marching_on_spot': 'JUMP_LANDING', 'burpees': 'JUMP_LANDING', 'butt_kicks': 'JUMP_LANDING',
+
+    // PUSH_UP (28)
+    'push_ups': 'PUSH_UP', 'wall_push_up': 'PUSH_UP', 'knee_push_up': 'PUSH_UP',
+    'incline_push_up': 'PUSH_UP', 'decline_push_up': 'PUSH_UP', 'diamond_push_up': 'PUSH_UP',
+    'close_grip_push_up': 'PUSH_UP', 'wide_grip_push_up': 'PUSH_UP', 'archer_push_up': 'PUSH_UP',
+    'staggered_push_up': 'PUSH_UP', 'spiderman_push_up': 'PUSH_UP', 'shoulder_tap_push_up': 'PUSH_UP',
+    'hindu_push_up': 'PUSH_UP', 'pike_push_up': 'PRESS_VERTICAL', 'pike_push_up_elevated': 'PRESS_VERTICAL',
+    'explosive_push_up': 'PUSH_UP', 'clapping_push_up': 'PUSH_UP', 'drop_push_up': 'PUSH_UP',
+    'negative_push_up': 'PUSH_UP', 'box_push_up': 'PUSH_UP', 'ring_push_up': 'PUSH_UP',
+    'push_up_plus': 'PUSH_UP', 'pseudo_planche_push_up': 'PUSH_UP', 'typewriter_push_up': 'PUSH_UP',
+    'single_arm_push_up_progression': 'PUSH_UP', 'elevated_push_up': 'PUSH_UP',
+    'mountain_climbers': 'PUSH_UP', 'serratus_wall_push': 'PUSH_UP',
+
+    // PLANK_FRONT (12)
+    'planks': 'PLANK_FRONT', 'plank_shoulder_tap': 'PLANK_FRONT', 'single_arm_plank': 'PLANK_FRONT',
+    'single_arm_single_leg_plank': 'PLANK_FRONT', 'hollow_body_hold': 'PLANK_FRONT',
+    'hollow_body_rock': 'PLANK_FRONT', 'planche_lean': 'PLANK_FRONT', 'handstand_wall_hold': 'PLANK_FRONT',
+    'wall_handstand_push_up': 'PRESS_VERTICAL', 'l_sit_floor': 'PLANK_FRONT',
+    'ab_wheel_rollout': 'PLANK_FRONT', 'dragon_flag_progression': 'PLANK_FRONT',
+
+    // PLANK_SIDE (5)
+    'side_plank': 'PLANK_SIDE', 'side_plank_hip_dip': 'PLANK_SIDE', 'side_plank_rotation': 'PLANK_SIDE',
+    'copenhagen_plank': 'PLANK_SIDE', 'copenhagen_with_movement': 'PLANK_SIDE',
+
+    // HINGE_BILATERAL (23)
+    'glute_bridge': 'HINGE_BILATERAL', 'hip_thrust_bodyweight': 'HINGE_BILATERAL',
+    'hip_thrust_banded': 'HINGE_BILATERAL', 'good_morning': 'HINGE_BILATERAL',
+    'deadlift_dumbbell': 'HINGE_BILATERAL', 'bodyweight_rdl': 'HINGE_BILATERAL',
+    'banded_rdl': 'HINGE_BILATERAL', 'hip_hinge_wall': 'HINGE_BILATERAL',
+    'prone_hip_extension': 'STRETCH_MOBILITY', 'reverse_hyperextension': 'HINGE_BILATERAL',
+    'sliding_leg_curl': 'HINGE_BILATERAL', 'seated_hamstring_curl': 'HINGE_BILATERAL',
+    'hamstring_curls_standing': 'HINGE_BILATERAL', 'nordic_hamstring_curl': 'HINGE_BILATERAL',
+    'nordic_curl_weighted': 'HINGE_BILATERAL', 'medicine_ball_slam': 'HINGE_BILATERAL',
+    'straight_leg_raises': 'STRETCH_MOBILITY', 'clamshells': 'STRETCH_MOBILITY',
+    'hip_abduction_sideline': 'STRETCH_MOBILITY', 'hip_abduction_standing': 'HINGE_BILATERAL',
+    'lateral_band_walks': 'HINGE_BILATERAL', 'heel_slides': 'STRETCH_MOBILITY',
+    'seated_hip_flexion': 'STRETCH_MOBILITY',
+
+    // HINGE_SINGLE (5)
+    'single_leg_rdl': 'HINGE_SINGLE', 'single_leg_glute_bridge': 'HINGE_SINGLE',
+    'single_leg_hip_thrust': 'HINGE_SINGLE', 'b_stance_rdl': 'HINGE_SINGLE',
+    'single_leg_slider_curl': 'HINGE_SINGLE',
+
+    // LUNGE_SPLIT (18)
+    'split_squat_static': 'LUNGE_SPLIT', 'lunges': 'LUNGE_SPLIT', 'reverse_lunges': 'LUNGE_SPLIT',
+    'walking_lunge': 'LUNGE_SPLIT', 'curtsy_lunge': 'LUNGE_SPLIT', 'slider_reverse_lunge': 'LUNGE_SPLIT',
+    'deficit_reverse_lunge': 'LUNGE_SPLIT', 'clock_lunge': 'LUNGE_SPLIT', 'lateral_lunges': 'LUNGE_SPLIT',
+    'step_ups': 'LUNGE_SPLIT', 'step_up_with_knee_drive': 'LUNGE_SPLIT', 'step_downs': 'LUNGE_SPLIT',
+    'side_step_ups': 'LUNGE_SPLIT', 'side_step_downs': 'LUNGE_SPLIT', 'lateral_step_down': 'LUNGE_SPLIT',
+    'skipping_lunge': 'LUNGE_SPLIT', 'plyometric_lunge': 'LUNGE_SPLIT', 'split_squat_jump': 'LUNGE_SPLIT',
+
+    // BALANCE_SINGLE (25)
+    'single_leg_balance': 'BALANCE_SINGLE', 'single_leg_eyes_closed': 'BALANCE_SINGLE',
+    'single_leg_reach': 'BALANCE_SINGLE', 'star_excursion': 'BALANCE_SINGLE',
+    'clock_reaches': 'BALANCE_SINGLE', 'tandem_walking': 'BALANCE_SINGLE',
+    'backward_walking': 'BALANCE_SINGLE', 'sideways_walking': 'BALANCE_SINGLE',
+    'lateral_gait_training': 'BALANCE_SINGLE', 'perturbation_training': 'BALANCE_SINGLE',
+    'single_leg_landing': 'BALANCE_SINGLE', 'single_leg_hop_forward': 'BALANCE_SINGLE',
+    'single_leg_hop_lateral': 'BALANCE_SINGLE', 'single_leg_hop_and_stick': 'BALANCE_SINGLE',
+    'single_leg_bound': 'BALANCE_SINGLE', 'lateral_bound': 'BALANCE_SINGLE',
+    'lateral_bound_and_stick': 'BALANCE_SINGLE', 'lateral_Hops': 'BALANCE_SINGLE',
+    'side_to_side_hops': 'BALANCE_SINGLE', 'skaters': 'BALANCE_SINGLE',
+    'power_skip': 'BALANCE_SINGLE', 'sprint_start': 'BALANCE_SINGLE',
+    'shuttle_run': 'BALANCE_SINGLE', 'change_of_direction': 'BALANCE_SINGLE',
+    'supine_hip_abduction': 'STRETCH_MOBILITY',
+
+    // PULL_HORIZONTAL — band pull-apart type (arm spread measurement)
+    'band_pull_apart': 'PULL_HORIZONTAL', 'face_pull_band': 'PULL_HORIZONTAL',
+    'prone_y_t_w': 'PULL_HORIZONTAL', 'prone_trap_raise': 'PULL_HORIZONTAL',
+    'side_lying_external_rotation': 'PULL_HORIZONTAL', 'isometric_shoulder_er': 'PULL_HORIZONTAL',
+
+    // ROW_HORIZONTAL — elbow pull-back type (elbow angle measurement)
+    'dumbbell_rowing': 'ROW_HORIZONTAL', 'renegade_row': 'ROW_HORIZONTAL',
+    'inverted_row': 'ROW_HORIZONTAL', 'ring_row': 'ROW_HORIZONTAL',
+    'australian_row': 'ROW_HORIZONTAL', 'table_row': 'ROW_HORIZONTAL',
+    'negative_table_row': 'ROW_HORIZONTAL', 'elevated_table_row': 'ROW_HORIZONTAL',
+    'doorframe_row': 'ROW_HORIZONTAL', 'bedsheet_row': 'ROW_HORIZONTAL',
+    'single_arm_towel_row': 'ROW_HORIZONTAL', 'towel_row': 'ROW_HORIZONTAL',
+    'bicep_curls': 'ROW_HORIZONTAL',
+
+    // HANG_PULL (15)
+    'dead_hang': 'HANG_HOLD', 'scapular_pull': 'HANG_PULL', 'negative_pull_up': 'HANG_PULL',
+    'jumping_pull_up': 'HANG_PULL', 'band_assisted_pull_up': 'HANG_PULL', 'chin_up': 'HANG_PULL',
+    'full_pull_up': 'HANG_PULL', 'close_grip_pull_up': 'HANG_PULL', 'archer_pull_up': 'HANG_PULL',
+    'commando_pull_up': 'HANG_PULL', 'l_sit_pull_up': 'HANG_PULL', 'weighted_pull_up': 'HANG_PULL',
+    'muscle_up_progression': 'HANG_PULL', 'hanging_leg_raise': 'HANG_PULL', 'superman_hold': 'PLANK_FRONT',
+
+    // DEAD_BUG (3)
+    'dead_bug': 'DEAD_BUG', 'single_leg_dead_bug': 'DEAD_BUG', 'bird_dog': 'DEAD_BUG',
+
+    // ROTATION (9)
+    'russian_twist_bw': 'ROTATION', 'bicycle_crunch': 'ROTATION', 'pallof_press_isometric': 'ROTATION',
+    'pallof_press_dynamic': 'ROTATION', 'band_woodchop': 'ROTATION', 'rotational_throw': 'ROTATION',
+    'rotational_swings': 'ROTATION', 'windshield_wiper': 'ROTATION', 'turkish_get_up': 'ROTATION',
+
+    // CARRY_UPRIGHT (7)
+    'farmer_carry': 'CARRY_UPRIGHT', 'suitcase_carry': 'CARRY_UPRIGHT', 'overhead_carry': 'CARRY_UPRIGHT',
+    'waiter_carry': 'CARRY_UPRIGHT', 'bottoms_up_carry': 'CARRY_UPRIGHT',
+    'waiter_farmer_combined': 'CARRY_UPRIGHT', 'single_arm_farmer_heavy': 'CARRY_UPRIGHT',
+
+    // CRAWL (6)
+    'bear_crawl': 'CRAWL', 'bear_crawl_cardio': 'CRAWL', 'bear_crawl_with_reach': 'CRAWL',
+    'lateral_bear_crawl': 'CRAWL', 'crab_walk': 'CRAWL', 'crawl_drag': 'CRAWL',
+
+    // STRETCH_MOBILITY (43)
+    'hip_flexor_stretch': 'STRETCH_MOBILITY', 'hamstring_stretch': 'STRETCH_MOBILITY',
+    'pigeon_stretch': 'STRETCH_MOBILITY', 'frog_stretch': 'STRETCH_MOBILITY',
+    'groin_stretch_butterfly': 'STRETCH_MOBILITY', 'quadriceps_stretch': 'STRETCH_MOBILITY',
+    'calf_stretch': 'STRETCH_MOBILITY', 'hip_cars': 'STRETCH_MOBILITY',
+    'shoulder_cars': 'STRETCH_MOBILITY', 'shoulder_stretch': 'STRETCH_MOBILITY',
+    'chest_stretch': 'STRETCH_MOBILITY', 'wrist_forearm_stretch': 'STRETCH_MOBILITY',
+    'it_band_stretch': 'STRETCH_MOBILITY', 'cat_cow': 'STRETCH_MOBILITY',
+    'foam_rolling': 'STRETCH_MOBILITY', 'pnf_hamstring_stretch': 'STRETCH_MOBILITY',
+    'loaded_progressive_stretch': 'STRETCH_MOBILITY', 'ninety_ninety_hip_switch': 'STRETCH_MOBILITY',
+    'thoracic_rotation': 'STRETCH_MOBILITY', 'seated_spinal_twist': 'STRETCH_MOBILITY',
+    'trunk_rotation_stretch': 'STRETCH_MOBILITY', 'prone_scorpion': 'STRETCH_MOBILITY',
+    'worlds_greatest_stretch': 'STRETCH_MOBILITY', 'adductor_rock': 'STRETCH_MOBILITY',
+    'wall_angel': 'STRETCH_MOBILITY', 'wall_slide': 'STRETCH_MOBILITY',
+    'banded_shoulder_dislocate': 'STRETCH_MOBILITY', 'scapular_setting': 'STRETCH_MOBILITY',
+    'chin_tuck': 'STRETCH_MOBILITY', 'deep_neck_flexor_activation': 'STRETCH_MOBILITY',
+    'pendulum_exercise': 'STRETCH_MOBILITY', 'knee_circles': 'STRETCH_MOBILITY',
+    'ankle_dorsiflexion_wall': 'STRETCH_MOBILITY', 'ankle_pumps': 'STRETCH_MOBILITY',
+    'patellar_mobilisation': 'STRETCH_MOBILITY', 'heel_drop': 'STRETCH_MOBILITY',
+    'quad_set_with_shr': 'STRETCH_MOBILITY', 'static_glutei': 'STRETCH_MOBILITY',
+    'static_hip_adductors': 'STRETCH_MOBILITY', 'static_quadriceps': 'STRETCH_MOBILITY',
+    'isometric_shoulder_ir': 'STRETCH_MOBILITY', 'dip_progression': 'PRESS_HORIZONTAL',
+    'tricep_extensions': 'STRETCH_MOBILITY',
+
+    // ══════════════════════════════════════════════════════════
+    // BATCH 2 — 149 exercises that were missing from mapping
+    // ══════════════════════════════════════════════════════════
+
+    // SQUAT_BILATERAL
+    'partial_squats': 'SQUAT_BILATERAL', 'box_squat': 'SQUAT_BILATERAL',
+    'sit_to_stand': 'SQUAT_BILATERAL', 'wall_sit': 'PLANK_FRONT',
+    'pause_squat': 'SQUAT_BILATERAL', 'prisoner_squat': 'SQUAT_BILATERAL',
+    'tempo_squat': 'SQUAT_BILATERAL', 'squat_pulse': 'SQUAT_BILATERAL',
+    'spanish_squat': 'SQUAT_BILATERAL', 'decline_squats': 'SQUAT_BILATERAL',
+    'bosu_squat': 'SQUAT_BILATERAL', 'sissy_squat': 'SQUAT_BILATERAL',
+    'double_leg_balance': 'BALANCE_SINGLE', 'bosu_balance': 'BALANCE_SINGLE',
+    'short_arc_quad': 'SQUAT_BILATERAL', 'terminal_knee_extension': 'SQUAT_BILATERAL',
+
+    // SQUAT_SINGLE
+    'single_leg_squats': 'SQUAT_SINGLE', 'single_leg_squat_to_box': 'SQUAT_SINGLE',
+    'bulgarian_split_squats': 'LUNGE_SPLIT',
+
+    // JUMP_LANDING
+    'box_jumps': 'JUMP_LANDING', 'broad_jump': 'JUMP_LANDING',
+    'tuck_jumps': 'JUMP_LANDING', 'squat_jump_turn': 'JUMP_LANDING',
+    'high_knees': 'JUMP_LANDING', 'jumping_jacks': 'JUMP_LANDING',
+    'jumping_rope_simulation': 'JUMP_LANDING', 'burpees': 'JUMP_LANDING',
+    'butt_kicks': 'JUMP_LANDING',
+
+    // PUSH_UP
+    'wall_push_up': 'PUSH_UP', 'knee_push_up': 'PUSH_UP',
+    'decline_push_up': 'PUSH_UP', 'diamond_push_up': 'PUSH_UP',
+    'wide_grip_push_up': 'PUSH_UP', 'archer_push_up': 'PUSH_UP',
+    'spiderman_push_up': 'PUSH_UP', 'shoulder_tap_push_up': 'PUSH_UP',
+    'pike_push_up': 'PRESS_VERTICAL', 'pike_push_up_elevated': 'PRESS_VERTICAL',
+    'clapping_push_up': 'PUSH_UP', 'drop_push_up': 'PUSH_UP',
+    'box_push_up': 'PUSH_UP', 'ring_push_up': 'PUSH_UP',
+    'pseudo_planche_push_up': 'PUSH_UP', 'typewriter_push_up': 'PUSH_UP',
+    'elevated_push_up': 'PUSH_UP', 'serratus_wall_push': 'PUSH_UP',
+
+    // PLANK_FRONT
+    'plank_shoulder_tap': 'PLANK_FRONT', 'single_arm_plank': 'PLANK_FRONT',
+    'hollow_body_hold': 'PLANK_FRONT', 'planche_lean': 'PLANK_FRONT',
+    'handstand_wall_hold': 'PLANK_FRONT', 'l_sit_floor': 'PLANK_FRONT',
+    'dragon_flag_progression': 'PLANK_FRONT',
+
+    // PLANK_SIDE
+    'side_plank_hip_dip': 'PLANK_SIDE', 'side_plank_rotation': 'PLANK_SIDE',
+    'copenhagen_with_movement': 'PLANK_SIDE',
+
+    // HINGE_BILATERAL
+    'hip_thrust_bodyweight': 'HINGE_BILATERAL', 'good_morning': 'HINGE_BILATERAL',
+    'bodyweight_rdl': 'HINGE_BILATERAL', 'hip_hinge_wall': 'HINGE_BILATERAL',
+    'reverse_hyperextension': 'HINGE_BILATERAL', 'seated_hamstring_curl': 'HINGE_BILATERAL',
+    'nordic_hamstring_curl': 'HINGE_BILATERAL', 'medicine_ball_slam': 'HINGE_BILATERAL',
+    'clamshells': 'STRETCH_MOBILITY', 'hip_abduction_standing': 'HINGE_BILATERAL',
+    'heel_slides': 'STRETCH_MOBILITY',
+
+    // HINGE_SINGLE
+    'b_stance_rdl': 'HINGE_SINGLE', 'single_leg_glute_bridge': 'HINGE_SINGLE',
+
+    // LUNGE_SPLIT
+    'lunges': 'LUNGE_SPLIT', 'reverse_lunges': 'LUNGE_SPLIT',
+    'curtsy_lunge': 'LUNGE_SPLIT', 'slider_reverse_lunge': 'LUNGE_SPLIT',
+    'clock_lunge': 'LUNGE_SPLIT', 'lateral_lunges': 'LUNGE_SPLIT',
+    'lateral_step_down': 'LUNGE_SPLIT', 'step_downs': 'LUNGE_SPLIT',
+    'step_up_with_knee_drive': 'LUNGE_SPLIT', 'side_step_downs': 'LUNGE_SPLIT',
+    'plyometric_lunge': 'LUNGE_SPLIT', 'split_squat_jump': 'LUNGE_SPLIT',
+
+    // BALANCE_SINGLE
+    'single_leg_eyes_closed': 'BALANCE_SINGLE', 'star_excursion': 'BALANCE_SINGLE',
+    'tandem_walking': 'BALANCE_SINGLE', 'sideways_walking': 'BALANCE_SINGLE',
+    'perturbation_training': 'BALANCE_SINGLE', 'single_leg_hop_forward': 'BALANCE_SINGLE',
+    'single_leg_hop_and_stick': 'BALANCE_SINGLE', 'lateral_bound': 'BALANCE_SINGLE',
+    'lateral_Hops': 'BALANCE_SINGLE', 'skaters': 'BALANCE_SINGLE',
+    'sprint_start': 'BALANCE_SINGLE', 'change_of_direction': 'BALANCE_SINGLE',
+
+    // PULL_HORIZONTAL
+    'face_pull_band': 'PULL_HORIZONTAL',
+    'prone_trap_raise': 'PULL_HORIZONTAL', 'side_lying_external_rotation': 'PULL_HORIZONTAL',
+
+    // ROW_HORIZONTAL
+    'renegade_row': 'ROW_HORIZONTAL', 'ring_row': 'ROW_HORIZONTAL',
+    'elevated_table_row': 'ROW_HORIZONTAL', 'bedsheet_row': 'ROW_HORIZONTAL',
+    'towel_row': 'ROW_HORIZONTAL',
+
+    // HANG_PULL
+    'scapular_pull': 'HANG_PULL', 'negative_pull_up': 'HANG_PULL',
+    'band_assisted_pull_up': 'HANG_PULL', 'chin_up': 'HANG_PULL',
+    'close_grip_pull_up': 'HANG_PULL', 'archer_pull_up': 'HANG_PULL',
+    'l_sit_pull_up': 'HANG_PULL', 'weighted_pull_up': 'HANG_PULL',
+    'hanging_leg_raise': 'HANG_PULL', 'superman_hold': 'PLANK_FRONT',
+
+    // DEAD_BUG
+    'single_leg_dead_bug': 'DEAD_BUG', 'bird_dog': 'DEAD_BUG',
+
+    // ROTATION
+    'bicycle_crunch': 'ROTATION', 'pallof_press_isometric': 'ROTATION',
+    'band_woodchop': 'ROTATION', 'rotational_throw': 'ROTATION',
+    'windshield_wiper': 'ROTATION', 'turkish_get_up': 'ROTATION',
+
+    // CARRY_UPRIGHT
+    'suitcase_carry': 'CARRY_UPRIGHT', 'overhead_carry': 'CARRY_UPRIGHT',
+    'bottoms_up_carry': 'CARRY_UPRIGHT', 'single_arm_farmer_heavy': 'CARRY_UPRIGHT',
+
+    // CRAWL
+    'bear_crawl_cardio': 'CRAWL', 'bear_crawl_with_reach': 'CRAWL',
+    'crab_walk': 'CRAWL', 'crawl_drag': 'CRAWL',
+
+    // STRETCH_MOBILITY
+    'hamstring_stretch': 'STRETCH_MOBILITY', 'frog_stretch': 'STRETCH_MOBILITY',
+    'quadriceps_stretch': 'STRETCH_MOBILITY', 'hip_cars': 'STRETCH_MOBILITY',
+    'shoulder_stretch': 'STRETCH_MOBILITY', 'wrist_forearm_stretch': 'STRETCH_MOBILITY',
+    'cat_cow': 'STRETCH_MOBILITY', 'pnf_hamstring_stretch': 'STRETCH_MOBILITY',
+    'ninety_ninety_hip_switch': 'STRETCH_MOBILITY', 'seated_spinal_twist': 'STRETCH_MOBILITY',
+    'prone_scorpion': 'STRETCH_MOBILITY', 'adductor_rock': 'STRETCH_MOBILITY',
+    'wall_slide': 'STRETCH_MOBILITY', 'scapular_setting': 'STRETCH_MOBILITY',
+    'deep_neck_flexor_activation': 'STRETCH_MOBILITY', 'knee_circles': 'STRETCH_MOBILITY',
+    'ankle_pumps': 'STRETCH_MOBILITY', 'heel_drop': 'STRETCH_MOBILITY',
+    'static_glutei': 'STRETCH_MOBILITY', 'static_quadriceps': 'STRETCH_MOBILITY',
+    'dip_progression': 'PRESS_HORIZONTAL', 'loaded_progressive_stretch': 'STRETCH_MOBILITY',
+    'table_row': 'ROW_HORIZONTAL',
+    'pike_push_up': 'PRESS_VERTICAL',
+    'pike_push_up_elevated': 'PRESS_VERTICAL',
+    'wall_handstand_push_up': 'PRESS_VERTICAL',
+    'nordic_curl_partner': 'HINGE_BILATERAL',
+    'single_arm_pull_up_prog': 'HANG_PULL',
+    'single_arm_push_up_prog': 'PUSH_UP',
+
+    // ══════════════════════════════════════════════════════════
+    // FOOTBALL MODULE — 18 new exercises
+    // ══════════════════════════════════════════════════════════
+
+    // Loaded strength (require barbell/dumbbell/kettlebell)
+    'barbell_back_squat': 'SQUAT_BILATERAL',
+    'barbell_front_squat': 'SQUAT_BILATERAL',
+    'barbell_rdl': 'HINGE_BILATERAL',
+    'trap_bar_deadlift': 'HINGE_BILATERAL',
+    'barbell_hip_thrust': 'HINGE_BILATERAL',
+    'kettlebell_swing': 'HINGE_BILATERAL',
+
+    // Calf / Achilles tendon loading
+    'heavy_calf_raise': 'STRETCH_MOBILITY',
+    'single_leg_calf_raise': 'STRETCH_MOBILITY',
+
+    // Plyometric — football specific
+    'pogo_jump_single_leg': 'JUMP_LANDING',
+    'drop_landing': 'JUMP_LANDING',
+    'altitude_drop_landing': 'JUMP_LANDING',
+    'continuous_hurdle_hops': 'JUMP_LANDING',
+
+    // Sprint mechanics
+    'a_skip_drill': 'JUMP_LANDING',
+    'b_skip_drill': 'JUMP_LANDING',
+    'wall_drive_hold': 'PLANK_FRONT',
+
+    // Agility
+    'lateral_shuffle_drill': 'BALANCE_SINGLE',
+    'carioca_drill': 'BALANCE_SINGLE',
+
+    // Loaded lunge
+    'dumbbell_walking_lunge': 'LUNGE_SPLIT',
+  };
+
+  // ============================================================================
+  // VOICE COACH — Browser Speech API
+  // ============================================================================
+
+  const VoiceCoach = {
+    enabled: true,
+    lastSpoken: '',
+    lastSpokenTime: 0,
+    cooldownMs: 3000,
+    repCooldownMs: 1500,
+
+    init: function() {
+      if (!('speechSynthesis' in window)) { this.enabled = false; return; }
+      var warmup = new SpeechSynthesisUtterance('');
+      warmup.volume = 0;
+      speechSynthesis.speak(warmup);
+    },
+
+    speak: function(text, priority) {
+      if (!this.enabled || !text) return;
+      var now = Date.now();
+      if (text === this.lastSpoken && (now - this.lastSpokenTime) < this.cooldownMs) return;
+      if (speechSynthesis.speaking && !priority) return;
+      if (priority && speechSynthesis.speaking) speechSynthesis.cancel();
+
+      var utt = new SpeechSynthesisUtterance(text);
+      utt.rate = priority ? 0.95 : 0.88; utt.pitch = 1.0; utt.volume = 0.9; utt.lang = 'en-IN';
+      var voices = speechSynthesis.getVoices();
+      var v = voices.find(function(v) { return v.lang === 'en-IN'; })
+           || voices.find(function(v) { return v.lang.startsWith('en') && v.name.includes('Female'); })
+           || voices.find(function(v) { return v.lang.startsWith('en'); });
+      if (v) utt.voice = v;
+      speechSynthesis.speak(utt);
+      VoiceCoach.lastSpokenTime = Date.now();
+      this.lastSpoken = text; this.lastSpokenTime = now;
+    },
+
+    cueAlignment: function(score, cueText) {
+      if (score >= 90) { this.speak('Beautiful. Hold it right there.', false); }
+      else if (score >= 75) { this.speak('Looking good. Just a little more.', false); }
+      else if (score >= 60) { this.speak("You're getting there. Keep going.", false); }
+      else if (cueText && score < 60) {
+        var clean = cueText.replace(/^[\u2713\u2717\uD83C\uDFAF\uD83D\uDC40] ?/, '');
+        if (clean) this.speak(clean, false);
+      }
+    },
+
+    announceRep: function(count, targetReps) {
+      var now = Date.now();
+      if ((now - this.lastSpokenTime) < this.repCooldownMs) return;
+      if (count === targetReps) { this.speak('Set complete! Great work.', true); }
+      else if (count === 1) { this.speak('Nice. One.', false); }
+      else if (count === 2) { this.speak('Two. Keep it up.', false); }
+      else if (count === targetReps - 2) { this.speak(count + '. Almost there.', false); }
+      else if (count === targetReps - 1) { this.speak('Last one. Give it everything.', true); }
+      else if (count % 5 === 0) { this.speak(count + '. Strong.', false); }
+      else { this.speak('' + count, false); }
+    },
+
+    announceHold: function(seconds) {
+      if (seconds === 5)  this.speak('Five seconds', false);
+      else if (seconds === 10) this.speak('Ten seconds. Keep holding.', false);
+      else if (seconds === 15) this.speak('Fifteen. Stay strong.', false);
+      else if (seconds === 20) this.speak('Twenty seconds.', false);
+      else if (seconds === 30) this.speak('Thirty seconds. Halfway if you can.', false);
+      else if (seconds === 45) this.speak('Forty five. Almost there.', false);
+      else if (seconds === 60) this.speak('One minute. Great hold.', true);
+      else if (seconds > 30 && seconds % 15 === 0) this.speak(seconds + ' seconds', false);
+    },
+
+    announceDemo: function(label) { this.speak(label, true); },
+
+    announceStart: function(name) {
+      this.speak('Next exercise. ' + name.replace(/_/g, ' ') + '.', true);
+    },
+
+    announceRest: function(seconds) {
+      this.speak('Rest. ' + seconds + ' seconds.', true);
+    },
+
+    stop: function() { if (speechSynthesis.speaking) speechSynthesis.cancel(); },
+
+    toggle: function() {
+      this.enabled = !this.enabled;
+      if (!this.enabled) this.stop();
+      return this.enabled;
+    }
+  };
+
+  // Tempo voice counting
+  let tempoVoiceInterval = null;
+
+  function startTempoVoice() {
+    if (tempoVoiceInterval) return;
+    var parts = TEMPO_PARTS.slice();
+    var LABELS = ['Down', 'Hold', 'Up', 'Top'];
+    var phaseIdx = 0;
+    var countdown = parts[0];
+    if (parts[0] > 0) VoiceCoach.speak(LABELS[0], true);
+    tempoVoiceInterval = setInterval(function() {
+      countdown--;
+      if (countdown > 0) {
+        VoiceCoach.speak('' + countdown, false);
+      } else {
+        phaseIdx = (phaseIdx + 1) % 4;
+        countdown = parts[phaseIdx];
+        while (countdown === 0 && phaseIdx < 3) { phaseIdx++; countdown = parts[phaseIdx]; }
+        if (countdown > 0) VoiceCoach.speak(LABELS[phaseIdx], true);
+      }
+    }, 1000);
+  }
+
+  function stopTempoVoice() {
+    if (tempoVoiceInterval) { clearInterval(tempoVoiceInterval); tempoVoiceInterval = null; }
+  }
+
+  function toggleVoice() {
+    var on = VoiceCoach.toggle();
+    document.getElementById('voiceIcon').className = on ? 'fas fa-volume-up' : 'fas fa-volume-mute';
+    document.getElementById('voiceToggle').title = on ? 'Voice on' : 'Voice off';
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    VoiceCoach.init();
+    if (speechSynthesis.onvoiceschanged !== undefined) {
+      speechSynthesis.onvoiceschanged = function() { VoiceCoach.init(); };
+    }
+    setTimeout(function() { VoiceCoach.announceStart(EXERCISE_NAME); }, 600);
+
+  });
+
+  // ============================================================================
+  // EXERCISE_TYPE_MAP — maps each exercise_id → EXERCISE_PHASES key
+  // ============================================================================
+
+  const EXERCISE_TYPE_MAP = {};
+  try { (function() {
+    var templateToType = {
+      'SQUAT_BILATERAL': 'SQUAT',   'SQUAT_SINGLE': 'SQUAT_SINGLE',
+      'PUSH_UP':         'PUSH_UP', 'PLANK_FRONT':  'PLANK', 'PLANK_SIDE': 'SIDE_PLANK',
+      'HINGE_BILATERAL': 'HINGE',   'HINGE_SINGLE': 'HINGE_SINGLE',
+      'LUNGE_SPLIT':     'LUNGE',   'DEAD_BUG':     'DEAD_BUG',
+      'PULL_HORIZONTAL': 'PULL',    'HANG_PULL':    'HANG',
+      'BALANCE_SINGLE':  'BALANCE', 'CARRY_UPRIGHT':'CARRY',
+      'CRAWL':           'CRAWL',   'STRETCH_MOBILITY': 'STRETCH',
+      'ROTATION':        'ROTATION','JUMP_LANDING':  'JUMP',
+      'PRESS_VERTICAL':   'PRESS_VERTICAL',
+      'PRESS_HORIZONTAL': 'PRESS_HORIZONTAL',
+      'HANG_HOLD': 'HANG_HOLD',
+      'ROW_HORIZONTAL':  'ROW',
+    };
+    for (var exId in EXERCISE_TEMPLATE_MAP) {
+      var tmpl = EXERCISE_TEMPLATE_MAP[exId];
+      EXERCISE_TYPE_MAP[exId] = templateToType[tmpl] || 'STRETCH';
+    }
+  })(); } catch(e) { console.error('EXERCISE_TYPE_MAP init error:', e); }
+
+  // Backward-compat stub so any lingering POSE_TARGETS reference doesn't crash
+  const POSE_TARGETS = EXERCISE_TYPE_MAP;
+
+  // ============================================================================
+  // GHOST ANIMATOR — State machine guiding the user through each rep
+  // ============================================================================
+
+  var ghostState = {
+    mode: 'DEMO',
+    currentPhaseIndex: 0,
+    phaseStartTime: 0,
+    repCount: 0,
+    matchFrames: 0,
+    MATCH_THRESHOLD: 15,
+    MATCH_FRAMES_NEEDED: (ASSESSMENT_MODE && ASSESSMENT_TYPE === 'max_reps') ? 1 : 8,
+    exerciseType: null,
+    exerciseDef: null,
+    totalSets: 3,
+    targetReps: 10,
+    isHoldExercise: false,
+    holdSeconds: 0,
+    holdInterval: null,
+    demoRepsDone: 0,
+    settleStartTime: 0,
+    stallStartTime: 0,
+    stallBaseScore: 0,
+    lastRepPartial: false,
+    adjustedTarget: false,
+    achievedAngles: null,
+    partialRomReps: 0,
+    ghostAnimProgress: 0,
+    calibrationFrames: 0,
+    CALIBRATION_NEEDED: 15,
+    _stanceWarnings: 0,
+    _lastMatchScore: 50,
+    referenceLm: null,
+    userHasMovedFromStart: false,
+    setupCueIndex: 0,
+    setupCueTime: 0,
+  };
+
+  function initGhostAnimator() {
+    var typeName = EXERCISE_TYPE_MAP[EXERCISE_ID];
+    if (!typeName) { ghostState.exerciseDef = null; return; }
+    ghostState.exerciseDef = EXERCISE_PHASES[typeName];
+    if (!ghostState.exerciseDef) { return; }
+    ghostState.exerciseType      = typeName;
+    ghostState.mode              = 'CALIBRATING';
+    ghostState.currentPhaseIndex = 0;
+    ghostState.phaseStartTime    = Date.now();
+    ghostState.repCount          = 0;
+    ghostState.demoRepsDone      = 0;
+    ghostState.isHoldExercise    = ghostState.exerciseDef.phases.length <= 1;
+    ghostState.holdSeconds       = 0;
+    ghostState.calibrationFrames = 0;
+
+    // Prepend exercise-specific cues from Django template (clone to avoid mutating shared type definition)
+    if (ghostState.exerciseDef.setupCues && (EXERCISE_FORM_CUES.length > 0 || MIND_MUSCLE_CUE)) {
+      var clonedDef = {};
+      for (var _ck in ghostState.exerciseDef) { clonedDef[_ck] = ghostState.exerciseDef[_ck]; }
+      var extraCues = [];
+      for (var _ci = 0; _ci < Math.min(2, EXERCISE_FORM_CUES.length); _ci++) {
+        extraCues.push(EXERCISE_FORM_CUES[_ci]);
+      }
+      if (MIND_MUSCLE_CUE) extraCues.push(MIND_MUSCLE_CUE);
+      clonedDef.setupCues = extraCues.concat(ghostState.exerciseDef.setupCues);
+      ghostState.exerciseDef = clonedDef;
+    }
+
+    var repsEl = document.querySelector('.reps-input');
+    ghostState.targetReps = repsEl ? (parseInt(repsEl.placeholder) || 10) : 10;
+  }
+
+  function getGhostCurrentTarget() {
+    if (!ghostState.exerciseDef) return null;
+    var phases = ghostState.exerciseDef.phases;
+    return phases[ghostState.currentPhaseIndex % phases.length];
+  }
+
+  function computeMatchScore(userAngles, targetJoints) {
+    var keys = Object.keys(targetJoints);
+    if (keys.length === 0) return 90;
+    var totalDiff = 0, count = 0;
+    for (var i = 0; i < keys.length; i++) {
+      var key    = keys[i];
+      var target = targetJoints[key];
+      var actual = userAngles[key];
+      if (actual === undefined) continue;
+      totalDiff += (target < 1) ? Math.abs(actual - target) * 500
+                                 : Math.abs(actual - target);
+      count++;
+    }
+    if (count === 0) return 90;
+    return Math.max(0, Math.min(100, 100 - (totalDiff / count) * 1.5));
+  }
+
+  function findWorstJoint(userAngles, targetJoints) {
+    var worstKey = null, worstDiff = 0;
+    for (var key in targetJoints) {
+      if (userAngles[key] === undefined) continue;
+      var diff = Math.abs(userAngles[key] - targetJoints[key]);
+      if (targetJoints[key] < 1) diff *= 500;
+      if (diff > worstDiff) { worstDiff = diff; worstKey = key; }
+    }
+    return worstKey;
+  }
+
+  function checkStanceWidth(lm, stanceCheck) {
+    if (!stanceCheck) return { ok: true, message: '' };
+
+    var shoulderW = Math.abs(lm[LM.leftShoulder].x - lm[LM.rightShoulder].x);
+    if (shoulderW < 0.01) return { ok: true, message: '' };
+
+    // === 1. Ankle-to-shoulder width ratio ===
+    if (stanceCheck.ankleToShoulderRatio) {
+      var ankleW = Math.abs(lm[LM.leftAnkle].x - lm[LM.rightAnkle].x);
+      var aRatio = ankleW / shoulderW;
+      // Add 30% tolerance to thresholds for MediaPipe jitter
+      var aMin = stanceCheck.ankleToShoulderRatio.min * 0.7;
+      var aMax = stanceCheck.ankleToShoulderRatio.max * 1.3;
+      if (aRatio < aMin) {
+        return { ok: false, message: stanceCheck.label + ' \u2014 feet too narrow' };
+      }
+      if (aRatio > aMax) {
+        return { ok: false, message: stanceCheck.label + ' \u2014 feet too wide' };
+      }
+    }
+
+    // === 2. Wrist-to-shoulder width ratio ===
+    if (stanceCheck.wristToShoulderRatio) {
+      var wristW = Math.abs(lm[LM.leftWrist].x - lm[LM.rightWrist].x);
+      var wRatio = wristW / shoulderW;
+      var wMin = stanceCheck.wristToShoulderRatio.min * 0.7;
+      var wMax = stanceCheck.wristToShoulderRatio.max * 1.3;
+      if (wRatio < wMin) {
+        return { ok: false, message: stanceCheck.label + ' \u2014 hands too narrow' };
+      }
+      if (wRatio > wMax) {
+        return { ok: false, message: stanceCheck.label + ' \u2014 hands too wide' };
+      }
+    }
+
+    // === 3. Foot rotation (heel-to-toe direction) ===
+    if (stanceCheck.maxFootRotation !== undefined) {
+      var leftHeel  = lm[LM.leftHeel];
+      var leftToe   = lm[LM.leftFootIndex];
+      var rightHeel = lm[LM.rightHeel];
+      var rightToe  = lm[LM.rightFootIndex];
+
+      if (leftHeel && leftToe && rightHeel && rightToe) {
+        var heelVis = (leftHeel.visibility  === undefined || leftHeel.visibility  > 0.4)
+                   && (rightHeel.visibility === undefined || rightHeel.visibility > 0.4);
+        var toeVis  = (leftToe.visibility   === undefined || leftToe.visibility   > 0.4)
+                   && (rightToe.visibility  === undefined || rightToe.visibility  > 0.4);
+
+        if (heelVis && toeVis) {
+          var leftRot  = Math.abs(leftToe.x  - leftHeel.x)  / shoulderW;
+          var rightRot = Math.abs(rightToe.x - rightHeel.x) / shoulderW;
+
+          var footThresh = stanceCheck.maxFootRotation * 1.5;  // 50% more tolerance
+          if (leftRot > footThresh || rightRot > footThresh) {
+            var side = leftRot > rightRot ? 'left' : 'right';
+            return { ok: false, message: 'Your ' + side + ' foot is turned out too much. Point toes more forward.' };
+          }
+        }
+      }
+    }
+
+    // === 4. Knee over ankle (valgus/varus check) ===
+    if (stanceCheck.kneeOverAnkle) {
+      var lKnee  = lm[LM.leftKnee];
+      var lAnkle = lm[LM.leftAnkle];
+      var rKnee  = lm[LM.rightKnee];
+      var rAnkle = lm[LM.rightAnkle];
+
+      if (lKnee && lAnkle && rKnee && rAnkle) {
+        var leftValgus  = lAnkle.x - lKnee.x;
+        var rightValgus = rKnee.x  - rAnkle.x;
+        var valgusThreshold = shoulderW * 0.25;  // wider tolerance for MediaPipe noise
+
+        if (leftValgus > valgusThreshold) {
+          return { ok: false, message: 'Left knee is caving inward. Push it out over your toes.' };
+        }
+        if (rightValgus > valgusThreshold) {
+          return { ok: false, message: 'Right knee is caving inward. Push it out over your toes.' };
+        }
+      }
+    }
+
+    // === 5. Shoulder shrug (shoulders too close to ears) ===
+    if (stanceCheck.shoulderShrug) {
+      var lShoulder = lm[LM.leftShoulder];
+      var lEar      = lm[LM.leftEar];
+      var rShoulder = lm[LM.rightShoulder];
+      var rEar      = lm[LM.rightEar];
+
+      if (lShoulder && lEar && rShoulder && rEar) {
+        var earVis = (lEar.visibility === undefined || lEar.visibility > 0.4)
+                  && (rEar.visibility === undefined || rEar.visibility > 0.4);
+        if (earVis) {
+          var leftEarDist  = Math.abs(lEar.y - lShoulder.y);
+          var rightEarDist = Math.abs(rEar.y - rShoulder.y);
+          var avgEarDist   = (leftEarDist + rightEarDist) / 2;
+          var shrugRatio   = avgEarDist / shoulderW;
+
+          if (shrugRatio < 0.25) {  // more lenient — only trigger for very shrugged shoulders
+            return { ok: false, message: 'Drop your shoulders away from your ears. Relax them down.' };
+          }
+        }
+      }
+    }
+
+    // === 6. Hip level (one hip dropping) ===
+    if (stanceCheck.hipLevel) {
+      var lHip = lm[LM.leftHip];
+      var rHip = lm[LM.rightHip];
+      if (lHip && rHip) {
+        var hipDiff = Math.abs(lHip.y - rHip.y);
+        if (hipDiff > shoulderW * 0.20) {  // wider tolerance — most people have mild asymmetry
+          var lowSide = lHip.y > rHip.y ? 'left' : 'right';
+          return { ok: false, message: 'Your ' + lowSide + ' hip is dropping. Level your hips.' };
+        }
+      }
+    }
+
+    // === 7. Body line (for planks — hip sag or pike) ===
+    if (stanceCheck.bodyLine) {
+      var shoulder = lm[LM.leftShoulder];
+      var hip      = lm[LM.leftHip];
+      var ankle    = lm[LM.leftAnkle];
+      if (shoulder && hip && ankle) {
+        var midY   = (shoulder.y + ankle.y) / 2;
+        var deviation = hip.y - midY;
+        var bodyLen   = Math.abs(ankle.y - shoulder.y);
+        if (bodyLen > 0.05) {
+          var devRatio = deviation / bodyLen;
+          if (devRatio > 0.25) {
+            return { ok: false, message: 'Your hips are sagging. Squeeze your core and lift them.' };
+          }
+          if (devRatio < -0.25) {
+            return { ok: false, message: 'Your hips are piking up. Lower them into a straight line.' };
+          }
+        }
+      }
+    }
+
+    // === 8. Symmetry (left-right balance) ===
+    if (stanceCheck.symmetry) {
+      var lSh  = lm[LM.leftShoulder];
+      var rSh  = lm[LM.rightShoulder];
+      var lHip = lm[LM.leftHip];
+      var rHip = lm[LM.rightHip];
+      if (lSh && rSh && lHip && rHip) {
+        var shoulderMidX = (lSh.x + rSh.x) / 2;
+        var hipMidX      = (lHip.x + rHip.x) / 2;
+        var lateralShift = Math.abs(shoulderMidX - hipMidX);
+        if (lateralShift > shoulderW * 0.15) {
+          return { ok: false, message: 'You are leaning to one side. Center yourself.' };
+        }
+      }
+    }
+
+    return { ok: true, message: '' };
+  }
+
+  function updateGhostState(userAngles, matchScore, lm) {
+    if (!ghostState.exerciseDef) return;
+    var phases = ghostState.exerciseDef.phases;
+
+    switch (ghostState.mode) {
+
+      case 'SETUP': {
+        var cues = ghostState.exerciseDef.setupCues || [];
+        if (cues.length === 0) {
+          ghostState.mode = 'DEMO';
+          ghostState.phaseStartTime = Date.now();
+          ghostState.currentPhaseIndex = 0;
+          ghostState.demoRepsDone = 0;
+          VoiceCoach.speak('Watch me. I will show you the movement.', true);
+          break;
+        }
+        // Camera cue at index -1, exercise cues at 0+
+        var cueDelay = (ghostState.setupCueIndex === -1) ? 5000 : 3500;
+        if (Date.now() - ghostState.setupCueTime >= cueDelay) {
+          ghostState.setupCueIndex++;
+          if (ghostState.setupCueIndex >= cues.length) {
+            ghostState.mode = 'DEMO';
+            ghostState.phaseStartTime = Date.now();
+            ghostState.currentPhaseIndex = 0;
+            ghostState.demoRepsDone = 0;
+            VoiceCoach.speak('Watch me. I will show you the movement.', true);
+          } else {
+            ghostState.setupCueTime = Date.now();
+            VoiceCoach.speak(cues[ghostState.setupCueIndex], true);
+          }
+        }
+        break;
+      }
+
+      case 'DEMO': {
+        var elapsed = Date.now() - ghostState.phaseStartTime;
+        var phase = phases[ghostState.currentPhaseIndex];
+        var phaseDur = Math.max(phase.duration || 0, 1500);  // minimum 1.5s per phase during demo
+        if (elapsed >= phaseDur) {
+          ghostState.currentPhaseIndex++;
+          ghostState.phaseStartTime = Date.now();
+            if (ghostState.currentPhaseIndex >= phases.length) {
+            ghostState.demoRepsDone++;
+            ghostState.currentPhaseIndex = 0;
+            if (ghostState.demoRepsDone === 1) {
+              VoiceCoach.speak('One more time. Watch the movement.', true);
+            }
+            if (ghostState.demoRepsDone >= 2) {
+              ghostState.mode = 'WAITING';
+              ghostState.currentPhaseIndex = 0;
+              ghostState.phaseStartTime = Date.now();
+              ghostState.matchFrames = 0;
+              VoiceCoach.speak('Now you try. Step into me.', true);
+            }
+          }
+        }
+        break;
+      }
+
+      case 'WAITING': {
+        // Stance check — WARN but don't block (soft gate)
+        var stanceResult = checkStanceWidth(lm, ghostState.exerciseDef.stanceCheck || null);
+        if (!stanceResult.ok) {
+          ghostState._stanceWarnings = (ghostState._stanceWarnings || 0) + 1;
+          // Show warning but DON'T reset matchFrames — let user still match
+          var cueEl = document.getElementById('alignmentCue');
+          if (cueEl && stanceResult.message) {
+            cueEl.textContent = '\u26A0 ' + stanceResult.message;
+            cueEl.style.color = '#f59e0b';
+          }
+          // Voice the warning once every 8 seconds (not 5 — less nagging)
+          if (Date.now() - VoiceCoach.lastSpokenTime > 8000) {
+            VoiceCoach.speak(stanceResult.message, false);
+          }
+          // DON'T break — fall through to matchScore check
+        } else {
+          ghostState._stanceWarnings = 0;  // reset if stance is fine
+        }
+        var repThreshold = (ASSESSMENT_MODE && ASSESSMENT_TYPE === 'max_reps') ? 55 : 75;
+        if (matchScore >= repThreshold) {
+          ghostState.matchFrames = (ghostState.matchFrames || 0) + 1;
+          if (ghostState.matchFrames >= ghostState.MATCH_FRAMES_NEEDED) {
+            if (lm) {
+              ghostState.referenceLm = [];
+              for (var ri = 0; ri < lm.length; ri++) {
+                ghostState.referenceLm.push({ x: lm[ri].x, y: lm[ri].y, z: lm[ri].z || 0 });
+              }
+            }
+            if (ghostState.isHoldExercise) {
+              ghostState.mode = 'SETTLE';
+              ghostState.settleStartTime = Date.now();
+              VoiceCoach.speak('Good... hold it right there...', true);
+            } else {
+              ghostState.userHasMovedFromStart = false;
+              ghostState.mode = 'GHOST_LEADS';
+              ghostState.currentPhaseIndex = phases.length > 1 ? 1 : 0;
+              ghostState.phaseStartTime = Date.now();
+              ghostState.ghostAnimProgress = 0;
+              VoiceCoach.speak(phases.length > 1 ? phases[1].voice : phases[0].voice, true);
+            }
+          }
+        } else {
+          ghostState.matchFrames = Math.max(0, (ghostState.matchFrames || 0) - 1);
+        }
+        break;
+      }
+
+      case 'SETTLE': {
+        if (Date.now() - ghostState.settleStartTime >= 2500) {
+          ghostState.mode = 'GUIDING';
+          ghostState.currentPhaseIndex = 0;
+          ghostState.phaseStartTime = Date.now();
+          ghostState.holdSeconds = 0;
+          VoiceCoach.speak('Timer starting. Hold it.', true);
+          ghostState.holdInterval = setInterval(function() {
+            if (ghostState.mode === 'GUIDING') {
+              // Only count if user is actually holding the position
+              if (ghostState._lastMatchScore >= 40) {
+                ghostState.holdSeconds++;
+                VoiceCoach.announceHold(ghostState.holdSeconds);
+                var el = document.getElementById('holdTimerDisplay');
+                if (el) el.textContent = ghostState.holdSeconds + 's';
+              } else {
+                // User broke form — pause timer, cue to get back
+                if (Date.now() - VoiceCoach.lastSpokenTime > 3000) {
+                  VoiceCoach.speak('Get back into position. Timer paused.', true);
+                }
+                var el = document.getElementById('holdTimerDisplay');
+                if (el) el.textContent = ghostState.holdSeconds + 's \u23F8';
+              }
+            }
+          }, 1000);
+          if (ghostState.exerciseDef.forceArrows && ghostState.exerciseDef.forceArrows.length > 0) {
+            setTimeout(function() {
+              VoiceCoach.speak(ghostState.exerciseDef.forceArrows[0].label, false);
+            }, 2000);
+          }
+        }
+        break;
+      }
+
+      case 'GHOST_LEADS': {
+        var elapsed = Date.now() - ghostState.phaseStartTime;
+        var phase = phases[ghostState.currentPhaseIndex];
+        var phaseDur = Math.max(phase.duration || 0, 2000);  // minimum 2 seconds per phase when guiding
+        var rawP = Math.min(1, elapsed / phaseDur);
+        ghostState.ghostAnimProgress = rawP < 0.5
+          ? 4 * rawP * rawP * rawP
+          : 1 - Math.pow(-2 * rawP + 2, 3) / 2;
+        if (ghostState.ghostAnimProgress >= 1) {
+          ghostState.mode = 'USER_FOLLOWS';
+          ghostState.stallStartTime = Date.now();
+          ghostState.stallBaseScore = matchScore;
+          ghostState.matchFrames = 0;
+        }
+        break;
+      }
+
+      case 'USER_FOLLOWS': {
+        // Mid-exercise knee valgus warning (Principle 8 — joint centration)
+        if (ghostState.exerciseDef.stanceCheck && ghostState.exerciseDef.stanceCheck.kneeOverAnkle && lm) {
+          var _shoulderW = Math.abs(lm[LM.leftShoulder].x - lm[LM.rightShoulder].x);
+          if (_shoulderW > 0.01) {
+            var _lValgus = lm[LM.leftAnkle].x  - lm[LM.leftKnee].x;
+            var _rValgus = lm[LM.rightKnee].x  - lm[LM.rightAnkle].x;
+            var _vThresh = _shoulderW * 0.18;
+            if (_lValgus > _vThresh || _rValgus > _vThresh) {
+              if (Date.now() - VoiceCoach.lastSpokenTime > 4000) {
+                VoiceCoach.speak('Push your knees out. Do not let them cave in.', true);
+              }
+            }
+          }
+        }
+        if (matchScore >= 70) {
+          ghostState.matchFrames = (ghostState.matchFrames || 0) + 1;
+          if (ghostState.matchFrames >= 5) {
+            ghostState.currentPhaseIndex++;
+            ghostState.matchFrames = 0;
+            if (ghostState.currentPhaseIndex >= phases.length) {
+              // Full rep done
+              ghostState.mode = 'REP_DONE';
+              ghostState.phaseStartTime = Date.now();
+            } else {
+              ghostState.mode = 'GHOST_LEADS';
+              ghostState.phaseStartTime = Date.now();
+              ghostState.ghostAnimProgress = 0;
+              VoiceCoach.speak(phases[ghostState.currentPhaseIndex].voice, false);
+            }
+          }
+        } else {
+          ghostState.matchFrames = Math.max(0, (ghostState.matchFrames || 0) - 1);
+        }
+        // Stall detection — only fires AFTER user has started moving
+        if (!ghostState.userHasMovedFromStart) {
+          if (matchScore > 40) {
+            ghostState.userHasMovedFromStart = true;
+            ghostState.stallStartTime = Date.now();
+            ghostState.stallBaseScore = matchScore;
+          }
+          // Don't run stall detection until user starts moving
+        } else {
+          var stallElapsed = Date.now() - ghostState.stallStartTime;
+          if (stallElapsed >= 8000) {
+            if (matchScore - ghostState.stallBaseScore < 5) {
+              ghostState.lastRepPartial = true;
+              ghostState.partialRomReps++;
+              VoiceCoach.speak("Good effort. Come back up. You'll go deeper next time.", true);
+              ghostState.mode = 'REP_DONE';
+              ghostState.phaseStartTime = Date.now();
+            } else {
+              ghostState.stallStartTime = Date.now();
+              ghostState.stallBaseScore = matchScore;
+            }
+          }
+        }
+        // Silence nudge
+        if (!(ASSESSMENT_MODE && ASSESSMENT_TYPE === 'max_reps') && Date.now() - VoiceCoach.lastSpokenTime > 6000 && matchScore >= 40 && matchScore < 70) {
+          var nudges = ['Take your time. You got this.', "You're doing great.", 'Almost there. Keep pushing.', 'A little more. Strong work.'];
+          VoiceCoach.speak(nudges[Math.floor(Math.random() * nudges.length)], false);
+        }
+        break;
+      }
+
+      case 'REP_DONE': {
+        ghostState.repCount++;
+        if (typeof onRepCounted === 'function') onRepCounted(ghostState.repCount);
+        var repEl = document.getElementById('repCountDisplay');
+        if (repEl) repEl.textContent = ghostState.repCount + ' / ' + ghostState.targetReps;
+        if (ghostState.repCount >= ghostState.targetReps) {
+          ghostState.mode = 'SET_DONE';
+          VoiceCoach.speak('Set complete! Well done.', true);
+          var doneBtn = document.getElementById('completeSetBtn');
+          if (doneBtn) doneBtn.style.display = 'block';
+        } else {
+          ghostState.currentPhaseIndex = phases.length > 1 ? 1 : 0;
+          ghostState.mode = 'GHOST_LEADS';
+          ghostState.phaseStartTime = Date.now();
+          ghostState.ghostAnimProgress = 0;
+          ghostState.lastRepPartial = false;
+          ghostState.userHasMovedFromStart = false;
+          VoiceCoach.speak('Again. ' + (phases.length > 1 ? phases[1].voice : phases[0].voice), false);
+        }
+        break;
+      }
+
+      case 'GUIDING': {
+        // Mid-exercise knee valgus warning (Principle 8 — joint centration)
+        if (ghostState.exerciseDef.stanceCheck && ghostState.exerciseDef.stanceCheck.kneeOverAnkle && lm) {
+          var _shoulderW = Math.abs(lm[LM.leftShoulder].x - lm[LM.rightShoulder].x);
+          if (_shoulderW > 0.01) {
+            var _lValgus = lm[LM.leftAnkle].x  - lm[LM.leftKnee].x;
+            var _rValgus = lm[LM.rightKnee].x  - lm[LM.rightAnkle].x;
+            var _vThresh = _shoulderW * 0.18;
+            if (_lValgus > _vThresh || _rValgus > _vThresh) {
+              if (Date.now() - VoiceCoach.lastSpokenTime > 4000) {
+                VoiceCoach.speak('Push your knees out. Do not let them cave in.', true);
+              }
+            }
+          }
+        }
+        // Hold exercise logic
+        var holdMatchEl = document.getElementById('holdMatchScore');
+        if (holdMatchEl) holdMatchEl.textContent = Math.round(matchScore) + '%';
+
+        // Adaptive target — if struggling
+        var holdElapsed = Date.now() - ghostState.phaseStartTime;
+        if (!ghostState._lowScoreStart && matchScore < 65) {
+          ghostState._lowScoreStart = Date.now();
+          ghostState._lowScoreAngle = matchScore;
+        }
+        if (ghostState._lowScoreStart && matchScore < 65) {
+          if (Date.now() - ghostState._lowScoreStart >= 8000 &&
+              Math.abs(matchScore - ghostState._lowScoreAngle) < 5) {
+            ghostState.adjustedTarget = true;
+            ghostState.achievedAngles = userAngles;
+            VoiceCoach.speak("That's your range today. Hold it here.", true);
+            ghostState._lowScoreStart = null;
+          }
+        } else {
+          ghostState._lowScoreStart = null;
+        }
+
+        // Form degradation
+        if (matchScore < 55) {
+          if (ghostState.exerciseDef.forceArrows && ghostState.exerciseDef.forceArrows.length > 0) {
+            VoiceCoach.speak(ghostState.exerciseDef.forceArrows[0].label, false);
+          }
+        }
+        break;
+      }
+
+      case 'SET_DONE':
+        break;
+    }
+  }
+
+  const LM = {
+    nose: 0,
+    leftEar: 7,       rightEar: 8,
+    leftShoulder: 11, rightShoulder: 12,
+    leftElbow: 13,    rightElbow: 14,
+    leftWrist: 15,    rightWrist: 16,
+    leftHip: 23,      rightHip: 24,
+    leftKnee: 25,     rightKnee: 26,
+    leftAnkle: 27,    rightAnkle: 28,
+    leftHeel: 29,     rightHeel: 30,
+    leftFootIndex: 31, rightFootIndex: 32,
+  };
+
+  // ---- Rep / hold state ----
+  let repState = { phase: 'up', count: 0 };
+
+  // Correct initial phase for exercises that start in a non-'up' position
+  (function() {
+    var tmplName = EXERCISE_TEMPLATE_MAP[EXERCISE_ID];
+    if (tmplName === 'PULL_HORIZONTAL') {
+      repState.phase = 'together';
+    } else if (tmplName === 'ROW_HORIZONTAL') {
+      repState.phase = 'up';  // arm extended = starting position
+    } else if (tmplName === 'HINGE_BILATERAL' || tmplName === 'HINGE_SINGLE' || tmplName === 'DEAD_BUG') {
+      repState.phase = 'down';
+    }
+  })();
+
+  let holdSeconds = 0;
+  let holdInterval = null;
+  let alignedFrames = 0;
+  let angleBuffer = [];
+  const ANGLE_BUFFER = 5;
+
+  function smoothVal(v) {
+    angleBuffer.push(v);
+    if (angleBuffer.length > ANGLE_BUFFER) angleBuffer.shift();
+    return angleBuffer.reduce((a, b) => a + b, 0) / angleBuffer.length;
+  }
+
+  // ---- Angle calculator ----
+  function calcAngle(a, b, c) {
+    if (!a || !b || !c) return 90;
+    const rad = Math.atan2(c.y - b.y, c.x - b.x) - Math.atan2(a.y - b.y, a.x - b.x);
+    let angle = Math.abs(rad * 180 / Math.PI);
+    if (angle > 180) angle = 360 - angle;
+    return angle;
+  }
+
+  function onRepCounted(count) {
+    const el = document.getElementById('repCountDisplay');
+    if (el) {
+      el.textContent = count;
+      el.style.color = '#00ff78';
+      el.style.transform = 'scale(1.5)';
+      el.style.textShadow = '0 0 20px #00ff78';
+      setTimeout(() => {
+        el.style.color = '#fff';
+        el.style.transform = 'scale(1)';
+        el.style.textShadow = 'none';
+      }, 500);
+    }
+    const currentSetInput = document.getElementById('reps' + (completedSets + 1));
+    if (currentSetInput) currentSetInput.value = count;
+    VoiceCoach.announceRep(count, PRESCRIBED_REPS);
+  }
+
+  // ============================================================================
+  // GHOST DRAWING — Generates target skeleton from user position + target angles
+  // ============================================================================
+
+  var ghostPulse = 0;
+
+  // ════════════════════════════════════════════════════════
+  // STANDARD BODY — fixed proportional skeleton, zero user dependency
+  // All coordinates are normalized 0-1 (x: left-right, y: top-bottom)
+  // Represents a standing human, centered in frame
+  // ════════════════════════════════════════════════════════
+  // ════════════════════════════════════════════════════════
+  // ORIENTATION-SPECIFIC STANDARD BODIES
+  // Each orientation defines joint positions for that pose
+  // All coordinates normalized 0-1 (x: left-right, y: top-bottom)
+  // ════════════════════════════════════════════════════════
+
+  function buildBody(orientation) {
+    var body = [];
+    for (var i = 0; i < 33; i++) {
+      body.push({ x: 0.5, y: 0.5, z: 0, visibility: 1.0 });
+    }
+
+    var cx = 0.5;
+
+    if (orientation === 'prone') {
+      // Horizontal face-down (push-up/plank) — SIDE VIEW
+      // Body runs left-to-right: head on left, feet on right
+      var headX  = 0.20;
+      var shouldX = 0.28;
+      var elbowX  = 0.26;
+      var wristX  = 0.26;
+      var hipX    = 0.52;
+      var kneeX   = 0.70;
+      var ankleX  = 0.85;
+      var bodyY   = 0.55;  // all joints at roughly same height (horizontal)
+      var handY   = 0.72;  // hands on floor below shoulders
+
+      body[0]  = { x: headX,    y: bodyY - 0.02, z: 0, visibility: 1 };
+      body[7]  = { x: headX - 0.03, y: bodyY - 0.03, z: 0, visibility: 1 };
+      body[8]  = { x: headX - 0.03, y: bodyY - 0.01, z: 0, visibility: 1 };
+      body[11] = { x: shouldX,  y: bodyY,      z: 0, visibility: 1 };
+      body[12] = { x: shouldX,  y: bodyY + 0.01, z: 0, visibility: 1 };
+      body[13] = { x: elbowX,   y: bodyY + 0.08, z: 0, visibility: 1 };
+      body[14] = { x: elbowX,   y: bodyY + 0.09, z: 0, visibility: 1 };
+      body[15] = { x: wristX,   y: handY,       z: 0, visibility: 1 };
+      body[16] = { x: wristX,   y: handY + 0.01, z: 0, visibility: 1 };
+      body[23] = { x: hipX,     y: bodyY,       z: 0, visibility: 1 };
+      body[24] = { x: hipX,     y: bodyY + 0.01, z: 0, visibility: 1 };
+      body[25] = { x: kneeX,    y: bodyY + 0.01, z: 0, visibility: 1 };
+      body[26] = { x: kneeX,    y: bodyY + 0.02, z: 0, visibility: 1 };
+      body[27] = { x: ankleX,   y: bodyY + 0.01, z: 0, visibility: 1 };
+      body[28] = { x: ankleX,   y: bodyY + 0.02, z: 0, visibility: 1 };
+      body[29] = { x: ankleX + 0.02, y: bodyY + 0.02, z: 0, visibility: 1 };
+      body[30] = { x: ankleX + 0.02, y: bodyY + 0.03, z: 0, visibility: 1 };
+      body[31] = { x: ankleX + 0.03, y: bodyY + 0.01, z: 0, visibility: 1 };
+      body[32] = { x: ankleX + 0.03, y: bodyY + 0.02, z: 0, visibility: 1 };
+
+    } else if (orientation === 'supine') {
+      // Horizontal face-up (dead bug, bench press) — SIDE VIEW
+      // Head on left, feet on right, body face-up
+      var headX  = 0.20;
+      var shouldX = 0.28;
+      var hipX    = 0.52;
+      var kneeX   = 0.70;
+      var ankleX  = 0.85;
+      var bodyY   = 0.60;
+      var armY    = 0.42;  // arms up toward ceiling in side view
+
+      body[0]  = { x: headX,    y: bodyY,      z: 0, visibility: 1 };
+      body[7]  = { x: headX - 0.03, y: bodyY - 0.01, z: 0, visibility: 1 };
+      body[8]  = { x: headX - 0.03, y: bodyY + 0.01, z: 0, visibility: 1 };
+      body[11] = { x: shouldX,  y: bodyY,      z: 0, visibility: 1 };
+      body[12] = { x: shouldX,  y: bodyY + 0.01, z: 0, visibility: 1 };
+      body[13] = { x: shouldX,  y: armY,        z: 0, visibility: 1 };
+      body[14] = { x: shouldX,  y: armY + 0.01, z: 0, visibility: 1 };
+      body[15] = { x: shouldX,  y: armY - 0.08, z: 0, visibility: 1 };
+      body[16] = { x: shouldX,  y: armY - 0.07, z: 0, visibility: 1 };
+      body[23] = { x: hipX,     y: bodyY,       z: 0, visibility: 1 };
+      body[24] = { x: hipX,     y: bodyY + 0.01, z: 0, visibility: 1 };
+      body[25] = { x: kneeX,    y: bodyY - 0.08, z: 0, visibility: 1 };
+      body[26] = { x: kneeX,    y: bodyY - 0.07, z: 0, visibility: 1 };
+      body[27] = { x: ankleX - 0.05, y: bodyY - 0.05, z: 0, visibility: 1 };
+      body[28] = { x: ankleX - 0.05, y: bodyY - 0.04, z: 0, visibility: 1 };
+      body[29] = { x: ankleX - 0.04, y: bodyY - 0.04, z: 0, visibility: 1 };
+      body[30] = { x: ankleX - 0.04, y: bodyY - 0.03, z: 0, visibility: 1 };
+      body[31] = { x: ankleX - 0.03, y: bodyY - 0.05, z: 0, visibility: 1 };
+      body[32] = { x: ankleX - 0.03, y: bodyY - 0.04, z: 0, visibility: 1 };
+
+    } else if (orientation === 'sidelying') {
+      // Side-lying (side plank) — FRONT VIEW, body stacked vertically
+      var headY = 0.15;
+      var shoulderY = 0.25;
+      var hipY = 0.55;
+      var ankleY = 0.88;
+
+      body[0]  = { x: cx, y: headY, z: 0, visibility: 1 };
+      body[7]  = { x: cx - 0.03, y: headY - 0.02, z: 0, visibility: 1 };
+      body[8]  = { x: cx + 0.03, y: headY - 0.02, z: 0, visibility: 1 };
+      body[11] = { x: cx - 0.02, y: shoulderY, z: 0, visibility: 1 };
+      body[12] = { x: cx + 0.02, y: shoulderY, z: 0, visibility: 1 };
+      body[13] = { x: cx - 0.05, y: shoulderY + 0.10, z: 0, visibility: 1 };
+      body[14] = { x: cx + 0.05, y: shoulderY - 0.02, z: 0, visibility: 1 };
+      body[15] = { x: cx - 0.05, y: shoulderY + 0.15, z: 0, visibility: 1 };
+      body[16] = { x: cx + 0.05, y: shoulderY - 0.05, z: 0, visibility: 1 };
+      body[23] = { x: cx - 0.02, y: hipY, z: 0, visibility: 1 };
+      body[24] = { x: cx + 0.02, y: hipY, z: 0, visibility: 1 };
+      body[25] = { x: cx - 0.02, y: (hipY + ankleY) / 2, z: 0, visibility: 1 };
+      body[26] = { x: cx + 0.02, y: (hipY + ankleY) / 2, z: 0, visibility: 1 };
+      body[27] = { x: cx - 0.02, y: ankleY, z: 0, visibility: 1 };
+      body[28] = { x: cx + 0.02, y: ankleY, z: 0, visibility: 1 };
+      body[29] = { x: cx - 0.02, y: ankleY + 0.02, z: 0, visibility: 1 };
+      body[30] = { x: cx + 0.02, y: ankleY + 0.02, z: 0, visibility: 1 };
+      body[31] = { x: cx - 0.01, y: ankleY + 0.02, z: 0, visibility: 1 };
+      body[32] = { x: cx + 0.01, y: ankleY + 0.02, z: 0, visibility: 1 };
+
+    } else if (orientation === 'hanging') {
+      // Hanging from bar — FRONT VIEW, arms overhead
+      var wristY  = 0.08;
+      var elbowY  = 0.15;
+      var shoulderY = 0.22;
+      var hipY    = 0.52;
+      var kneeY   = 0.72;
+      var ankleY  = 0.90;
+
+      body[0]  = { x: cx, y: shoulderY - 0.05, z: 0, visibility: 1 };
+      body[7]  = { x: cx - 0.03, y: shoulderY - 0.07, z: 0, visibility: 1 };
+      body[8]  = { x: cx + 0.03, y: shoulderY - 0.07, z: 0, visibility: 1 };
+      body[11] = { x: cx - 0.08, y: shoulderY, z: 0, visibility: 1 };
+      body[12] = { x: cx + 0.08, y: shoulderY, z: 0, visibility: 1 };
+      body[13] = { x: cx - 0.09, y: elbowY, z: 0, visibility: 1 };
+      body[14] = { x: cx + 0.09, y: elbowY, z: 0, visibility: 1 };
+      body[15] = { x: cx - 0.07, y: wristY, z: 0, visibility: 1 };
+      body[16] = { x: cx + 0.07, y: wristY, z: 0, visibility: 1 };
+      body[23] = { x: cx - 0.05, y: hipY, z: 0, visibility: 1 };
+      body[24] = { x: cx + 0.05, y: hipY, z: 0, visibility: 1 };
+      body[25] = { x: cx - 0.05, y: kneeY, z: 0, visibility: 1 };
+      body[26] = { x: cx + 0.05, y: kneeY, z: 0, visibility: 1 };
+      body[27] = { x: cx - 0.04, y: ankleY, z: 0, visibility: 1 };
+      body[28] = { x: cx + 0.04, y: ankleY, z: 0, visibility: 1 };
+      body[29] = { x: cx - 0.04, y: ankleY + 0.02, z: 0, visibility: 1 };
+      body[30] = { x: cx + 0.04, y: ankleY + 0.02, z: 0, visibility: 1 };
+      body[31] = { x: cx - 0.03, y: ankleY + 0.02, z: 0, visibility: 1 };
+      body[32] = { x: cx + 0.03, y: ankleY + 0.02, z: 0, visibility: 1 };
+
+    } else {
+      // DEFAULT: standing (front view)
+      var headY = 0.15;
+      var shoulderY = 0.25;
+      var elbowY = 0.40;
+      var wristY = 0.52;
+      var hipY = 0.52;
+      var kneeY = 0.72;
+      var ankleY = 0.90;
+      var shoulderHalf = 0.09;
+      var hipHalf = 0.065;
+      var ankleHalf = 0.06;
+      var elbowOff = 0.10;
+      var wristOff = 0.08;
+      var kneeHalf = 0.065;
+
+      body[0]  = { x: cx, y: headY, z: 0, visibility: 1 };
+      body[7]  = { x: cx - 0.04, y: headY - 0.02, z: 0, visibility: 1 };
+      body[8]  = { x: cx + 0.04, y: headY - 0.02, z: 0, visibility: 1 };
+      body[11] = { x: cx - shoulderHalf, y: shoulderY, z: 0, visibility: 1 };
+      body[12] = { x: cx + shoulderHalf, y: shoulderY, z: 0, visibility: 1 };
+      body[13] = { x: cx - elbowOff, y: elbowY, z: 0, visibility: 1 };
+      body[14] = { x: cx + elbowOff, y: elbowY, z: 0, visibility: 1 };
+      body[15] = { x: cx - wristOff, y: wristY, z: 0, visibility: 1 };
+      body[16] = { x: cx + wristOff, y: wristY, z: 0, visibility: 1 };
+      body[23] = { x: cx - hipHalf, y: hipY, z: 0, visibility: 1 };
+      body[24] = { x: cx + hipHalf, y: hipY, z: 0, visibility: 1 };
+      body[25] = { x: cx - kneeHalf, y: kneeY, z: 0, visibility: 1 };
+      body[26] = { x: cx + kneeHalf, y: kneeY, z: 0, visibility: 1 };
+      body[27] = { x: cx - ankleHalf, y: ankleY, z: 0, visibility: 1 };
+      body[28] = { x: cx + ankleHalf, y: ankleY, z: 0, visibility: 1 };
+      body[29] = { x: cx - ankleHalf, y: ankleY + 0.02, z: 0, visibility: 1 };
+      body[30] = { x: cx + ankleHalf, y: ankleY + 0.02, z: 0, visibility: 1 };
+      body[31] = { x: cx - ankleHalf + 0.01, y: ankleY + 0.02, z: 0, visibility: 1 };
+      body[32] = { x: cx + ankleHalf - 0.01, y: ankleY + 0.02, z: 0, visibility: 1 };
+    }
+
+    return body;
+  }
+
+  // Build all orientation bodies once at startup
+  var STANDARD_BODIES = {
+    standing:  buildBody('standing'),
+    prone:     buildBody('prone'),
+    supine:    buildBody('supine'),
+    sidelying: buildBody('sidelying'),
+    hanging:   buildBody('hanging'),
+  };
+  // Backward compatibility
+  var STANDARD_BODY = STANDARD_BODIES.standing;
+
+  // Shift STANDARD_BODY to roughly match where the user is standing,
+  // preserving all standard proportions — ghost has correct shape, appears near user
+  function shiftStandardBodyToUser(userLm, sourceBody) {
+    var stdBody = sourceBody || STANDARD_BODY;
+
+    // Find user's center position
+    var userCenterX = 0.5;
+    var userCenterY = 0.5;
+    if (userLm && userLm[23] && userLm[24]) {
+      userCenterX = (userLm[23].x + userLm[24].x) / 2;
+      // Vertical: use the midpoint between nose and ankles
+      var topY = userLm[0] ? userLm[0].y : 0.15;
+      var botY = userLm[27] ? userLm[27].y : 0.9;
+      userCenterY = (topY + botY) / 2;
+    }
+
+    // Calculate standard body height dynamically based on orientation
+    var stdNose = stdBody[0] ? stdBody[0].y : 0.15;
+    var stdFoot = Math.max(stdBody[27] ? stdBody[27].y : 0.90, stdBody[28] ? stdBody[28].y : 0.90);
+    var stdHeight = Math.abs(stdFoot - stdNose) || 0.75;
+
+    var stdCenterX = (stdBody[23] ? stdBody[23].x + (stdBody[24] ? stdBody[24].x : stdBody[23].x) : 1.0) / 2;
+    var stdCenterY = (stdNose + stdFoot) / 2;
+
+    var dx = userCenterX - stdCenterX;
+    var dy = userCenterY - stdCenterY;
+
+    // Scale to match user's height roughly
+    var userHeight = 1.0;
+    if (userLm && userLm[0] && userLm[27]) {
+      userHeight = Math.abs(userLm[27].y - userLm[0].y);
+    }
+    var scale = userHeight / stdHeight;
+    if (scale < 0.5) scale = 0.5;
+    if (scale > 1.5) scale = 1.5;
+
+    var shifted = [];
+    for (var i = 0; i < stdBody.length; i++) {
+      var p = stdBody[i];
+      shifted.push({
+        x: stdCenterX + (p.x - stdCenterX) * scale + dx,
+        y: stdCenterY + (p.y - stdCenterY) * scale + dy,
+        z: p.z,
+        visibility: p.visibility,
+      });
+    }
+    return shifted;
+  }
+
+  // Generate a target landmark set from the base landmarks, adjusted toward target angles
+  function generateGhostLandmarks(userLm, targetJoints, exerciseType, progress) {
+    // Clone user landmarks as starting point
+    var ghost = [];
+    for (var i = 0; i < userLm.length; i++) {
+      ghost.push({ x: userLm[i].x, y: userLm[i].y, z: userLm[i].z || 0 });
+    }
+
+    // If no targets, return user pose (for STRETCH etc)
+    if (!targetJoints || Object.keys(targetJoints).length === 0) return ghost;
+
+    function dist(a, b) {
+      return Math.sqrt((a.x-b.x)*(a.x-b.x) + (a.y-b.y)*(a.y-b.y));
+    }
+
+    // Squat-type: adjust knee angle
+    if (targetJoints.knee !== undefined) {
+      var thighLen = dist(userLm[LM.leftHip], userLm[LM.leftKnee]) || 0.12;
+      var targetKnee = targetJoints.knee;
+
+      // Interpolate during demo animation
+      if ((ghostState.mode === 'DEMO' || ghostState.mode === 'GHOST_LEADS') && progress !== undefined) {
+        var prevPhaseK = ghostState.currentPhaseIndex > 0 ?
+          ghostState.exerciseDef.phases[ghostState.currentPhaseIndex - 1] : ghostState.exerciseDef.phases[0];
+        var prevKnee = (prevPhaseK.joints && prevPhaseK.joints.knee != null) ? prevPhaseK.joints.knee : 175;
+        targetKnee = prevKnee + (targetKnee - prevKnee) * progress;
+      }
+
+      var ankleY = Math.max(userLm[LM.leftAnkle].y, userLm[LM.rightAnkle].y);
+      var hipDropFactor = Math.max(0, Math.min(1, (175 - targetKnee) / 85));
+      var bodyHeight = Math.abs((userLm[0] ? userLm[0].y : 0.15) - ankleY) || 0.75;
+      var maxDrop = Math.min(thighLen * 1.8, bodyHeight * 0.35);  // never drop more than 35% of body height
+
+      ghost[LM.leftHip].y  = userLm[LM.leftHip].y  + hipDropFactor * maxDrop;
+      ghost[LM.rightHip].y = userLm[LM.rightHip].y + hipDropFactor * maxDrop;
+      ghost[LM.leftKnee].y  = (ghost[LM.leftHip].y  + ankleY) / 2;
+      ghost[LM.rightKnee].y = (ghost[LM.rightHip].y + ankleY) / 2;
+      ghost[LM.leftKnee].x  = userLm[LM.leftKnee].x  - hipDropFactor * 0.05;
+      ghost[LM.rightKnee].x = userLm[LM.rightKnee].x + hipDropFactor * 0.05;
+      ghost[LM.leftAnkle].y  = ankleY;
+      ghost[LM.rightAnkle].y = ankleY;
+      ghost[LM.leftShoulder].y  = userLm[LM.leftShoulder].y  + hipDropFactor * maxDrop * 0.9;
+      ghost[LM.rightShoulder].y = userLm[LM.rightShoulder].y + hipDropFactor * maxDrop * 0.9;
+      if (ghost[0]) ghost[0].y = userLm[0].y + hipDropFactor * maxDrop * 0.85;
+    }
+
+    // Push-up type: adjust elbow angle
+    if (targetJoints.elbow !== undefined) {
+      var targetElbow = targetJoints.elbow;
+      if ((ghostState.mode === 'DEMO' || ghostState.mode === 'GHOST_LEADS') && progress !== undefined) {
+        var prevPhaseE = ghostState.currentPhaseIndex > 0 ?
+          ghostState.exerciseDef.phases[ghostState.currentPhaseIndex - 1] : ghostState.exerciseDef.phases[0];
+        var prevElbow = (prevPhaseE.joints && prevPhaseE.joints.elbow != null) ? prevPhaseE.joints.elbow : 175;
+        targetElbow = prevElbow + (targetElbow - prevElbow) * progress;
+      }
+      var bendFactor = Math.max(0, Math.min(1, (175 - targetElbow) / 85));
+      var drop = bendFactor * 0.15;  // tuned for standard body proportions
+      ghost[LM.leftShoulder].y  += drop;
+      ghost[LM.rightShoulder].y += drop;
+      ghost[LM.leftElbow].y     += drop * 0.7;
+      ghost[LM.rightElbow].y    += drop * 0.7;
+      // Elbows flare slightly outward during push-up descent
+      ghost[LM.leftElbow].x     -= bendFactor * 0.03;
+      ghost[LM.rightElbow].x    += bendFactor * 0.03;
+      // Wrists stay planted, head drops with body
+      if (ghost[0]) ghost[0].y  += drop * 0.95;
+    }
+
+    // Hip hinge: adjust hip angle (no knee target)
+    if (targetJoints.hip !== undefined && targetJoints.knee === undefined) {
+      var targetHip = targetJoints.hip;
+      if ((ghostState.mode === 'DEMO' || ghostState.mode === 'GHOST_LEADS') && progress !== undefined) {
+        var prevPhaseH = ghostState.currentPhaseIndex > 0 ?
+          ghostState.exerciseDef.phases[ghostState.currentPhaseIndex - 1] : ghostState.exerciseDef.phases[0];
+        var prevHip = (prevPhaseH.joints && prevPhaseH.joints.hip != null) ? prevPhaseH.joints.hip : 175;
+        targetHip = prevHip + (targetHip - prevHip) * progress;
+      }
+      var hingeFactor = Math.max(0, Math.min(1, (175 - targetHip) / 45));
+      var hipRise = hingeFactor * 0.16;
+      ghost[LM.leftHip].y  -= hipRise;
+      ghost[LM.rightHip].y -= hipRise;
+    }
+
+    // Arm spread (PULL exercises — band pull apart etc.)
+    if (targetJoints.armSpread !== undefined) {
+      var targetSpread = targetJoints.armSpread;
+      if ((ghostState.mode === 'DEMO' || ghostState.mode === 'GHOST_LEADS') && progress !== undefined) {
+        var prevPhaseA = ghostState.currentPhaseIndex > 0 ?
+          ghostState.exerciseDef.phases[ghostState.currentPhaseIndex - 1] : ghostState.exerciseDef.phases[0];
+        var prevSpread = (prevPhaseA.joints && prevPhaseA.joints.armSpread != null) ? prevPhaseA.joints.armSpread : 1.0;
+        targetSpread = prevSpread + (targetSpread - prevSpread) * progress;
+      }
+      var spreadShoulderW = Math.abs(userLm[LM.leftShoulder].x - userLm[LM.rightShoulder].x) || 0.15;
+      var spreadFactor = (targetSpread - 1.0) / 1.5;
+      ghost[LM.leftWrist].x  = userLm[LM.leftWrist].x  - spreadFactor * spreadShoulderW * 0.8;
+      ghost[LM.rightWrist].x = userLm[LM.rightWrist].x + spreadFactor * spreadShoulderW * 0.8;
+      ghost[LM.leftElbow].x  = userLm[LM.leftElbow].x  - spreadFactor * spreadShoulderW * 0.4;
+      ghost[LM.rightElbow].x = userLm[LM.rightElbow].x + spreadFactor * spreadShoulderW * 0.4;
+    }
+
+    // Rotation (Russian twist etc. — shoulders rotate relative to hips)
+    if (targetJoints.rotation !== undefined) {
+      var targetRot = targetJoints.rotation;
+      if ((ghostState.mode === 'DEMO' || ghostState.mode === 'GHOST_LEADS') && progress !== undefined) {
+        var prevPhaseR = ghostState.currentPhaseIndex > 0 ?
+          ghostState.exerciseDef.phases[ghostState.currentPhaseIndex - 1] : ghostState.exerciseDef.phases[0];
+        var prevRot = (prevPhaseR.joints && prevPhaseR.joints.rotation != null) ? prevPhaseR.joints.rotation : 0;
+        targetRot = prevRot + (targetRot - prevRot) * progress;
+      }
+      var rotOffset = targetRot * 2.0;
+      ghost[LM.leftShoulder].x  -= rotOffset;
+      ghost[LM.rightShoulder].x -= rotOffset;
+    }
+
+    // Body line (PLANK — keep hip in line with shoulders and ankles)
+    if (targetJoints.bodyLine !== undefined && targetJoints.knee === undefined && targetJoints.elbow === undefined) {
+      var midY = (ghost[LM.leftShoulder].y + ghost[LM.leftAnkle].y) / 2;
+      ghost[LM.leftHip].y  = midY;
+      ghost[LM.rightHip].y = midY;
+    }
+
+    // Single leg squat: working leg descends, non-working leg raises forward
+    if (targetJoints.workingKnee !== undefined && targetJoints.knee === undefined) {
+      var thighLen = dist(userLm[LM.leftHip], userLm[LM.leftKnee]) || 0.12;
+      var targetKnee = targetJoints.workingKnee;
+      if ((ghostState.mode === 'DEMO' || ghostState.mode === 'GHOST_LEADS') && progress !== undefined) {
+        var prevPhase = ghostState.currentPhaseIndex > 0 ?
+          ghostState.exerciseDef.phases[ghostState.currentPhaseIndex - 1] : ghostState.exerciseDef.phases[0];
+        var prev = (prevPhase.joints && prevPhase.joints.workingKnee != null) ? prevPhase.joints.workingKnee : 175;
+        targetKnee = prev + (targetKnee - prev) * progress;
+      }
+
+      // Working leg = left (demo always on left so user can mirror it)
+      var wHip   = LM.leftHip;   var nHip   = LM.rightHip;
+      var wKnee  = LM.leftKnee;  var nKnee  = LM.rightKnee;
+      var wAnkle = LM.leftAnkle; var nAnkle = LM.rightAnkle;
+
+      var ankleY = userLm[wAnkle].y;
+      var hipDropFactor = Math.max(0, Math.min(1, (175 - targetKnee) / 85));
+      var bodyHeight = Math.abs((userLm[0] ? userLm[0].y : 0.15) - ankleY) || 0.75;
+      var maxDrop = Math.min(thighLen * 1.8, bodyHeight * 0.35);
+
+      // Working leg: hip drops, knee tracks between hip and planted ankle
+      ghost[wHip].y   += hipDropFactor * maxDrop;
+      ghost[wKnee].y   = (ghost[wHip].y + ankleY) / 2;
+      ghost[wKnee].x   = userLm[wKnee].x - hipDropFactor * 0.04;  // knee slightly outward (left = more negative x)
+      ghost[wAnkle].y  = ankleY;  // planted foot stays
+
+      // Torso drops with body
+      ghost[LM.leftShoulder].y  += hipDropFactor * maxDrop * 0.9;
+      ghost[LM.rightShoulder].y += hipDropFactor * maxDrop * 0.9;
+      if (ghost[0]) ghost[0].y  += hipDropFactor * maxDrop * 0.85;
+
+      // Non-working leg: hip also lowers (body is lower), but leg raises up in front
+      ghost[nHip].y   += hipDropFactor * maxDrop * 0.85;
+      ghost[nKnee].y   = ghost[nHip].y - hipDropFactor * 0.10;  // knee rises above hip
+      ghost[nKnee].x   = userLm[nKnee].x;                       // knee stays above hip x
+      ghost[nAnkle].y  = ghost[nHip].y - hipDropFactor * 0.16;  // ankle rises highest
+      ghost[nAnkle].x  = userLm[nAnkle].x;                      // ankle above knee
+
+      // Arms come forward for balance: wrists raise toward chest height
+      ghost[LM.leftWrist].y  -= hipDropFactor * 0.08;
+      ghost[LM.rightWrist].y -= hipDropFactor * 0.08;
+      ghost[LM.leftElbow].y  -= hipDropFactor * 0.04;
+      ghost[LM.rightElbow].y -= hipDropFactor * 0.04;
+    }
+
+    // Single leg hinge: hip flexion on one side
+    if (targetJoints.workingHip !== undefined && targetJoints.hip === undefined) {
+      var targetHip = targetJoints.workingHip;
+      if ((ghostState.mode === 'DEMO' || ghostState.mode === 'GHOST_LEADS') && progress !== undefined) {
+        var prevPhase = ghostState.currentPhaseIndex > 0 ?
+          ghostState.exerciseDef.phases[ghostState.currentPhaseIndex - 1] : ghostState.exerciseDef.phases[0];
+        var prev = (prevPhase.joints && prevPhase.joints.workingHip != null) ? prevPhase.joints.workingHip : 175;
+        targetHip = prev + (targetHip - prev) * progress;
+      }
+      var hingeFactor = Math.max(0, Math.min(1, (175 - targetHip) / 75));
+      // Torso hinges forward
+      ghost[LM.leftShoulder].y  += hingeFactor * 0.12;
+      ghost[LM.rightShoulder].y += hingeFactor * 0.12;
+      if (ghost[0]) ghost[0].y  += hingeFactor * 0.14;
+      // Non-working leg goes back
+      ghost[LM.rightKnee].y  -= hingeFactor * 0.06;
+      ghost[LM.rightAnkle].y -= hingeFactor * 0.1;
+    }
+
+    return ghost;
+  }
+
+  // ════════════════════════════════════════════════════════
+  // PER-JOINT COLOR MAPPING
+  // Maps each checkAngles key to the skeleton segments it affects
+  // ════════════════════════════════════════════════════════
+
+  var JOINT_TO_SEGMENTS = {
+    knee:          [['leftHip','leftKnee'], ['leftKnee','leftAnkle'], ['rightHip','rightKnee'], ['rightKnee','rightAnkle']],
+    hip:           [['leftShoulder','leftHip'], ['rightShoulder','rightHip'], ['leftHip','leftKnee'], ['rightHip','rightKnee']],
+    trunk:         [['leftShoulder','leftHip'], ['rightShoulder','rightHip']],
+    elbow:         [['leftShoulder','leftElbow'], ['leftElbow','leftWrist'], ['rightShoulder','rightElbow'], ['rightElbow','rightWrist']],
+    bodyLine:      [['leftShoulder','leftHip'], ['rightShoulder','rightHip'], ['leftHip','leftKnee'], ['rightHip','rightKnee']],
+    lateralLine:   [['leftShoulder','leftHip'], ['leftHip','leftKnee']],
+    armSpread:     [['leftShoulder','leftElbow'], ['leftElbow','leftWrist'], ['rightShoulder','rightElbow'], ['rightElbow','rightWrist']],
+    rotation:      [['leftShoulder','rightShoulder'], ['leftHip','rightHip']],
+    hipLevel:      [['leftHip','rightHip']],
+    kneeHover:     [['leftKnee','leftAnkle'], ['rightKnee','rightAnkle']],
+    shoulderLevel: [['leftShoulder','rightShoulder']],
+    shoulder:      [['leftShoulder','leftElbow'], ['rightShoulder','rightElbow']],
+    workingKnee:   [['leftHip','leftKnee'], ['leftKnee','leftAnkle'], ['rightHip','rightKnee'], ['rightKnee','rightAnkle']],
+    workingHip:    [['leftShoulder','leftHip'], ['rightShoulder','rightHip'], ['leftHip','leftKnee'], ['rightHip','rightKnee']],
+    liftedKnee:    [['leftHip','leftKnee'], ['rightHip','rightKnee']],
+    plankLevel:    [['leftShoulder','leftHip'], ['rightShoulder','rightHip'], ['leftHip','leftAnkle'], ['rightHip','rightAnkle']],
+  };
+
+  var JOINT_TO_NODES = {
+    knee:          [LM.leftKnee, LM.rightKnee, LM.leftAnkle, LM.rightAnkle],
+    hip:           [LM.leftHip, LM.rightHip],
+    trunk:         [LM.leftShoulder, LM.rightShoulder, LM.leftHip, LM.rightHip],
+    elbow:         [LM.leftElbow, LM.rightElbow, LM.leftWrist, LM.rightWrist],
+    bodyLine:      [LM.leftShoulder, LM.rightShoulder, LM.leftHip, LM.rightHip],
+    lateralLine:   [LM.leftShoulder, LM.leftHip, LM.leftKnee],
+    armSpread:     [LM.leftElbow, LM.rightElbow, LM.leftWrist, LM.rightWrist],
+    rotation:      [LM.leftShoulder, LM.rightShoulder],
+    hipLevel:      [LM.leftHip, LM.rightHip],
+    kneeHover:     [LM.leftKnee, LM.rightKnee],
+    shoulderLevel: [LM.leftShoulder, LM.rightShoulder],
+    shoulder:      [LM.leftShoulder, LM.rightShoulder, LM.leftElbow, LM.rightElbow],
+    workingKnee:   [LM.leftKnee, LM.rightKnee, LM.leftAnkle, LM.rightAnkle],
+    workingHip:    [LM.leftHip, LM.rightHip],
+    liftedKnee:    [LM.leftKnee, LM.rightKnee],
+    plankLevel:    [LM.leftShoulder, LM.rightShoulder, LM.leftAnkle, LM.rightAnkle],
+  };
+
+  // Build LM index → name lookup once
+  var _lmNames = {};
+  for (var _k in LM) { _lmNames[LM[_k]] = _k; }
+
+  function computePerJointColors(userAngles, targetJoints) {
+    var GREEN  = { r: 0,   g: 255, b: 120 };
+    var YELLOW = { r: 255, g: 220, b: 0   };
+    var RED    = { r: 255, g: 50,  b: 50  };
+
+    var segColors  = {};
+    var nodeColors = {};
+
+    for (var jointKey in targetJoints) {
+      var target = targetJoints[jointKey];
+      var actual = userAngles[jointKey];
+      if (actual === undefined) continue;
+
+      var diff = (target < 1)
+        ? Math.abs(actual - target) * 500
+        : Math.abs(actual - target);
+
+      var color;
+      if (diff <= 20)      { color = { r: GREEN.r,  g: GREEN.g,  b: GREEN.b,  diff: diff }; }
+      else if (diff <= 40) { color = { r: YELLOW.r, g: YELLOW.g, b: YELLOW.b, diff: diff }; }
+      else                 { color = { r: RED.r,    g: RED.g,    b: RED.b,    diff: diff }; }
+
+      // Apply to segments — keep WORST color per segment
+      var segs = JOINT_TO_SEGMENTS[jointKey] || [];
+      for (var s = 0; s < segs.length; s++) {
+        var key = segs[s][0] + '-' + segs[s][1];
+        if (!segColors[key] || diff > segColors[key].diff) {
+          segColors[key] = color;
+        }
+      }
+
+      // Apply to joint nodes — keep WORST color per node
+      var nodes = JOINT_TO_NODES[jointKey] || [];
+      for (var n = 0; n < nodes.length; n++) {
+        if (!nodeColors[nodes[n]] || diff > nodeColors[nodes[n]].diff) {
+          nodeColors[nodes[n]] = color;
+        }
+      }
+    }
+
+    return { segmentColors: segColors, nodeColors: nodeColors };
+  }
+
+  // Mirror X coordinate to match the selfie-mirrored video display
+  function mx(landmark, W) {
+    return (1 - landmark.x) * W;
+  }
+
+  function drawGhostTarget(ctx, targetPhase, matchScore, W, H, userLm) {
+    if (!targetPhase || !userLm) return;
+
+    var elapsed  = Date.now() - ghostState.phaseStartTime;
+    var phaseDur = targetPhase.duration || 1500;
+    var rawProgress = Math.min(1, elapsed / Math.max(phaseDur, 100));
+    // Ease-in-out cubic for smooth ghost animation
+    var progress = rawProgress < 0.5
+      ? 4 * rawProgress * rawProgress * rawProgress
+      : 1 - Math.pow(-2 * rawProgress + 2, 3) / 2;
+
+    // Ghost is FULLY INDEPENDENT — uses STANDARD_BODY, never user landmarks
+    var baseLm;
+    if (ghostState.mode === 'DEMO' || ghostState.mode === 'WAITING' || ghostState.mode === 'SETUP') {
+      // Select the correct body orientation for this exercise type
+      var orientation = (ghostState.exerciseDef && ghostState.exerciseDef.bodyOrientation) || 'standing';
+      var stdBody = STANDARD_BODIES[orientation] || STANDARD_BODIES.standing;
+      baseLm = shiftStandardBodyToUser(userLm, stdBody);
+    } else if (ghostState.referenceLm) {
+      baseLm = ghostState.referenceLm;
+    } else {
+      baseLm = STANDARD_BODY;
+    }
+    var ghostLm = generateGhostLandmarks(baseLm, targetPhase.joints || {}, ghostState.exerciseType, progress);
+
+    var connections = [
+      [LM.leftShoulder,  LM.rightShoulder],
+      [LM.leftShoulder,  LM.leftHip],      [LM.rightShoulder, LM.rightHip],
+      [LM.leftHip,       LM.rightHip],
+      [LM.leftShoulder,  LM.leftElbow],    [LM.leftElbow,     LM.leftWrist],
+      [LM.rightShoulder, LM.rightElbow],   [LM.rightElbow,    LM.rightWrist],
+      [LM.leftHip,       LM.leftKnee],     [LM.leftKnee,      LM.leftAnkle],
+      [LM.rightHip,      LM.rightKnee],    [LM.rightKnee,     LM.rightAnkle],
+    ];
+    var jointNodes = [0, 11, 12, 13, 14, 15, 16, 23, 24, 25, 26, 27, 28];
+
+    // ── Segment thickness map — wider at trunk, tapers to extremities ──
+    var SEG_WIDTH = {
+      'leftShoulder-rightShoulder': 7,
+      'leftShoulder-leftHip': 6, 'rightShoulder-rightHip': 6,
+      'leftHip-rightHip': 6,
+      'leftShoulder-leftElbow': 5,  'leftElbow-leftWrist': 3,
+      'rightShoulder-rightElbow': 5, 'rightElbow-rightWrist': 3,
+      'leftHip-leftKnee': 6,   'leftKnee-leftAnkle': 4,
+      'rightHip-rightKnee': 6, 'rightKnee-rightAnkle': 4,
+    };
+
+    // ── Helper: draw one tapered limb segment ──────────────────────────
+    function drawTaperedSegment(ctx, ax, ay, bx, by, wA, wB, colStr, glowStr, blur) {
+      var dx = bx - ax, dy = by - ay;
+      var len = Math.sqrt(dx*dx + dy*dy) || 1;
+      var nx = -dy/len, ny = dx/len;
+
+      ctx.save();
+      ctx.shadowBlur = blur;
+      ctx.shadowColor = glowStr;
+      ctx.beginPath();
+      ctx.moveTo(ax + nx*wA, ay + ny*wA);
+      ctx.lineTo(bx + nx*wB, by + ny*wB);
+      ctx.lineTo(bx - nx*wB, by - ny*wB);
+      ctx.lineTo(ax - nx*wA, ay - ny*wA);
+      ctx.closePath();
+      ctx.fillStyle = colStr;
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // ── Helper: draw joint circle with glow ───────────────────────────
+    function drawJointCircle(ctx, x, y, r, fillStr, glowStr, blur) {
+      ctx.save();
+      ctx.shadowBlur = blur;
+      ctx.shadowColor = glowStr;
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.fillStyle = fillStr;
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // ── Helper: draw head shape (circle + subtle face indicator) ──────
+    function drawHead(ctx, noseLm, lShoulderLm, rShoulderLm, W, H, fillStr, glowStr) {
+      if (!noseLm) return;
+      var shoulderW = Math.abs(mx(lShoulderLm, W) - mx(rShoulderLm, W));
+      var headR = shoulderW * 0.22;
+      var headR = Math.max(headR, W * 0.022);
+      var hx = mx(noseLm, W);
+      var hy = noseLm.y * H;
+      ctx.save();
+      ctx.shadowBlur = 14;
+      ctx.shadowColor = glowStr;
+      // Head circle
+      ctx.beginPath();
+      ctx.arc(hx, hy, headR, 0, Math.PI * 2);
+      ctx.fillStyle = fillStr;
+      ctx.fill();
+      // Subtle chin line
+      ctx.beginPath();
+      ctx.arc(hx, hy, headR * 1.05, Math.PI * 0.15, Math.PI * 0.85);
+      ctx.strokeStyle = glowStr;
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // ── Helper: draw torso fill (trapezoid shoulders→hips) ────────────
+    function drawTorsoFill(ctx, lsLm, rsLm, lhLm, rhLm, W, H, fillStr) {
+      if (!lsLm || !rsLm || !lhLm || !rhLm) return;
+      var lsx = mx(lsLm, W), lsy = lsLm.y * H;
+      var rsx = mx(rsLm, W), rsy = rsLm.y * H;
+      var lhx = mx(lhLm, W), lhy = lhLm.y * H;
+      var rhx = mx(rhLm, W), rhy = rhLm.y * H;
+      // Inset slightly from shoulder/hip edges for tapering waist
+      var inset = 0.12;
+      var waistLx = lhx + (lsx - lhx) * inset;
+      var waistRx = rhx + (rsx - rhx) * inset;
+      var midY = (lhy + rhy) / 2;
+      ctx.save();
+      ctx.globalAlpha = 0.13;
+      ctx.beginPath();
+      ctx.moveTo(lsx, lsy);
+      ctx.lineTo(rsx, rsy);
+      ctx.lineTo(waistRx, midY);
+      ctx.lineTo(rhx, rhy);
+      ctx.lineTo(lhx, lhy);
+      ctx.lineTo(waistLx, midY);
+      ctx.closePath();
+      ctx.fillStyle = fillStr;
+      ctx.fill();
+      ctx.globalAlpha = 1.0;
+      ctx.restore();
+    }
+
+    ghostPulse += 0.06;
+    var pulseAlpha = 0.6 + 0.2 * Math.sin(ghostPulse);
+
+    // Compute per-joint colors (user angles vs target angles)
+    var userAngles = ghostState.exerciseDef ? ghostState.exerciseDef.checkAngles(userLm) : {};
+    var jColors    = computePerJointColors(userAngles, targetPhase.joints || {});
+    var isActive   = (ghostState.mode === 'GHOST_LEADS' || ghostState.mode === 'USER_FOLLOWS' || ghostState.mode === 'GUIDING' || ghostState.mode === 'SETTLE');
+
+    var NEON_BLUE    = { r: 56,  g: 189, b: 248 };
+    var NEON_DEFAULT = { r: 100, g: 180, b: 255 };
+
+    // ════════════════════════════════════════════════════════
+    // USER SKELETON — per-joint coloring during active modes
+    // Thin white during DEMO/WAITING, neon colored during exercise
+    // ════════════════════════════════════════════════════════
+
+    if (isActive) {
+      var ND = { r: 0, g: 255, b: 120 };  // default green
+
+      // Torso fill
+      drawTorsoFill(ctx,
+        userLm[LM.leftShoulder], userLm[LM.rightShoulder],
+        userLm[LM.leftHip], userLm[LM.rightHip],
+        W, H, 'rgba(0,255,120,1)'
+      );
+
+      // Segments — tapered anatomical limbs
+      connections.forEach(function(c) {
+        var a = userLm[c[0]], b = userLm[c[1]];
+        if (!a || !b) return;
+        var nameA = _lmNames[c[0]] || '';
+        var nameB = _lmNames[c[1]] || '';
+        var segKey = nameA + '-' + nameB;
+        var col = jColors.segmentColors[segKey] || ND;
+        var isRed = (col.r === 255 && col.g <= 60);
+        var baseW = (SEG_WIDTH[segKey] || 4);
+        var wA = baseW; var wB = baseW * 0.72;
+        var colStr = 'rgba(' + col.r + ',' + col.g + ',' + col.b + ',0.92)';
+        var glowStr = 'rgba(' + col.r + ',' + col.g + ',' + col.b + ',0.55)';
+        var blur = isRed ? 20 : 10;
+
+        // Glow layer
+        drawTaperedSegment(ctx, mx(a,W), a.y*H, mx(b,W), b.y*H,
+          wA*2.2, wB*2.2,
+          'rgba(' + col.r + ',' + col.g + ',' + col.b + ',' + (0.18 * pulseAlpha) + ')',
+          glowStr, blur * 1.5
+        );
+        // Core layer
+        drawTaperedSegment(ctx, mx(a,W), a.y*H, mx(b,W), b.y*H,
+          wA, wB, colStr, glowStr, blur
+        );
+      });
+
+      // Joint nodes
+      jointNodes.forEach(function(idx) {
+        if (idx === 0) return; // head drawn separately
+        var p = userLm[idx]; if (!p) return;
+        var col = jColors.nodeColors[idx] || ND;
+        var isRed = (col.r === 255 && col.g <= 60);
+        var r = isRed ? (6 + 2.5 * Math.sin(ghostPulse * 2.2)) : 5;
+        var colStr = 'rgba(' + col.r + ',' + col.g + ',' + col.b + ',0.95)';
+        var glowStr = 'rgba(' + col.r + ',' + col.g + ',' + col.b + ',' + (isRed ? '0.9' : '0.5') + ')';
+        var blur = isRed ? 22 : 8;
+        drawJointCircle(ctx, mx(p,W), p.y*H, r, colStr, glowStr, blur);
+        // White rim
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(mx(p,W), p.y*H, r, 0, Math.PI*2);
+        ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        ctx.restore();
+      });
+
+      // Head
+      drawHead(ctx,
+        userLm[0], userLm[LM.leftShoulder], userLm[LM.rightShoulder],
+        W, H,
+        'rgba(0,255,120,0.88)',
+        'rgba(0,255,120,0.5)'
+      );
+
+    } else {
+      // DEMO/WAITING/SETUP: dim white silhouette of user
+      drawTorsoFill(ctx,
+        userLm[LM.leftShoulder], userLm[LM.rightShoulder],
+        userLm[LM.leftHip], userLm[LM.rightHip],
+        W, H, 'rgba(255,255,255,1)'
+      );
+      connections.forEach(function(c) {
+        var a = userLm[c[0]], b = userLm[c[1]];
+        if (!a || !b) return;
+        var nameA = _lmNames[c[0]] || '';
+        var nameB = _lmNames[c[1]] || '';
+        var segKey = nameA + '-' + nameB;
+        var baseW = (SEG_WIDTH[segKey] || 3) * 0.6;
+        drawTaperedSegment(ctx, mx(a,W), a.y*H, mx(b,W), b.y*H,
+          baseW, baseW * 0.7,
+          'rgba(255,255,255,0.28)',
+          'rgba(255,255,255,0.1)', 3
+        );
+      });
+      jointNodes.forEach(function(idx) {
+        if (idx === 0) return;
+        var p = userLm[idx]; if (!p) return;
+        drawJointCircle(ctx, mx(p,W), p.y*H, 3, 'rgba(255,255,255,0.35)', 'rgba(255,255,255,0.1)', 2);
+      });
+      drawHead(ctx,
+        userLm[0], userLm[LM.leftShoulder], userLm[LM.rightShoulder],
+        W, H, 'rgba(255,255,255,0.3)', 'rgba(255,255,255,0.1)'
+      );
+    }
+
+    // ════════════════════════════════════════════════════════
+    // LAYER 2: GHOST COACH — big neon glow
+    // ════════════════════════════════════════════════════════
+
+    if (ghostState.mode === 'DEMO' || ghostState.mode === 'WAITING' || ghostState.mode === 'SETUP') {
+      // ── GHOST: anatomical tapered figure in neon blue ──
+      var GC = '56,189,248';
+
+      // Torso fill
+      drawTorsoFill(ctx,
+        ghostLm[LM.leftShoulder], ghostLm[LM.rightShoulder],
+        ghostLm[LM.leftHip], ghostLm[LM.rightHip],
+        W, H, 'rgba(' + GC + ',1)'
+      );
+
+      // Segments — outer glow then core
+      connections.forEach(function(c) {
+        var a = ghostLm[c[0]], b = ghostLm[c[1]];
+        if (!a || !b) return;
+        var nameA = _lmNames[c[0]] || '';
+        var nameB = _lmNames[c[1]] || '';
+        var segKey = nameA + '-' + nameB;
+        var baseW = (SEG_WIDTH[segKey] || 4);
+        // Outer glow
+        drawTaperedSegment(ctx, mx(a,W), a.y*H, mx(b,W), b.y*H,
+          baseW * 2.8, baseW * 2.0,
+          'rgba(' + GC + ',' + (0.12 * pulseAlpha) + ')',
+          'rgba(' + GC + ',0.5)', 28
+        );
+        // Mid glow
+        drawTaperedSegment(ctx, mx(a,W), a.y*H, mx(b,W), b.y*H,
+          baseW * 1.6, baseW * 1.15,
+          'rgba(' + GC + ',' + (0.35 * pulseAlpha) + ')',
+          'rgba(' + GC + ',0.6)', 12
+        );
+        // Sharp core
+        drawTaperedSegment(ctx, mx(a,W), a.y*H, mx(b,W), b.y*H,
+          baseW, baseW * 0.72,
+          'rgba(' + GC + ',0.95)',
+          'rgba(' + GC + ',0.8)', 4
+        );
+      });
+
+      // Joint nodes
+      jointNodes.forEach(function(idx) {
+        if (idx === 0) return;
+        var p = ghostLm[idx]; if (!p) return;
+        drawJointCircle(ctx, mx(p,W), p.y*H, 7,
+          'rgba(' + GC + ',0.95)',
+          'rgba(' + GC + ',0.7)', 16
+        );
+        // White center dot
+        drawJointCircle(ctx, mx(p,W), p.y*H, 2.5,
+          'rgba(255,255,255,0.85)',
+          'rgba(255,255,255,0.3)', 4
+        );
+      });
+
+      // Head
+      drawHead(ctx,
+        ghostLm[0], ghostLm[LM.leftShoulder], ghostLm[LM.rightShoulder],
+        W, H,
+        'rgba(' + GC + ',0.92)',
+        'rgba(' + GC + ',0.7)'
+      );
+
+    } else if (false) {
+      // ── DISABLED: Ghost skeleton during active exercise ──
+      // The ghost position was computed from user landmarks and was wrong
+      // for most exercises. Per-joint coloring on the USER skeleton (above)
+      // provides the actual feedback.
+
+      // PASS 1: outer glow (overall match-score color)
+      var overallCol = (matchScore >= 80) ? { r: 0,   g: 255, b: 120 }
+                     : (matchScore >= 50) ? { r: 255, g: 220, b: 0   }
+                     :                      { r: 255, g: 50,  b: 50  };
+      ctx.save();
+      ctx.shadowBlur  = 25;
+      ctx.shadowColor = 'rgba(' + overallCol.r + ',' + overallCol.g + ',' + overallCol.b + ',0.3)';
+      ctx.strokeStyle = 'rgba(' + overallCol.r + ',' + overallCol.g + ',' + overallCol.b + ',' + (0.12 * pulseAlpha) + ')';
+      ctx.lineWidth   = 18;
+      ctx.lineCap     = 'round';
+      connections.forEach(function(c) {
+        var a = ghostLm[c[0]], b = ghostLm[c[1]];
+        if (!a || !b) return;
+        ctx.beginPath();
+        ctx.moveTo(a.x * W, a.y * H);
+        ctx.lineTo(b.x * W, b.y * H);
+        ctx.stroke();
+      });
+      ctx.restore();
+
+      // PASS 2: mid glow — per-segment color
+      connections.forEach(function(c) {
+        var a = ghostLm[c[0]], b = ghostLm[c[1]];
+        if (!a || !b) return;
+        var nameA  = _lmNames[c[0]] || '';
+        var nameB  = _lmNames[c[1]] || '';
+        var segKey = nameA + '-' + nameB;
+        var col    = jColors.segmentColors[segKey] || (isActive ? NEON_DEFAULT : NEON_BLUE);
+
+        ctx.save();
+        ctx.shadowBlur  = 12;
+        ctx.shadowColor = 'rgba(' + col.r + ',' + col.g + ',' + col.b + ',0.6)';
+        ctx.strokeStyle = 'rgba(' + col.r + ',' + col.g + ',' + col.b + ',' + (0.45 * pulseAlpha) + ')';
+        ctx.lineWidth   = 10;
+        ctx.lineCap     = 'round';
+        ctx.beginPath();
+        ctx.moveTo(a.x * W, a.y * H);
+        ctx.lineTo(b.x * W, b.y * H);
+        ctx.stroke();
+        ctx.restore();
+      });
+
+      // PASS 3: sharp core — per-segment color, full brightness
+      connections.forEach(function(c) {
+        var a = ghostLm[c[0]], b = ghostLm[c[1]];
+        if (!a || !b) return;
+        var nameA  = _lmNames[c[0]] || '';
+        var nameB  = _lmNames[c[1]] || '';
+        var segKey = nameA + '-' + nameB;
+        var col    = jColors.segmentColors[segKey] || (isActive ? NEON_DEFAULT : NEON_BLUE);
+
+        ctx.save();
+        ctx.shadowBlur  = 3;
+        ctx.shadowColor = 'rgba(' + col.r + ',' + col.g + ',' + col.b + ',0.9)';
+        ctx.strokeStyle = 'rgba(' + col.r + ',' + col.g + ',' + col.b + ',0.95)';
+        ctx.lineWidth   = 4;
+        ctx.lineCap     = 'round';
+        ctx.beginPath();
+        ctx.moveTo(a.x * W, a.y * H);
+        ctx.lineTo(b.x * W, b.y * H);
+        ctx.stroke();
+        ctx.restore();
+      });
+
+      // PASS 4: joint nodes — per-joint color, red nodes pulse bigger
+      jointNodes.forEach(function(idx) {
+        var p = ghostLm[idx]; if (!p) return;
+        var col     = jColors.nodeColors[idx] || (isActive ? NEON_DEFAULT : NEON_BLUE);
+        var isRed   = (col.r === 255 && col.g === 50);
+        var isGreen = (col.r === 0   && col.g === 255);
+        var radius  = isRed ? (8 + 2 * Math.sin(ghostPulse * 2)) : (isGreen ? 7 : 6);
+
+        ctx.save();
+        ctx.shadowBlur  = isRed ? 20 : (isGreen ? 10 : 6);
+        ctx.shadowColor = 'rgba(' + col.r + ',' + col.g + ',' + col.b + ',' + (isRed ? '0.9' : '0.5') + ')';
+        ctx.beginPath();
+        ctx.arc(p.x * W, p.y * H, radius, 0, Math.PI * 2);
+        ctx.fillStyle   = 'rgba(' + col.r + ',' + col.g + ',' + col.b + ',0.95)';
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+        ctx.lineWidth   = 1;
+        ctx.stroke();
+        ctx.restore();
+      });
+    }
+
+    // ════════════════════════════════════════════════════════
+    // PHASE LABEL BAR
+    // ════════════════════════════════════════════════════════
+    ctx.save();
+    var barW   = 320, barH = 44;
+    ctx.fillStyle   = 'rgba(0,0,0,0.75)';
+    ctx.fillRect(W/2 - barW/2, 8, barW, barH);
+    var barCol = (matchScore >= 80) ? '0,255,120'
+               : (matchScore >= 50) ? '255,220,0'
+               : (isActive         ? '255,50,50' : '100,180,255');
+    ctx.strokeStyle = 'rgba(' + barCol + ',0.5)';
+    ctx.lineWidth   = 1.5;
+    ctx.strokeRect(W/2 - barW/2, 8, barW, barH);
+    ctx.fillStyle   = 'rgba(255,255,255,0.95)';
+    ctx.font        = 'bold 15px Inter, sans-serif';
+    ctx.textAlign   = 'center';
+    var phases = ghostState.exerciseDef ? ghostState.exerciseDef.phases : [];
+    var label  = '';
+    if (ghostState.mode === 'DEMO')             label = '\uD83D\uDC40 WATCH \u2014 ' + (targetPhase.voice || 'Demonstrating');
+    else if (ghostState.mode === 'CALIBRATING') label = '\uD83D\uDCF7 Step into frame';
+    else if (ghostState.mode === 'SETUP') {
+      var sc    = ghostState.exerciseDef && ghostState.exerciseDef.setupCues;
+      var scIdx = ghostState.setupCueIndex;
+      if (scIdx < 0) {
+        var camPos = ghostState.exerciseDef.cameraPosition;
+        label = '\uD83D\uDCF1 CAMERA: ' + (camPos ? camPos.instruction : 'Position your camera');
+      } else {
+        label = '\uD83D\uDCCB ' + (scIdx + 1) + '/' + (sc ? sc.length : 1) + ' \u2014 ' + (sc ? sc[scIdx] : '');
+      }
+    }
+    else if (ghostState.mode === 'WAITING')      label = '\uD83C\uDFAF STEP INTO ME';
+    else if (ghostState.mode === 'SETTLE')       label = '\u23F3 Hold it right there...';
+    else if (ghostState.mode === 'GHOST_LEADS')  label = '\uD83D\uDC7B ' + (phases[ghostState.currentPhaseIndex] ? phases[ghostState.currentPhaseIndex].voice : '');
+    else if (ghostState.mode === 'USER_FOLLOWS') label = '\uD83D\uDCAA ' + (phases[ghostState.currentPhaseIndex] ? phases[ghostState.currentPhaseIndex].voice : '') + '  ' + Math.round(matchScore) + '%';
+    else if (ghostState.mode === 'REP_DONE')     label = '\u2714 REP ' + ghostState.repCount;
+    else if (ghostState.mode === 'GUIDING')      label = targetPhase.voice + '  ' + Math.round(matchScore) + '%';
+    else if (ghostState.mode === 'SET_DONE')     label = '\u2705 SET COMPLETE';
+    ctx.fillText(label, W/2, 36);
+    ctx.restore();
+
+    // ════════════════════════════════════════════════════════
+    // REP COUNTER (top right)
+    // ════════════════════════════════════════════════════════
+    if (ghostState.repCount > 0 && ghostState.mode !== 'SET_DONE') {
+      ctx.save();
+      ctx.fillStyle   = 'rgba(0,0,0,0.65)';
+      ctx.fillRect(W - 85, 8, 77, 44);
+      ctx.strokeStyle = 'rgba(0,255,120,0.4)';
+      ctx.lineWidth   = 1;
+      ctx.strokeRect(W - 85, 8, 77, 44);
+      ctx.fillStyle   = '#00ff78';
+      ctx.font        = 'bold 22px Inter, sans-serif';
+      ctx.textAlign   = 'center';
+      ctx.fillText(ghostState.repCount + '/' + ghostState.targetReps, W - 46, 37);
+      ctx.restore();
+    }
+  }
+
+  function drawForceArrows(ctx, userLm, exerciseDef, matchScore, W, H) {
+    if (!exerciseDef || !exerciseDef.forceArrows || exerciseDef.forceArrows.length === 0) return;
+    if (ghostState.mode !== 'GUIDING' || !ghostState.isHoldExercise) return;
+
+    var gr, gg, gb;
+    if (matchScore >= 80)      { gr=0;   gg=220; gb=100; }
+    else if (matchScore >= 60) { gr=100; gg=180; gb=255; }
+    else if (matchScore >= 40) { gr=255; gg=200; gb=0;   }
+    else                       { gr=255; gg=60;  gb=60;  }
+
+    var pulse = 0.7 + 0.3 * Math.sin(Date.now() / 400);
+    var arrowLen = 45;
+
+    exerciseDef.forceArrows.forEach(function(arrow) {
+      var p = userLm[arrow.joint];
+      if (!p) return;
+
+      var startX = mx(p, W);
+      var startY = p.y * H;
+      var endX = startX + (arrow.dir.x) * W * 3;
+      var endY = startY + arrow.dir.y * H * 3;
+
+      var dx = endX - startX, dy = endY - startY;
+      var len = Math.sqrt(dx*dx + dy*dy) || 1;
+      endX = startX + (dx/len) * arrowLen;
+      endY = startY + (dy/len) * arrowLen;
+
+      ctx.save();
+      ctx.shadowBlur = 15;
+      ctx.shadowColor = 'rgba('+gr+','+gg+','+gb+',0.6)';
+      ctx.strokeStyle = 'rgba('+gr+','+gg+','+gb+','+(0.8 * pulse)+')';
+      ctx.lineWidth = 4;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(startX, startY);
+      ctx.lineTo(endX, endY);
+      ctx.stroke();
+
+      var angle = Math.atan2(endY - startY, endX - startX);
+      var headLen = 12;
+      ctx.beginPath();
+      ctx.moveTo(endX, endY);
+      ctx.lineTo(endX - headLen * Math.cos(angle - 0.4), endY - headLen * Math.sin(angle - 0.4));
+      ctx.moveTo(endX, endY);
+      ctx.lineTo(endX - headLen * Math.cos(angle + 0.4), endY - headLen * Math.sin(angle + 0.4));
+      ctx.stroke();
+      ctx.restore();
+    });
+  }
+
+  function drawFootAngleIndicator(ctx, lm, stanceCheck, W, H) {
+    if (!stanceCheck || stanceCheck.maxFootRotation === undefined) return;
+    if (ghostState.mode !== 'WAITING') return;
+
+    var shoulderW = Math.abs(lm[LM.leftShoulder].x - lm[LM.rightShoulder].x);
+    if (shoulderW < 0.01) return;
+
+    var feet = [
+      { heel: lm[LM.leftHeel],  toe: lm[LM.leftFootIndex],  side: 'L' },
+      { heel: lm[LM.rightHeel], toe: lm[LM.rightFootIndex], side: 'R' },
+    ];
+
+    feet.forEach(function(foot) {
+      if (!foot.heel || !foot.toe) return;
+      var vis = (foot.heel.visibility === undefined || foot.heel.visibility > 0.4)
+             && (foot.toe.visibility  === undefined || foot.toe.visibility  > 0.4);
+      if (!vis) return;
+
+      var rotation = Math.abs(foot.toe.x - foot.heel.x) / shoulderW;
+      var tooMuch  = rotation > stanceCheck.maxFootRotation;
+
+      ctx.save();
+      ctx.strokeStyle = tooMuch ? 'rgba(255,60,60,0.9)' : 'rgba(0,220,100,0.7)';
+      ctx.lineWidth   = tooMuch ? 4 : 2;
+      ctx.shadowBlur  = tooMuch ? 12 : 0;
+      ctx.shadowColor = tooMuch ? 'rgba(255,60,60,0.5)' : 'transparent';
+      ctx.setLineDash(tooMuch ? [6, 4] : []);
+      ctx.beginPath();
+      ctx.moveTo(mx(foot.heel, W), foot.heel.y * H);
+      ctx.lineTo(mx(foot.toe,  W), foot.toe.y  * H);
+      ctx.stroke();
+
+      if (tooMuch) {
+        ctx.strokeStyle = 'rgba(0,220,100,0.5)';
+        ctx.lineWidth   = 2;
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath();
+        ctx.moveTo(mx(foot.heel, W), foot.heel.y * H);
+        ctx.lineTo(mx(foot.heel, W), (foot.heel.y - 0.05) * H);
+        ctx.stroke();
+      }
+      ctx.restore();
+    });
+  }
+
+  function drawKneeAlignmentIndicator(ctx, lm, stanceCheck, W, H) {
+    if (!stanceCheck || !stanceCheck.kneeOverAnkle) return;
+    if (ghostState.mode !== 'WAITING' && ghostState.mode !== 'USER_FOLLOWS' && ghostState.mode !== 'GUIDING') return;
+
+    var shoulderW = Math.abs(lm[LM.leftShoulder].x - lm[LM.rightShoulder].x);
+    if (shoulderW < 0.01) return;
+
+    var valgusThreshold = shoulderW * 0.15;
+    var knees = [
+      { knee: lm[LM.leftKnee],  ankle: lm[LM.leftAnkle],  side: 'L' },
+      { knee: lm[LM.rightKnee], ankle: lm[LM.rightAnkle], side: 'R' },
+    ];
+
+    knees.forEach(function(k) {
+      if (!k.knee || !k.ankle) return;
+      var valgus = (k.side === 'L')
+        ? (k.ankle.x - k.knee.x)
+        : (k.knee.x  - k.ankle.x);
+
+      if (valgus > valgusThreshold * 0.5) {
+        var bad = valgus > valgusThreshold;
+        ctx.save();
+        ctx.strokeStyle = bad ? 'rgba(255,60,60,0.9)' : 'rgba(255,200,0,0.7)';
+        ctx.lineWidth   = 3;
+        ctx.shadowBlur  = bad ? 10 : 0;
+        ctx.shadowColor = 'rgba(255,60,60,0.5)';
+
+        var kx      = mx(k.knee, W);
+        var ky      = k.knee.y * H;
+        var pushDir = k.side === 'L' ? 20 : -20;  // flipped: mx() mirrors x, so push directions invert
+        var headLen = 8;
+        var angle   = pushDir > 0 ? 0 : Math.PI;
+
+        ctx.beginPath();
+        ctx.moveTo(kx, ky);
+        ctx.lineTo(kx + pushDir, ky);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(kx + pushDir, ky);
+        ctx.lineTo(kx + pushDir - headLen * Math.cos(angle - 0.5), ky - headLen * Math.sin(angle - 0.5));
+        ctx.moveTo(kx + pushDir, ky);
+        ctx.lineTo(kx + pushDir - headLen * Math.cos(angle + 0.5), ky - headLen * Math.sin(angle + 0.5));
+        ctx.stroke();
+        ctx.restore();
+      }
+    });
+  }
+
+  // ---- initPose — ghost animator version ----
+  function initPose(video) {
+    console.log('initPose called');
+    var canvas   = document.getElementById('videoCanvas');
+    var ctx      = canvas.getContext('2d');
+    var hasGhost = !!(EXERCISE_TYPE_MAP[EXERCISE_ID] && EXERCISE_PHASES[EXERCISE_TYPE_MAP[EXERCISE_ID]]);
+
+    if (hasGhost) { initGhostAnimator(); }
+
+    pose = new Pose({ locateFile: function(f) { return 'https://cdn.jsdelivr.net/npm/@mediapipe/pose/' + f; } });
+    pose.setOptions({ modelComplexity: 1, smoothLandmarks: true, minDetectionConfidence: 0.6, minTrackingConfidence: 0.6 });
+
+    pose.onResults(function(results) {
+      var W = video.videoWidth  || 640;
+      var H = video.videoHeight || 480;
+      canvas.width = W; canvas.height = H;
+
+      ctx.save();
+      ctx.scale(-1, 1);
+      ctx.drawImage(results.image, -W, 0, W, H);
+      ctx.restore();
+
+      if (results.poseLandmarks) {
+        var lm = results.poseLandmarks;
+
+        // --- CALIBRATION phase ---
+        if (ghostState.mode === 'CALIBRATING') {
+          var keyLMs = [11, 12, 23, 24, 25, 26, 27, 28];
+          var allVis = keyLMs.every(function(idx) {
+            return lm[idx] && (lm[idx].visibility === undefined || lm[idx].visibility > 0.5);
+          });
+          if (allVis) {
+            ghostState.calibrationFrames++;
+            if (ghostState.calibrationFrames >= ghostState.CALIBRATION_NEEDED) {
+              var hasCues = ghostState.exerciseDef &&
+                            ghostState.exerciseDef.setupCues &&
+                            ghostState.exerciseDef.setupCues.length > 0;
+              if (hasCues) {
+                ghostState.mode = 'SETUP';
+                ghostState.setupCueIndex = -1;  // start at -1 so camera cue plays first
+                ghostState.setupCueTime = Date.now();
+                // Speak camera placement first
+                var camPos = ghostState.exerciseDef.cameraPosition;
+                if (camPos && camPos.instruction) {
+                  VoiceCoach.speak(camPos.instruction, true);
+                } else {
+                  VoiceCoach.speak(ghostState.exerciseDef.setupCues[0], true);
+                  ghostState.setupCueIndex = 0;
+                }
+              } else {
+                ghostState.mode = 'DEMO';
+                ghostState.phaseStartTime = Date.now();
+                VoiceCoach.speak('Watch me first. I will show you the movement.', true);
+              }
+            }
+          } else {
+            ghostState.calibrationFrames = Math.max(0, ghostState.calibrationFrames - 2);
+            var missing = [];
+            if (!lm[27] || (lm[27].visibility !== undefined && lm[27].visibility < 0.5)) missing.push('feet');
+            if (!lm[11] || (lm[11].visibility !== undefined && lm[11].visibility < 0.5)) missing.push('shoulders');
+            if (!lm[23] || (lm[23].visibility !== undefined && lm[23].visibility < 0.5)) missing.push('hips');
+            var cueEl = document.getElementById('alignmentCue');
+            if (cueEl) {
+              cueEl.textContent = missing.length > 0
+                ? 'Step back — your ' + missing[0] + ' are not visible'
+                : 'Getting ready...';
+              cueEl.style.color = '#f59e0b';
+            }
+          }
+          (function() {
+            var cal_conn = [
+              [11,12],[11,23],[12,24],[23,24],
+              [11,13],[13,15],[12,14],[14,16],
+              [23,25],[25,27],[24,26],[26,28],
+            ];
+            ctx.save();
+            ctx.strokeStyle = 'rgba(102,126,234,.7)';
+            ctx.lineWidth = 2; ctx.lineCap = 'round';
+            cal_conn.forEach(function(c) {
+              var a = lm[c[0]], b = lm[c[1]]; if (!a || !b) return;
+              ctx.beginPath(); ctx.moveTo(mx(a,W), a.y*H); ctx.lineTo(mx(b,W), b.y*H); ctx.stroke();
+            });
+            [0,11,12,13,14,15,16,23,24,25,26,27,28].forEach(function(idx) {
+              var p = lm[idx]; if (!p) return;
+              ctx.beginPath(); ctx.arc(mx(p,W), p.y*H, 4, 0, Math.PI*2);
+              ctx.fillStyle = 'rgba(102,126,234,.4)'; ctx.fill();
+              ctx.strokeStyle = '#667eea'; ctx.lineWidth = 1; ctx.stroke();
+            });
+            ctx.restore();
+          })();
+          return;
+        }
+
+        // --- SETUP phase — show cues, draw skeleton, but no ghost yet ---
+        if (ghostState.mode === 'SETUP') {
+          (function() {
+            var setup_conn = [
+              [11,12],[11,23],[12,24],[23,24],
+              [11,13],[13,15],[12,14],[14,16],
+              [23,25],[25,27],[24,26],[26,28],
+            ];
+            ctx.save();
+            ctx.strokeStyle = 'rgba(167,139,250,.7)';
+            ctx.lineWidth = 2; ctx.lineCap = 'round';
+            setup_conn.forEach(function(c) {
+              var a = lm[c[0]], b = lm[c[1]]; if (!a || !b) return;
+              ctx.beginPath(); ctx.moveTo(mx(a,W), a.y*H); ctx.lineTo(mx(b,W), b.y*H); ctx.stroke();
+            });
+            [0,11,12,13,14,15,16,23,24,25,26,27,28].forEach(function(idx) {
+              var p = lm[idx]; if (!p) return;
+              ctx.beginPath(); ctx.arc(mx(p,W), p.y*H, 4, 0, Math.PI*2);
+              ctx.fillStyle = 'rgba(167,139,250,.4)'; ctx.fill();
+              ctx.strokeStyle = '#a78bfa'; ctx.lineWidth = 1; ctx.stroke();
+            });
+            ctx.restore();
+          })();
+          if (hasGhost && ghostState.exerciseDef) {
+            // Run state machine so it can advance cue timer
+            var userAngles = ghostState.exerciseDef.checkAngles(lm);
+            updateGhostState(userAngles, 100, lm);
+          }
+          return;
+        }
+
+        if (hasGhost && ghostState.exerciseDef) {
+          var userAngles = ghostState.exerciseDef.checkAngles(lm);
+          var target     = getGhostCurrentTarget();
+          var matchScore = target ? computeMatchScore(userAngles, target.joints || {}) : 50;
+          ghostState._lastMatchScore = matchScore;
+          updateGhostState(userAngles, matchScore, lm);
+          target = getGhostCurrentTarget();
+          drawGhostTarget(ctx, target, matchScore || 50, W, H, lm);
+          if (ghostState.exerciseDef) {
+            drawForceArrows(ctx, lm, ghostState.exerciseDef, matchScore || 50, W, H);
+            if (ghostState.exerciseDef) {
+              drawFootAngleIndicator(ctx, lm, ghostState.exerciseDef.stanceCheck, W, H);
+              drawKneeAlignmentIndicator(ctx, lm, ghostState.exerciseDef.stanceCheck, W, H);
+            }
+          }
+          formScores.push(matchScore || 50);
+          updateFormDisplay(matchScore || 50);
+
+          var cueEl = document.getElementById('alignmentCue');
+          if (cueEl) {
+            if (ghostState.mode === 'CALIBRATING') {
+              cueEl.textContent = '\uD83D\uDCF7 Make sure your whole body is in frame';
+              cueEl.style.color = '#f59e0b';
+            } else if (ghostState.mode === 'SETUP') {
+              if (ghostState.setupCueIndex < 0) {
+                var camPos = ghostState.exerciseDef.cameraPosition;
+                cueEl.textContent = '\uD83D\uDCF1 ' + (camPos ? camPos.instruction : 'Position your camera');
+                cueEl.style.color = '#38bdf8';
+              } else {
+                var scArr = ghostState.exerciseDef && ghostState.exerciseDef.setupCues;
+                var scI   = ghostState.setupCueIndex;
+                cueEl.textContent = '\uD83D\uDCCB ' + (scArr ? scArr[scI] : 'Get into starting position');
+                cueEl.style.color = '#c084fc';
+              }
+            } else if (ghostState.mode === 'DEMO') {
+              cueEl.textContent = '\uD83D\uDC40 Watch the movement \u2014 your turn is next';
+              cueEl.style.color = '#38bdf8';
+            } else if (ghostState.mode === 'WAITING') {
+              cueEl.textContent = '\uD83C\uDFAF Step into me \u2014 match my position';
+              cueEl.style.color = '#667eea';
+            } else if (ghostState.mode === 'SETTLE') {
+              cueEl.textContent = '\u23F3 Hold it right there... getting ready';
+              cueEl.style.color = '#a78bfa';
+            } else if (ghostState.mode === 'GHOST_LEADS') {
+              var ph = getGhostCurrentTarget();
+              cueEl.textContent = '\uD83D\uDC7B Follow me \u2014 ' + (ph ? ph.voice : '');
+              cueEl.style.color = '#38bdf8';
+            } else if (ghostState.mode === 'USER_FOLLOWS') {
+              var ph = getGhostCurrentTarget();
+              cueEl.textContent = '\uD83D\uDCAA ' + (ph ? ph.voice : 'Match the position');
+              cueEl.style.color = matchScore >= 70 ? '#22c55e' : '#f59e0b';
+            } else if (ghostState.mode === 'GUIDING') {
+              var ph = getGhostCurrentTarget();
+              cueEl.textContent = ph ? ph.voice : 'Hold it';
+              cueEl.style.color = matchScore >= 70 ? '#22c55e' : '#f59e0b';
+            } else if (ghostState.mode === 'SET_DONE') {
+              cueEl.textContent = '\u2705 Set complete! Press Done.';
+              cueEl.style.color = '#22c55e';
+            }
+          }
+        } else {
+          (function() {
+            var fb_conn = [
+              [11,12],[11,23],[12,24],[23,24],
+              [11,13],[13,15],[12,14],[14,16],
+              [23,25],[25,27],[24,26],[26,28],
+            ];
+            ctx.save();
+            ctx.strokeStyle = 'rgba(102,126,234,.7)';
+            ctx.lineWidth = 2; ctx.lineCap = 'round';
+            fb_conn.forEach(function(c) {
+              var a = lm[c[0]], b = lm[c[1]]; if (!a || !b) return;
+              ctx.beginPath(); ctx.moveTo(mx(a,W), a.y*H); ctx.lineTo(mx(b,W), b.y*H); ctx.stroke();
+            });
+            [0,11,12,13,14,15,16,23,24,25,26,27,28].forEach(function(idx) {
+              var p = lm[idx]; if (!p) return;
+              ctx.beginPath(); ctx.arc(mx(p,W), p.y*H, 4, 0, Math.PI*2);
+              ctx.fillStyle = 'rgba(102,126,234,.4)'; ctx.fill();
+              ctx.strokeStyle = '#667eea'; ctx.lineWidth = 1; ctx.stroke();
+            });
+            ctx.restore();
+          })();
+          var score = computeFormScore(lm);
+          formScores.push(score);
+          updateFormDisplay(score);
+        }
+      }
+    });
+
+    var camera = new Camera(video, {
+      onFrame: function() { return pose.send({ image: video }); },
+      width: 640, height: 480
+    });
+    camera.start();
+  }
+
+  // ---- Reset ghost for next set ----
+  function resetGhostForNextSet() {
+    ghostState.mode              = 'WAITING';
+    ghostState.currentPhaseIndex = 0;
+    ghostState.phaseStartTime    = Date.now();
+    ghostState.repCount          = 0;
+    ghostState.matchFrames       = 0;
+    ghostState.holdSeconds       = 0;
+    if (ghostState.holdInterval) { clearInterval(ghostState.holdInterval); ghostState.holdInterval = null; }
+    VoiceCoach.speak('Next set. Match the starting position.', true);
+  }
+
+  function computeFormScore(landmarks) {
+    // Simplified symmetry heuristic — proper analysis is pattern-specific
+    const lHip  = landmarks[23], rHip  = landmarks[24];
+    const lKnee = landmarks[25], rKnee = landmarks[26];
+    if (!lHip || !rHip || !lKnee || !rKnee) return 75;
+    const hipDiff  = Math.abs(lHip.y  - rHip.y)  * 100;
+    const kneeDiff = Math.abs(lKnee.y - rKnee.y) * 100;
+    const penalty  = (hipDiff + kneeDiff) * 3;
+    return Math.max(40, Math.min(100, Math.round(100 - penalty)));
+  }
+
+  function updateFormDisplay(score) {
+    const el = document.getElementById('formScore');
+    el.textContent = score + '%';
+    el.style.color = score >= 85 ? '#22c55e' : score >= 70 ? '#f59e0b' : '#ef4444';
+  }
+
+  // ---- Tempo guide ----
+  function runTempo(setNum) {
+    const labels = ['Down', 'Hold', 'Up', 'Reset'];
+    let phase = 0;
+    function nextPhase() {
+      [0,1,2,3].forEach(i => document.getElementById('tp'+i).classList.remove('active'));
+      document.getElementById('tp'+phase).classList.add('active');
+      const dur = TEMPO_PARTS[phase];
+      document.getElementById('tempoGuide').textContent = labels[phase] + '...';
+      if (dur > 0) {
+        tempoInterval = setTimeout(() => {
+          phase = (phase + 1) % 4;
+          if (phase === 0) { nextPhase(); } // loop
+          else nextPhase();
+        }, dur * 1000);
+      } else {
+        phase = (phase + 1) % 4;
+        nextPhase();
+      }
+    }
+    nextPhase();
+  }
+
+  // ---- Set management ----
+  function completeSet(setNum) {
+    resetGhostForNextSet();
+    // Reset rep counter for next set
+    repState.count = 0;
+    repState.phase = 'up';
+    angleBuffer = [];
+    stopTempoVoice();
+    clearTimeout(tempoInterval);
+    [0,1,2,3].forEach(i => document.getElementById('tp'+i).classList.remove('active'));
+    document.getElementById('doneBtn'+setNum).classList.add('done');
+    document.getElementById('doneBtn'+setNum).disabled = true;
+    const repsEl = document.getElementById('reps'+setNum);
+    const reps = parseInt(repsEl.value) || PRESCRIBED_REPS;
+    repsPerSet.push(reps);
+    completedSets++;
+    if (completedSets < PRESCRIBED_SETS) {
+      startRest();
+    }
+  }
+
+  function startRest() {
+    stopTempoVoice();
+    const wrap = document.getElementById('restTimerWrap');
+    const val  = document.getElementById('restVal');
+    wrap.style.display = 'block';
+    let t = REST_SECS;
+    val.textContent = t;
+    VoiceCoach.announceRest(t);
+    restInterval = setInterval(() => {
+      t--;
+      val.textContent = t;
+      if (t <= 0) {
+        clearInterval(restInterval);
+        wrap.style.display = 'none';
+        VoiceCoach.speak('Rest over. Next set.', true);
+        startTempoVoice();
+      }
+    }, 1000);
+    // Run visual tempo guide for current set
+    runTempo(completedSets + 1);
+  }
+
+  function skipRest() {
+    clearInterval(restInterval);
+    document.getElementById('restTimerWrap').style.display = 'none';
+    VoiceCoach.speak('Next set.', true);
+    startTempoVoice();
+  }
+
+  // ---- Pain protocol ----
+  function togglePain() {
+    const p = document.getElementById('painProtocol');
+    p.classList.toggle('show');
+    // Reset to step 1 each time opened
+    if (p.classList.contains('show')) {
+      document.querySelectorAll('.pain-step').forEach(s => s.classList.remove('active'));
+      document.getElementById('painStep1').classList.add('active');
+      selectedLocation = '';
+    }
+  }
+
+  function painStep2() {
+    const type = document.querySelector('input[name="painType"]:checked');
+    if (!type) { alert('Please select a pain type.'); return; }
+    document.getElementById('painStep1').classList.remove('active');
+    document.getElementById('painStep2').classList.add('active');
+  }
+
+  function selectLoc(btn, loc) {
+    document.querySelectorAll('.loc-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    selectedLocation = loc;
+    // Auto-advance to step 3
+    setTimeout(() => {
+      document.getElementById('painStep2').classList.remove('active');
+      document.getElementById('painStep3').classList.add('active');
+      updateSevAndGuidance();
+    }, 300);
+  }
+
+  function updateSevAndGuidance() {
+    const severity = parseInt(document.getElementById('painSeverity').value);
+    document.getElementById('sevVal').textContent = severity;
+    const type = document.querySelector('input[name="painType"]:checked')?.value || 'aching';
+    const { guidance, action } = computeGuidance(type, severity);
+    painAction = action;
+    document.getElementById('painGuidance').innerHTML =
+      `<div class="guidance-box guidance-${action}"><p>${guidance}</p></div>`;
+  }
+
+  function computeGuidance(type, severity) {
+    let guidance = '', action = 'continue';
+    if (type === 'sharp' || type === 'joint') {
+      if (severity >= 4) {
+        guidance = type === 'sharp'
+          ? 'Stop this exercise. Sharp pain during exercise is your body\'s stop signal. This exercise has been removed from today\'s session.'
+          : 'Stop this exercise. Joint pain differs from muscle work. If this persists next session, speak with a physio.';
+        action = 'skip_exercise';
+      } else {
+        guidance = 'Take a 2-minute rest. If pain settles below 3/10, continue with reduced range of motion.';
+        action = 'reduce_volume';
+      }
+    } else if (type === 'aching') {
+      if (severity >= 6) {
+        guidance = 'This level of discomfort suggests you are pushing beyond productive adaptation. Reducing remaining volume by 20%.';
+        action = 'reduce_volume';
+      } else {
+        guidance = 'Mild to moderate aching is often normal training discomfort. Continue if it stays below 5/10.';
+        action = 'continue';
+      }
+    } else if (type === 'unusual') {
+      guidance = 'An unusual sensation warrants caution. Skipping this exercise today. If it recurs, speak with a physiotherapist.';
+      action = 'skip_exercise';
+    }
+    return { guidance, action };
+  }
+
+  function submitPain() {
+    const type = document.querySelector('input[name="painType"]:checked')?.value;
+    const severity = parseInt(document.getElementById('painSeverity').value);
+    if (!type || !selectedLocation) { alert('Please complete all steps.'); return; }
+    painReported = true;
+
+    fetch('{% url "v1_save_exercise_result" %}', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+      body: JSON.stringify({
+        exercise_index: EXERCISE_INDEX,
+        exercise_id: EXERCISE_ID,
+        exercise_name: EXERCISE_NAME,
+        movement_pattern: PATTERN,
+        prescribed_sets: PRESCRIBED_SETS,
+        prescribed_reps: PRESCRIBED_REPS,
+        prescribed_rest: REST_SECS,
+        completed_sets: completedSets,
+        reps_per_set: repsPerSet,
+        form_score: formScores.length ? Math.round(formScores.reduce((a,b)=>a+b,0)/formScores.length) : 75,
+        pain_reported: true,
+        pain_type: type,
+        pain_location: selectedLocation,
+        pain_severity: severity,
+        pain_action: painAction,
+        skipped: painAction === 'skip_exercise',
+      })
+    }).then(r => r.json()).then(data => {
+      if (painAction === 'skip_exercise') {
+        document.getElementById('painProtocol').innerHTML =
+          `<div class="guidance-box guidance-skip_exercise"><p>${computeGuidance(type, severity).guidance}</p><p style="margin-top:8px;font-size:.78rem;opacity:.7;">Moving to next exercise in 3 seconds...</p></div>`;
+        setTimeout(() => { window.location.href = data.next_url; }, 3000);
+      } else if (painAction === 'reduce_volume') {
+        remainingSets = Math.max(1, remainingSets - 1);
+        document.getElementById('painProtocol').classList.remove('show');
+        togglePain(); // close panel
+      } else {
+        document.getElementById('painProtocol').classList.remove('show');
+      }
+    });
+  }
+
+  // ---- Submit ----
+  function saveAndNext() {
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Saving...';
+    if (stream) stream.getTracks().forEach(t => t.stop());
+
+    let avgForm;
+    if (window._cameraFailed) {
+      avgForm = parseInt(document.getElementById('manualForm')?.value || 70);
+      const manualRepsEl = document.getElementById('manualReps');
+      if (manualRepsEl && repsPerSet.length === 0) {
+        const manualReps = parseInt(manualRepsEl.value) || PRESCRIBED_REPS;
+        repsPerSet = Array(completedSets || PRESCRIBED_SETS).fill(manualReps);
+        completedSets = repsPerSet.length;
+      }
+    } else {
+      avgForm = formScores.length
+        ? Math.round(formScores.reduce((a,b) => a+b, 0) / formScores.length)
+        : 75;
+    }
+
+    const painDetails = painReported ? {
+      location: document.getElementById('painLocation').value,
+      desc: document.getElementById('painDesc').value,
+    } : {};
+
+    if (IS_TEST_MODE) {
+      alert('Test mode — exercise data logged to console. Redirecting to test list.');
+      console.log('Test result:', { exercise_id: EXERCISE_ID, completedSets, repsPerSet, avgForm, partialRomReps: ghostState.partialRomReps || 0 });
+      window.location.href = '/v1/test-exercises/';
+      return;
+    }
+
+    fetch('{% url "v1_save_exercise_result" %}', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrf() },
+      body: JSON.stringify({
+        exercise_index:   EXERCISE_INDEX,
+        exercise_id:      EXERCISE_ID,
+        exercise_name:    EXERCISE_NAME,
+        movement_pattern: PATTERN,
+        prescribed_sets:  PRESCRIBED_SETS,
+        prescribed_reps:  PRESCRIBED_REPS,
+        prescribed_rest:  REST_SECS,
+        completed_sets:   completedSets,
+        reps_per_set:     repsPerSet,
+        form_score:       avgForm,
+        pain_reported:    painReported,
+        pain_details:     painDetails,
+        skipped:          false,
+      })
+    })
+    .then(r => r.json())
+    .then(d => { window.location.href = d.next_url; })
+    .catch(() => { window.location.href = '{% url "v1_cooldown" %}'; });
+  }
+
+  function skipExercise() {
+    if (IS_TEST_MODE) {
+      window.location.href = '/v1/test-exercises/';
+      return;
+    }
+    fetch('{% url "v1_save_exercise_result" %}', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrf() },
+      body: JSON.stringify({
+        exercise_index:   EXERCISE_INDEX,
+        exercise_id:      EXERCISE_ID,
+        exercise_name:    EXERCISE_NAME,
+        movement_pattern: PATTERN,
+        prescribed_sets:  PRESCRIBED_SETS,
+        prescribed_reps:  PRESCRIBED_REPS,
+        prescribed_rest:  REST_SECS,
+        completed_sets:   0,
+        reps_per_set:     [],
+        form_score:       0,
+        pain_reported:    false,
+        pain_details:     {},
+        skipped:          true,
+      })
+    })
+    .then(r => r.json())
+    .then(d => { window.location.href = d.next_url; })
+    .catch(() => { window.location.href = '{% url "v1_cooldown" %}'; });
+  }
+
+  function getCsrf() {
+    const cookies = document.cookie.split(';');
+    for (const c of cookies) {
+      const [k, v] = c.trim().split('=');
+      if (k === 'csrftoken') return v;
+    }
+    return '';
+  }
+
+  // ════════════════════════════════════════════════════════════════════════
+  // ASSESSMENT MODE CONTROLLER
+  // ════════════════════════════════════════════════════════════════════════
+  if (ASSESSMENT_MODE) {
+    var assessRepCount = 0;
+    var assessHoldTime = 0;
+    var assessTimerStarted = false;
+    var assessTimerEnded = false;
+    var assessCountdownInterval = null;
+    var assessRemainingSeconds = ASSESSMENT_DURATION;
+
+    document.addEventListener('DOMContentLoaded', function() {
+      var overlay = document.getElementById('assessmentOverlay');
+      if (overlay) overlay.style.display = 'block';
+      var cd = document.getElementById('assessmentCountdown');
+      if (cd) cd.textContent = ASSESSMENT_DURATION;
+      var lbl = document.getElementById('assessmentMeasuredLabel');
+      if (lbl) lbl.textContent = ASSESSMENT_TYPE === 'max_reps' ? 'reps' : 'seconds held';
+      var doseEl = document.querySelector('.card-label');
+      if (doseEl) doseEl.textContent = ASSESSMENT_TYPE === 'max_reps'
+        ? 'MAX reps in ' + ASSESSMENT_DURATION + 's'
+        : 'Hold as long as you can (' + ASSESSMENT_DURATION + 's max)';
+    });
+
+    function startAssessmentTimer() {
+      if (assessTimerStarted) return;
+      assessTimerStarted = true;
+      assessCountdownInterval = setInterval(function() {
+        if (ASSESSMENT_TYPE === 'hold') {
+          var matchScore = (window.ghostState && ghostState._lastMatchScore) || 0;
+          if (matchScore >= 60) {
+            assessHoldTime++;
+            var mEl = document.getElementById('assessmentMeasured');
+            if (mEl) mEl.textContent = assessHoldTime;
+          }
+        }
+        assessRemainingSeconds--;
+        var cdEl = document.getElementById('assessmentCountdown');
+        if (cdEl) cdEl.textContent = Math.max(0, assessRemainingSeconds);
+        if (assessRemainingSeconds <= 0) {
+          clearInterval(assessCountdownInterval);
+          assessTimerEnded = true;
+          finishAssessment();
+        }
+      }, 1000);
+    }
+
+    // Hook: start timer when ghost enters USER_FOLLOWS state
+    var _ghostStateCheck = setInterval(function() {
+      if (window.ghostState && ghostState.mode === 'USER_FOLLOWS' && !assessTimerStarted) {
+        startAssessmentTimer();
+      }
+    }, 500);
+
+    // Poll repState for max_reps counting
+    setInterval(function() {
+      if (!ASSESSMENT_MODE || assessTimerEnded || ASSESSMENT_TYPE !== 'max_reps') return;
+      var count = (window.repState && repState.count) ? repState.count : 0;
+      if (count !== assessRepCount) {
+        assessRepCount = count;
+        var mEl = document.getElementById('assessmentMeasured');
+        if (mEl) mEl.textContent = assessRepCount;
+      }
+    }, 200);
+
+    function computeAssessmentScore(measured) {
+      var t = ASSESSMENT_SCORING.thresholds || [5, 15, 30, 45, 45];
+      if (measured <= t[0]) return 1;
+      if (measured <= t[1]) return 2;
+      if (measured <= t[2]) return 3;
+      if (measured <= t[3]) return 4;
+      return 5;
+    }
+
+    function finishAssessment() {
+      clearInterval(_ghostStateCheck);
+      var measured = ASSESSMENT_TYPE === 'max_reps' ? assessRepCount : assessHoldTime;
+      var score = computeAssessmentScore(measured);
+      var scoreEl = document.getElementById('assessmentScoreResult');
+      var scoreVal = document.getElementById('assessmentScoreValue');
+      if (scoreEl) scoreEl.style.display = 'block';
+      if (scoreVal) scoreVal.textContent = score;
+      if (window.VoiceCoach) VoiceCoach.speak('Test complete. Your score is ' + score + ' out of 5.', true);
+    }
+
+    window.saveAssessmentScore = function() {
+      var measured = ASSESSMENT_TYPE === 'max_reps' ? assessRepCount : assessHoldTime;
+      var score = computeAssessmentScore(measured);
+      fetch("{% url 'onboarding_save_test_result' %}", {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrf() },
+        body: JSON.stringify({
+          test_index: ASSESSMENT_TEST_INDEX,
+          score: score,
+          side: ASSESSMENT_SIDE,
+          variant: ASSESSMENT_VARIANT,
+          measured_value: measured,
+        })
+      }).then(function(r) { return r.json(); })
+        .then(function(data) {
+          window.location.href = data.next_url || "{% url 'onboarding_asymmetry' %}";
+        })
+        .catch(function() {
+          window.location.href = "{% url 'onboarding_asymmetry' %}";
+        });
+    };
+  }
+</script>
+{% endblock %}

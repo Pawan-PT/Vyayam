@@ -1,0 +1,110 @@
+{% extends 'strength_app/base.html' %}
+{% block title %}Health Screen — VYAYAM Assessment{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+  <div class="row justify-content-center">
+    <div class="col-lg-7">
+
+      <div class="mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <span class="text-muted small fw-600">Step {{ step }} of {{ total }}</span>
+          <span class="text-muted small">Health &amp; Safety Screen</span>
+        </div>
+        <div class="progress" style="height:6px;border-radius:6px;">
+          <div class="progress-bar" style="width:{% widthratio step total 100 %}%;background:var(--primary-gradient);"></div>
+        </div>
+      </div>
+
+      {% if stopped %}
+      <!-- ABSOLUTE STOP SCREEN -->
+      <div class="card border-0" style="background:var(--danger-gradient);color:white;">
+        <div class="card-body p-5 text-center">
+          <i class="fas fa-hand-paper fa-4x mb-3"></i>
+          <h3 class="fw-700 mb-2">Please Consult Your Clinician First</h3>
+          <p class="opacity-90 mb-3">Based on your reported condition(s), we recommend speaking with your doctor or physiotherapist before starting an exercise programme.</p>
+          <div class="alert mb-3" style="background:rgba(255,255,255,.15);border:none;color:white;">
+            <strong>Flagged:</strong> {{ patient.absolute_stop_reason }}
+          </div>
+          <p class="opacity-75 small">This is a precautionary measure for your safety. Once you have medical clearance, return and complete your assessment — your data is saved.</p>
+          <a href="{% url 'dashboard' %}" class="btn mt-3" style="background:white;color:#eb3349;font-weight:700;border-radius:10px;padding:.75rem 2rem;">
+            <i class="fas fa-home me-2"></i>Return to Dashboard
+          </a>
+        </div>
+      </div>
+
+      {% else %}
+      <!-- NORMAL RED FLAGS FORM -->
+      <div class="card">
+        <div class="card-body p-4">
+          <h4 class="fw-700 mb-1">Health &amp; Injury Screen</h4>
+          <p class="text-muted mb-4">Select anything that applies. This allows us to automatically exclude unsafe exercises and suggest safe alternatives.</p>
+
+          <form method="post">
+            {% csrf_token %}
+
+            <!-- Known conditions -->
+            <div class="mb-4">
+              <label class="form-label fw-600">Current or recent conditions / injuries <span class="text-muted">(select all that apply)</span></label>
+              <div class="d-flex flex-column gap-2">
+                {% for val, label in red_flag_options %}
+                <label class="p-3 rounded-3 border d-flex align-items-center gap-3" style="cursor:pointer;">
+                  <input type="checkbox" name="red_flags" value="{{ val }}" class="form-check-input mt-0 flex-shrink-0"
+                    {% if val in patient.red_flags_json %}checked{% endif %}>
+                  <span class="fw-500">{{ label }}</span>
+                </label>
+                {% endfor %}
+              </div>
+            </div>
+
+            <!-- Absolute stop conditions -->
+            <div class="mb-4">
+              <label class="form-label fw-600 text-danger"><i class="fas fa-exclamation-triangle me-1"></i>Absolute Stop Conditions <span class="text-muted fw-400">(require medical clearance before exercise)</span></label>
+              <div class="d-flex flex-column gap-2">
+                {% for val, label in absolute_stop_options %}
+                <label class="p-3 rounded-3 border border-danger d-flex align-items-center gap-3" style="cursor:pointer;">
+                  <input type="checkbox" name="absolute_stop_conditions" value="{{ val }}" class="form-check-input mt-0 flex-shrink-0">
+                  <span class="fw-500 text-danger">{{ label }}</span>
+                </label>
+                {% endfor %}
+              </div>
+            </div>
+
+            <!-- Surgical history -->
+            <div class="mb-3">
+              <label class="form-label fw-600">Surgical history <span class="text-muted">(optional — separate with commas)</span></label>
+              <input type="text" name="surgical_history" class="form-control"
+                     placeholder="e.g. ACL reconstruction 2022, hernia repair 2019"
+                     value="{{ patient.surgical_history_json|join:', ' }}">
+            </div>
+
+            <!-- Medications -->
+            <div class="mb-4">
+              <label class="form-label fw-600">Current medications affecting exercise <span class="text-muted">(optional)</span></label>
+              <input type="text" name="medications" class="form-control"
+                     placeholder="e.g. Beta-blockers, blood thinners"
+                     value="{{ patient.medications_json|join:', ' }}">
+            </div>
+
+            <!-- Data consent (Task 6b) -->
+            <div class="mb-3 p-3 rounded" style="background:rgba(102,126,234,.07);border:1px solid rgba(102,126,234,.2);">
+              <div class="form-check">
+                <input type="checkbox" name="data_consent" value="1" class="form-check-input" id="dataConsent">
+                <label class="form-check-label" for="dataConsent" style="font-size:.85rem;">
+                  <strong>Help improve VYAYAM</strong> — Allow anonymised training data to improve programme recommendations. No personal information is stored.
+                </label>
+              </div>
+            </div>
+
+            <button type="submit" class="btn w-100 py-3 fw-700" style="background:var(--primary-gradient);color:white;border:none;border-radius:10px;">
+              Save &amp; Continue <i class="fas fa-arrow-right ms-2"></i>
+            </button>
+          </form>
+        </div>
+      </div>
+      {% endif %}
+
+    </div>
+  </div>
+</div>
+{% endblock %}
