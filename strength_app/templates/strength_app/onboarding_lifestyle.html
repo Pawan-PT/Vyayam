@@ -26,11 +26,42 @@
 
             <div class="mb-3">
               <label class="form-label fw-600">Overall activity level</label>
-              <select name="lifestyle" class="form-select">
-                {% for val, label in lifestyle_choices %}
-                <option value="{{ val }}" {% if patient.lifestyle == val %}selected{% endif %}>{{ label }}</option>
-                {% endfor %}
-              </select>
+              <p class="text-muted small mb-2">Be honest — this affects how hard your sessions are. Pick the one closest to your typical week.</p>
+              <div style="display:flex;flex-direction:column;gap:8px;">
+
+                <label class="d-flex align-items-start gap-3 p-3 rounded-3 mb-0" style="background:var(--color-background-secondary,#1a1f3a);border:2px solid transparent;cursor:pointer;transition:all .2s;" onclick="this.querySelector('input').checked=true;document.querySelectorAll('[name=lifestyle]').forEach(r=>{r.closest('label').style.borderColor='transparent'});this.style.borderColor='#667eea';">
+                  <input type="radio" name="lifestyle" value="sedentary" {% if patient.lifestyle == 'sedentary' or not patient.lifestyle %}checked{% endif %} style="margin-top:3px;accent-color:#667eea;">
+                  <div>
+                    <div class="fw-700" style="font-size:.95rem;">Sedentary</div>
+                    <div class="text-muted" style="font-size:.8rem;line-height:1.4;">Desk job or studying most of the day. Less than 30 minutes of walking. No regular exercise. Example: office worker, student who auto-rickshaws to college.</div>
+                  </div>
+                </label>
+
+                <label class="d-flex align-items-start gap-3 p-3 rounded-3 mb-0" style="background:var(--color-background-secondary,#1a1f3a);border:2px solid transparent;cursor:pointer;transition:all .2s;" onclick="this.querySelector('input').checked=true;document.querySelectorAll('[name=lifestyle]').forEach(r=>{r.closest('label').style.borderColor='transparent'});this.style.borderColor='#667eea';">
+                  <input type="radio" name="lifestyle" value="moderately_active" {% if patient.lifestyle == 'moderately_active' %}checked{% endif %} style="margin-top:3px;accent-color:#667eea;">
+                  <div>
+                    <div class="fw-700" style="font-size:.95rem;">Moderately active</div>
+                    <div class="text-muted" style="font-size:.8rem;line-height:1.4;">Walk 30 to 60 minutes daily or light exercise 2 to 3 times per week. Example: walk to work, take stairs sometimes, play weekend cricket, do yoga twice a week.</div>
+                  </div>
+                </label>
+
+                <label class="d-flex align-items-start gap-3 p-3 rounded-3 mb-0" style="background:var(--color-background-secondary,#1a1f3a);border:2px solid transparent;cursor:pointer;transition:all .2s;" onclick="this.querySelector('input').checked=true;document.querySelectorAll('[name=lifestyle]').forEach(r=>{r.closest('label').style.borderColor='transparent'});this.style.borderColor='#667eea';">
+                  <input type="radio" name="lifestyle" value="active" {% if patient.lifestyle == 'active' %}checked{% endif %} style="margin-top:3px;accent-color:#667eea;">
+                  <div>
+                    <div class="fw-700" style="font-size:.95rem;">Active</div>
+                    <div class="text-muted" style="font-size:.8rem;line-height:1.4;">Structured exercise 4 to 5 times per week for 30 to 60 minutes. Or a physically demanding job. Example: gym 4 days a week, daily running, construction work, delivery rider cycling all day.</div>
+                  </div>
+                </label>
+
+                <label class="d-flex align-items-start gap-3 p-3 rounded-3 mb-0" style="background:var(--color-background-secondary,#1a1f3a);border:2px solid transparent;cursor:pointer;transition:all .2s;" onclick="this.querySelector('input').checked=true;document.querySelectorAll('[name=lifestyle]').forEach(r=>{r.closest('label').style.borderColor='transparent'});this.style.borderColor='#667eea';">
+                  <input type="radio" name="lifestyle" value="very_active" {% if patient.lifestyle == 'very_active' %}checked{% endif %} style="margin-top:3px;accent-color:#667eea;">
+                  <div>
+                    <div class="fw-700" style="font-size:.95rem;">Very active</div>
+                    <div class="text-muted" style="font-size:.8rem;line-height:1.4;">Hard training 6 to 7 days per week or twice daily. Example: competitive athlete in training, football practice every day, professional sportsperson, military physical training.</div>
+                  </div>
+                </label>
+
+              </div>
             </div>
 
             <div class="mb-3">

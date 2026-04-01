@@ -426,12 +426,6 @@ def onboarding_identity(request):
             return render(request, 'strength_app/onboarding_identity.html', {
                 'step': 2, 'total': TOTAL_ONBOARDING_STEPS,
             })
-        if not request.POST.get('consent_privacy'):
-            messages.error(request, 'You must consent to health data processing to use VYAYAM.')
-            return render(request, 'strength_app/onboarding_identity.html', {
-                'step': 2, 'total': TOTAL_ONBOARDING_STEPS,
-            })
-
         # Password validation
         if len(password) < 8:
             messages.error(request, 'Password must be at least 8 characters.')
