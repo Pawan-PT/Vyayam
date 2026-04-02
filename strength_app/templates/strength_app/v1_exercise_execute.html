@@ -2629,6 +2629,10 @@ async function startCamera() {
         visibility: p.visibility,
       });
     }
+    // Mirror x to match front camera mirror view
+    for (var mi = 0; mi < shifted.length; mi++) {
+      shifted[mi].x = 2 * userCenterX - shifted[mi].x;
+    }
     return shifted;
   }
 
