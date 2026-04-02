@@ -331,7 +331,7 @@
       <!-- Submit -->
       <button class="submit-btn" id="submitBtn" onclick="saveAndNext()">
         <i class="fas fa-check me-2"></i>
-        {% if is_last_exercise %}Finish &amp; Cool Down{% else %}Next Exercise{% endif %}
+        {% if assessment_mode %}Score &amp; Next Test{% elif is_last_exercise %}Finish &amp; Cool Down{% else %}Next Exercise{% endif %}
       </button>
       <button class="skip-btn" onclick="skipExercise()">Skip this exercise</button>
 
@@ -1148,6 +1148,84 @@ async function startCamera() {
       ],
     },
 
+    SQUAT_HOLD: {
+      name: 'Squat Hold',
+      bodyOrientation: 'standing',
+      cameraPosition: { view: 'front', instruction: 'Place camera in front of you at waist height. Step back so your full body is visible.' },
+      setupCues: [
+        'Stand with your feet shoulder width apart.',
+        'Toes slightly outward.',
+        'Squat down as deep as you can with good form.',
+        'Hold that position as long as you can.',
+      ],
+      stanceCheck: {
+        ankleToShoulderRatio: { min: 0.7, max: 1.4 },
+        maxFootRotation: 0.20,
+        kneeOverAnkle: true,
+        label: 'Feet shoulder width, toes slightly out',
+      },
+      phases: [
+        { name: 'hold', duration: 0, joints: { knee: 90, hip: 90, trunk: 160 }, voice: 'Squat and hold' },
+      ],
+      checkAngles: function(lm) {
+        var knee = (calcAngle(lm[LM.leftHip], lm[LM.leftKnee], lm[LM.leftAnkle]) +
+                    calcAngle(lm[LM.rightHip], lm[LM.rightKnee], lm[LM.rightAnkle])) / 2;
+        var hip = (calcAngle(lm[LM.leftShoulder], lm[LM.leftHip], lm[LM.leftKnee]) +
+                   calcAngle(lm[LM.rightShoulder], lm[LM.rightHip], lm[LM.rightKnee])) / 2;
+        var trunk = (calcAngle(lm[LM.leftShoulder], lm[LM.leftHip], lm[LM.leftAnkle]) +
+                     calcAngle(lm[LM.rightShoulder], lm[LM.rightHip], lm[LM.rightAnkle])) / 2;
+        return { knee: knee, hip: hip, trunk: trunk };
+      },
+      cues: { knee: 'Bend your knees more', hip: 'Sit your hips back', trunk: 'Keep your chest up' },
+      forceArrows: [],
+    },
+
+    HINGE_HOLD: {
+      name: 'Single Leg Hinge Hold',
+      bodyOrientation: 'standing',
+      cameraPosition: { view: 'side', instruction: 'Place camera to your side at waist height.' },
+      setupCues: [
+        'Stand on one leg.',
+        'Hinge forward from your hips, keeping your back straight.',
+        'Hold the deepest position you can.',
+      ],
+      stanceCheck: { hipLevel: true, label: 'Hips level' },
+      phases: [
+        { name: 'hold', duration: 0, joints: { workingHip: 100 }, voice: 'Hinge and hold' },
+      ],
+      checkAngles: function(lm) {
+        var hip = calcAngle(lm[LM.leftShoulder], lm[LM.leftHip], lm[LM.leftKnee]);
+        return { workingHip: hip };
+      },
+      cues: { workingHip: 'Hinge forward more from your hips' },
+      forceArrows: [],
+    },
+
+    LUNGE_HOLD: {
+      name: 'Split Squat Hold',
+      bodyOrientation: 'standing',
+      cameraPosition: { view: 'front', instruction: 'Place camera in front of you. Step one foot forward, one back.' },
+      setupCues: [
+        'Take a large step forward into a split stance.',
+        'Lower your back knee toward the floor.',
+        'Keep your chest tall and hold.',
+      ],
+      stanceCheck: { hipLevel: true, kneeOverAnkle: true, label: 'Feet split, torso upright' },
+      phases: [
+        { name: 'hold', duration: 0, joints: { knee: 90, trunk: 170 }, voice: 'Lunge and hold' },
+      ],
+      checkAngles: function(lm) {
+        var knee = Math.min(
+          calcAngle(lm[LM.leftHip], lm[LM.leftKnee], lm[LM.leftAnkle]),
+          calcAngle(lm[LM.rightHip], lm[LM.rightKnee], lm[LM.rightAnkle])
+        );
+        var trunk = calcAngle(lm[LM.leftShoulder], lm[LM.leftHip], lm[LM.leftAnkle]);
+        return { knee: knee, trunk: trunk };
+      },
+      cues: { knee: 'Lower your back knee', trunk: 'Stand taller' },
+      forceArrows: [],
+    },
+
   };  // end EXERCISE_PHASES
 
   // ── Adjust target angles based on patient capability level ──
@@ -1503,6 +1581,10 @@ async function startCamera() {
 
     // Loaded lunge
     'dumbbell_walking_lunge': 'LUNGE_SPLIT',
+    // Assessment hold exercises
+    'squat_hold_assess': 'SQUAT_HOLD',
+    'hinge_hold_assess': 'HINGE_HOLD',
+    'lunge_hold_assess': 'LUNGE_HOLD',
   };
 
   // ============================================================================
@@ -1655,6 +1737,9 @@ async function startCamera() {
       'PRESS_HORIZONTAL': 'PRESS_HORIZONTAL',
       'HANG_HOLD': 'HANG_HOLD',
       'ROW_HORIZONTAL':  'ROW',
+      'SQUAT_HOLD':      'SQUAT_HOLD',
+      'HINGE_HOLD':      'HINGE_HOLD',
+      'LUNGE_HOLD':      'LUNGE_HOLD',
     };
     for (var exId in EXERCISE_TEMPLATE_MAP) {
       var tmpl = EXERCISE_TEMPLATE_MAP[exId];
@@ -3858,6 +3943,40 @@ async function startCamera() {
 
   // ---- Submit ----
   function saveAndNext() {
+    // Assessment mode: save hold time as score and go to next test
+    if (ASSESSMENT_MODE) {
+      var holdTime = ghostState.holdSeconds || 0;
+      var score = 1;
+      var thresholds = ASSESSMENT_SCORING.thresholds || [5, 15, 25, 30, 31];
+      if (holdTime >= thresholds[4]) score = 5;
+      else if (holdTime >= thresholds[3]) score = 4;
+      else if (holdTime >= thresholds[2]) score = 3;
+      else if (holdTime >= thresholds[1]) score = 2;
+      else score = 1;
+
+      if (stream) stream.getTracks().forEach(function(t) { t.stop(); });
+      var btn = document.getElementById('submitBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Scoring...  (Held ' + holdTime + 's → Score ' + score + ')';
+
+      fetch("{% url 'onboarding_save_test_result' %}", {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          test_index: ASSESSMENT_TEST_INDEX,
+          score: score,
+          side: ASSESSMENT_SIDE,
+          variant: ASSESSMENT_VARIANT,
+          measured_value: holdTime,
+        })
+      }).then(function(r) { return r.json(); })
+        .then(function(data) {
+          if (data.next_url) window.location.href = data.next_url;
+          else window.location.href = "{% url 'onboarding_asymmetry' %}";
+        })
+        .catch(function() { window.location.href = "{% url 'onboarding_asymmetry' %}"; });
+      return;
+    }
     const btn = document.getElementById('submitBtn');
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Saving...';
@@ -3915,6 +4034,26 @@ async function startCamera() {
   }
 
   function skipExercise() {
+    if (ASSESSMENT_MODE) {
+      // Skip this test with score 1
+      fetch("{% url 'onboarding_save_test_result' %}", {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          test_index: ASSESSMENT_TEST_INDEX,
+          score: 1,
+          side: ASSESSMENT_SIDE,
+          variant: ASSESSMENT_VARIANT,
+          measured_value: 0,
+        })
+      }).then(function(r) { return r.json(); })
+        .then(function(data) {
+          if (data.next_url) window.location.href = data.next_url;
+          else window.location.href = "{% url 'onboarding_asymmetry' %}";
+        })
+        .catch(function() { window.location.href = "{% url 'onboarding_asymmetry' %}"; });
+      return;
+    }
     if (IS_TEST_MODE) {
       window.location.href = '/v1/test-exercises/';
       return;

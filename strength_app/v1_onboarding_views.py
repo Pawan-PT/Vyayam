@@ -61,11 +61,11 @@ V1_STRENGTH_TESTS = [
         'duration_seconds': 30,
         'is_bilateral': False,
         'scoring': {
-            1: 'Cannot squat or falls over',
-            2: 'Shallow squat, knees cave or heels lift',
-            3: 'Thighs reach parallel, mostly steady',
-            4: 'Deep squat, good form, holds 30s',
-            5: 'Full deep squat, rock solid, holds 30s',
+            1: 'Holds under 5 seconds',
+            2: 'Holds 5 to 15 seconds',
+            3: 'Holds 15 to 25 seconds',
+            4: 'Holds 30 seconds with good form',
+            5: 'Holds 60 seconds with good form',
         },
     },
     {
@@ -243,23 +243,23 @@ V1_STRENGTH_TESTS = [
 
 # ── Assessment → Exercise ID mapping ─────────────────────────────────────────
 ASSESSMENT_EXERCISE_MAP = {
-    'squat_test':    {'exercise_id': 'full_squats',       'mode': 'hold',     'duration': 30},
-    'hinge_test':    {'exercise_id': 'single_leg_rdl',    'mode': 'hold',     'duration': 30},
+    'squat_test':    {'exercise_id': 'squat_hold_assess', 'mode': 'hold',     'duration': 60},
+    'hinge_test':    {'exercise_id': 'hinge_hold_assess', 'mode': 'hold',     'duration': 60},
     'push_test':     {'exercise_id': 'push_ups',          'mode': 'max_reps', 'duration': 60},
     'pull_test_bar': {'exercise_id': 'dead_hang',         'mode': 'hold',     'duration': 60},
     'pull_test_row': {'exercise_id': 'doorframe_row',     'mode': 'max_reps', 'duration': 60},
     'core_test':     {'exercise_id': 'planks',            'mode': 'hold',     'duration': 120},
     'rotate_test':   {'exercise_id': 'side_plank',        'mode': 'hold',     'duration': 60},
-    'lunge_test':    {'exercise_id': 'split_squat_static','mode': 'hold',     'duration': 30},
+    'lunge_test':    {'exercise_id': 'lunge_hold_assess', 'mode': 'hold',     'duration': 60},
 }
 
 ASSESSMENT_SCORING = {
-    'squat_test':    {'type': 'hold', 'thresholds': [5,  10, 20, 30, 30]},
-    'hinge_test':    {'type': 'hold', 'thresholds': [3,  5,  10, 15, 20]},
+    'squat_test':    {'type': 'hold', 'thresholds': [5,  15, 25, 30, 31]},
+    'hinge_test':    {'type': 'hold', 'thresholds': [3,  8,  15, 25, 30]},
     'push_test':     {'type': 'reps', 'thresholds': [4,  14, 24, 34, 35]},
     'core_test':     {'type': 'hold', 'thresholds': [15, 29, 44, 59, 60]},
     'rotate_test':   {'type': 'hold', 'thresholds': [10, 19, 29, 39, 40]},
-    'lunge_test':    {'type': 'hold', 'thresholds': [5,  10, 15, 25, 30]},
+    'lunge_test':    {'type': 'hold', 'thresholds': [5,  10, 20, 30, 31]},
     'pull_test_bar': {'type': 'hold', 'thresholds': [5,  15, 30, 45, 45]},
     'pull_test_row': {'type': 'reps', 'thresholds': [4,  10, 18, 25, 26]},
 }
@@ -625,22 +625,60 @@ def onboarding_strength_test_execute(request, test_index):
         return redirect(url + qs)
 
     progress_pct = round((test_index / len(V1_STRENGTH_TESTS)) * 100)
-    scoring_items = [{'score': k, 'desc': v} for k, v in active_test.get('scoring', {}).items()]
 
-    return render(request, 'strength_app/onboarding_strength_test_execute.html', {
-        'test': active_test,
-        'test_index': test_index,
-        'total_tests': len(V1_STRENGTH_TESTS),
-        'side': side,
-        'variant': variant,
-        'is_bilateral': is_bilateral,
-        'progress_pct': progress_pct,
-        'scoring_items': scoring_items,
+    # Map test to exercise for ghost overlay
+    test_id = active_test.get('test_id', '')
+    map_key = f'pull_test_{variant}' if (test_id == 'pull_test' and variant) else test_id
+    ex_map = ASSESSMENT_EXERCISE_MAP.get(map_key, {})
+    exercise_id = ex_map.get('exercise_id', '')
+    assessment_duration = ex_map.get('duration', 60)
+
+    from .exercise_content import EXERCISE_CONTENT
+    content = EXERCISE_CONTENT.get(exercise_id, {})
+
+    exercise = {
+        'exercise_id': exercise_id,
+        'exercise_name': active_test.get('exercise', content.get('display_name', '')),
+        'movement_pattern': active_test.get('pattern', ''),
+        'sets': 1,
+        'reps': 0,
+        'hold_duration': assessment_duration,
+        'tempo': '0-0-0-0',
+        'rest_seconds': 0,
+        'is_unilateral': is_bilateral,
+        'asymmetry_side': side,
+        'is_new_exercise': False,
+        'notes': '',
+        'mind_muscle_cue': content.get('mind_muscle_cue', {}),
+        'instructions': content.get('instructions', active_test.get('instructions', [])),
+        'form_cues': content.get('form_cues', []),
+        'common_mistakes': content.get('common_mistakes', []),
+    }
+
+    scoring = ASSESSMENT_SCORING.get(map_key, {})
+
+    context = {
         'patient': patient,
+        'exercise': exercise,
+        'exercise_index': test_index,
+        'total_exercises': len(V1_STRENGTH_TESTS),
+        'is_last_exercise': test_index >= len(V1_STRENGTH_TESTS) - 1,
+        'next_exercise_index': test_index + 1,
+        'has_strength_profile': False,
+        'assessment_mode': True,
+        'assessment_type': 'hold',
+        'assessment_duration': assessment_duration,
+        'assessment_test_id': test_id,
+        'assessment_test_index': test_index,
+        'assessment_side': side,
+        'assessment_variant': variant,
+        'assessment_scoring': scoring,
+        'assessment_scoring_json': json.dumps(scoring),
+        'progress_pct': progress_pct,
         'step': 5,
         'total': _total_steps(patient if 'patient' in locals() else None),
-        'show_variant_picker': False,
-    })
+    }
+    return render(request, 'strength_app/v1_exercise_execute.html', context)
 
 
 # ============================================================================
