@@ -1165,7 +1165,8 @@ async function startCamera() {
         label: 'Feet shoulder width, toes slightly out',
       },
       phases: [
-        { name: 'hold', duration: 0, joints: { knee: 90, hip: 90, trunk: 160 }, voice: 'Squat and hold' },
+        { name: 'stand', duration: 2500, joints: { knee: 175, hip: 175, trunk: 175 }, voice: 'Stand tall. Now squat down slowly.' },
+        { name: 'hold',  duration: 0,    joints: { knee: 90,  hip: 90,  trunk: 160 }, voice: 'Hold this position. Stay strong.' },
       ],
       checkAngles: function(lm) {
         var knee = (calcAngle(lm[LM.leftHip], lm[LM.leftKnee], lm[LM.leftAnkle]) +
@@ -1191,10 +1192,13 @@ async function startCamera() {
       ],
       stanceCheck: { hipLevel: true, label: 'Hips level' },
       phases: [
-        { name: 'hold', duration: 0, joints: { workingHip: 100 }, voice: 'Hinge and hold' },
+        { name: 'stand', duration: 2500, joints: { workingHip: 175 }, voice: 'Stand on one leg. Now hinge forward slowly.' },
+        { name: 'hold',  duration: 0,    joints: { workingHip: 100 }, voice: 'Hold here. Keep your back straight.' },
       ],
       checkAngles: function(lm) {
-        var hip = calcAngle(lm[LM.leftShoulder], lm[LM.leftHip], lm[LM.leftKnee]);
+        var leftHip = calcAngle(lm[LM.leftShoulder], lm[LM.leftHip], lm[LM.leftKnee]);
+        var rightHip = calcAngle(lm[LM.rightShoulder], lm[LM.rightHip], lm[LM.rightKnee]);
+        var hip = Math.min(leftHip, rightHip);
         return { workingHip: hip };
       },
       cues: { workingHip: 'Hinge forward more from your hips' },
@@ -1212,7 +1216,8 @@ async function startCamera() {
       ],
       stanceCheck: { hipLevel: true, kneeOverAnkle: true, label: 'Feet split, torso upright' },
       phases: [
-        { name: 'hold', duration: 0, joints: { knee: 90, trunk: 170 }, voice: 'Lunge and hold' },
+        { name: 'stand', duration: 2500, joints: { knee: 170, trunk: 175 }, voice: 'Step into a lunge. Now lower down slowly.' },
+        { name: 'hold',  duration: 0,    joints: { knee: 90,  trunk: 170 }, voice: 'Hold this position. Stay steady.' },
       ],
       checkAngles: function(lm) {
         var knee = Math.min(
@@ -1802,6 +1807,13 @@ async function startCamera() {
     ghostState.isHoldExercise    = ghostState.exerciseDef.phases.length <= 1;
     ghostState.holdSeconds       = 0;
     ghostState.calibrationFrames = 0;
+
+    // Announce side for bilateral assessment tests
+    if (ASSESSMENT_MODE && ASSESSMENT_SIDE) {
+      setTimeout(function() {
+        VoiceCoach.speak(ASSESSMENT_SIDE + ' side. Do your ' + ASSESSMENT_SIDE + ' side now.', true);
+      }, 1500);
+    }
 
     // Prepend exercise-specific cues from Django template (clone to avoid mutating shared type definition)
     if (ghostState.exerciseDef.setupCues && (EXERCISE_FORM_CUES.length > 0 || MIND_MUSCLE_CUE)) {
