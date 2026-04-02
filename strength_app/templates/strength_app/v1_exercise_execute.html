@@ -388,7 +388,7 @@
   async function startCamera() {
     console.log('startCamera called, EXERCISE_ID:', EXERCISE_ID);
     try {
-      stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: 640, height: 480 } });
+      stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 640 }, height: { ideal: 480 } } });
       const video = document.getElementById('cameraFeed');
       video.srcObject = stream;
       document.getElementById('camPlaceholder').style.display = 'none';
