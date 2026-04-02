@@ -282,51 +282,52 @@
     switch(TEST_ID) {
       case 'squat_test': {
         const knee = calculateAngle(lm[L.lHip], lm[L.lKnee], lm[L.lAnk]);
-        if (knee < 120) return { color: '#22c55e', text: 'Good depth — hold it' };
-        if (knee < 150) return { color: '#f59e0b', text: 'Squat a little deeper' };
-        return { color: 'rgba(102,126,234,.8)', text: 'Start squatting down' };
+        if (knee < 90)  return { color: '#22c55e', text: 'Deep squat — hold here', zone: 'DEEP SQUAT', aligned: true };
+        if (knee < 120) return { color: '#22c55e', text: 'Full squat — hold here', zone: 'FULL SQUAT', aligned: true };
+        if (knee < 150) return { color: '#22c55e', text: 'Partial squat — hold here', zone: 'PARTIAL SQUAT', aligned: true };
+        return { color: 'rgba(102,126,234,.8)', text: 'Squat down to any depth and hold', zone: 'STANDING', aligned: false };
       }
       case 'core_test': {
         const line = calculateAngle(lm[L.lSh], lm[L.lHip], lm[L.lAnk]);
-        if (line > 165) return { color: '#22c55e', text: 'Perfect plank — hold it' };
-        if (line > 150) return { color: '#f59e0b', text: 'Adjust your hips' };
-        return { color: '#ef4444', text: 'Straighten your body line' };
+        if (line > 165) return { color: '#22c55e', text: 'Good plank — hold it', zone: 'PLANK', aligned: true };
+        if (line > 150) return { color: '#f59e0b', text: 'Straighten your hips a little', zone: 'ALMOST', aligned: true };
+        return { color: '#ef4444', text: 'Get into plank position', zone: '', aligned: false };
       }
       case 'rotate_test': {
         const line = calculateAngle(lm[L.lSh], lm[L.lHip], lm[L.lAnk]);
-        if (line > 160) return { color: '#22c55e', text: 'Good side plank — hold' };
-        return { color: '#f59e0b', text: 'Lift your hip higher' };
+        if (line > 160) return { color: '#22c55e', text: 'Good side plank — hold', zone: 'SIDE PLANK', aligned: true };
+        return { color: '#f59e0b', text: 'Lift your hip higher', zone: '', aligned: false };
       }
       case 'hinge_test': {
         const hip = calculateAngle(lm[L.lSh], lm[L.lHip], lm[L.lKnee]);
-        if (hip < 100) return { color: '#22c55e', text: 'Good hinge — hold it' };
-        if (hip < 130) return { color: '#f59e0b', text: 'Hinge forward more' };
-        return { color: 'rgba(102,126,234,.8)', text: 'Bend forward from your hips' };
+        if (hip < 100) return { color: '#22c55e', text: 'Full hinge — hold here', zone: 'FULL HINGE', aligned: true };
+        if (hip < 130) return { color: '#22c55e', text: 'Partial hinge — hold here', zone: 'PARTIAL HINGE', aligned: true };
+        return { color: 'rgba(102,126,234,.8)', text: 'Bend forward from your hips', zone: 'STANDING', aligned: false };
       }
       case 'push_test': {
         const bodyLine = calculateAngle(lm[L.lSh], lm[L.lHip], lm[L.lAnk]);
         const elbow = calculateAngle(lm[L.lSh], lm[13] || lm[L.lSh], lm[15] || lm[L.lSh]);
-        if (bodyLine > 165 && elbow < 120) return { color: '#22c55e', text: 'Good push-up — keep going' };
-        if (bodyLine > 155) return { color: '#f59e0b', text: 'Lower your chest more' };
-        return { color: 'rgba(102,126,234,.8)', text: 'Get into push-up position' };
+        if (bodyLine > 155 && elbow < 120) return { color: '#22c55e', text: 'Good push-up — keep going', zone: 'PUSH-UP', aligned: true };
+        if (bodyLine > 155) return { color: '#f59e0b', text: 'Get into push-up position', zone: '', aligned: true };
+        return { color: 'rgba(102,126,234,.8)', text: 'Get into push-up position', zone: '', aligned: false };
       }
       case 'pull_test': {
         const armHeight = (lm[15] ? lm[15].y : 1) + (lm[16] ? lm[16].y : 1);
         const shoulderHeight = lm[L.lSh].y + lm[L.rSh].y;
-        if (armHeight < shoulderHeight) return { color: '#22c55e', text: 'Good hang — hold it' };
+        if (armHeight < shoulderHeight) return { color: '#22c55e', text: 'Good hang — hold it', zone: 'HANGING', aligned: true };
         const bodyLine = calculateAngle(lm[L.lSh], lm[L.lHip], lm[L.lAnk]);
-        if (bodyLine > 160) return { color: '#22c55e', text: 'Good position — hold it' };
-        return { color: 'rgba(102,126,234,.8)', text: 'Get into test position' };
+        if (bodyLine > 160) return { color: '#22c55e', text: 'Good row position — hold', zone: 'ROW', aligned: true };
+        return { color: 'rgba(102,126,234,.8)', text: 'Get into test position', zone: '', aligned: false };
       }
       case 'lunge_test': {
         const knee = calculateAngle(lm[L.lHip], lm[L.lKnee], lm[L.lAnk]);
         const trunk = calculateAngle(lm[L.lSh], lm[L.lHip], lm[L.lKnee]);
-        if (knee < 110 && trunk > 155) return { color: '#22c55e', text: 'Good split squat — hold it' };
-        if (knee < 130) return { color: '#f59e0b', text: 'Go a little deeper' };
-        return { color: 'rgba(102,126,234,.8)', text: 'Lower into split squat position' };
+        if (knee < 110 && trunk > 150) return { color: '#22c55e', text: 'Deep lunge — hold here', zone: 'DEEP LUNGE', aligned: true };
+        if (knee < 140 && trunk > 150) return { color: '#22c55e', text: 'Lunge position — hold here', zone: 'LUNGE', aligned: true };
+        return { color: 'rgba(102,126,234,.8)', text: 'Step into a lunge and hold', zone: 'STANDING', aligned: false };
       }
       default:
-        return { color: 'rgba(102,126,234,.8)', text: 'Position detected — begin test' };
+        return { color: 'rgba(102,126,234,.8)', text: 'Get into position', zone: '', aligned: false };
     }
   }
 
@@ -370,7 +371,7 @@
         drawLandmarks(ctx, results.poseLandmarks, { color: fb.color, fillColor: fb.color + '66', lineWidth: 1, radius: 5 });
 
         // Ghost glow overlay
-        testAligned = (fb.color === '#22c55e');
+        testAligned = fb.aligned;
         const lm = results.poseLandmarks;
         let gr, gg, gb;
         if (fb.color === '#22c55e') { gr=34; gg=197; gb=94; }
@@ -402,6 +403,17 @@
         ctx.fillStyle = fb.color;
         ctx.font = 'bold 16px Inter, sans-serif';
         ctx.fillText(fb.text, 12, 28);
+        // Draw depth zone label
+        if (fb.zone) {
+          ctx.fillStyle = 'rgba(0,0,0,0.6)';
+          ctx.fillRect(W - 180, 0, 180, 52);
+          ctx.fillStyle = fb.aligned ? '#22c55e' : '#f59e0b';
+          ctx.font = 'bold 13px Inter, sans-serif';
+          ctx.fillText(fb.zone, W - 170, 22);
+          ctx.fillStyle = 'rgba(255,255,255,0.7)';
+          ctx.font = '11px Inter, sans-serif';
+          ctx.fillText(fb.aligned ? 'Timer counting' : 'Hold to start timer', W - 170, 40);
+        }
         ctx.restore();
 
       }
