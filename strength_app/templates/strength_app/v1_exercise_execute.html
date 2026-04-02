@@ -385,10 +385,15 @@
   const csrfToken = getCsrf();
 
   // ---- Camera ----
-  async function startCamera() {
+async function startCamera() {
     console.log('startCamera called, EXERCISE_ID:', EXERCISE_ID);
     try {
-      stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } } });
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } } });
+      } catch(e1) {
+        console.warn('Camera fallback: trying without constraints', e1);
+        stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      }
       const video = document.getElementById('cameraFeed');
       video.srcObject = stream;
       document.getElementById('camPlaceholder').style.display = 'none';
