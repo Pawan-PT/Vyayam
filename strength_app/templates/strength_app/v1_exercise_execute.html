@@ -363,7 +363,7 @@
   const ASSESSMENT_TEST_INDEX = {{ assessment_test_index|default:0 }};
   const ASSESSMENT_SIDE     = "{{ assessment_side|default:'' }}";
   const ASSESSMENT_VARIANT  = "{{ assessment_variant|default:'' }}";
-  const ASSESSMENT_SCORING  = {{ assessment_scoring_json|default:"{}" }};
+  const ASSESSMENT_SCORING  = {% if assessment_scoring_json %}{{ assessment_scoring_json|safe }}{% else %}{}{% endif %};
   const EXERCISE_INDEX  = "{{ exercise_index }}";
   const TEMPO_PARTS     = ["{{ exercise.tempo_parts.0|default:3 }}, {{ exercise.tempo_parts.1|default:1 }}, {{ exercise.tempo_parts.2|default:2 }}, {{ exercise.tempo_parts.3|default:0 }}"];
   const IS_TEST_MODE = (window.location.pathname.indexOf('/test-exercise/') !== -1);
