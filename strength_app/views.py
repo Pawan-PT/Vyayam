@@ -59,12 +59,18 @@ def patient_login(request: HttpRequest):
                 request.session['patient_id'] = patient.patient_id
                 has_profile = patient.strength_profiles.exists()
                 request.session['has_strength_profile'] = has_profile
-                if has_profile:
+
+                if patient.gate_test_completed and has_profile:
                     return redirect('v1_dashboard')
-                elif patient.gate_test_completed:
-                    return redirect('v1_dashboard')
-                else:
+
+                # Resume onboarding from where user left off
+                if not patient.name:
                     return redirect('onboarding_start')
+                if not has_profile:
+                    return redirect('onboarding_strength_test')
+                if not patient.gate_test_completed:
+                    return redirect('onboarding_goals')
+                return redirect('v1_dashboard')
             else:
                 messages.error(request, 'Invalid phone number or password')
         except PatientProfile.DoesNotExist:

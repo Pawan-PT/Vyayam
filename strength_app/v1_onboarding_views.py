@@ -33,7 +33,13 @@ from .v1_constants import GOAL_CONFIG, TRAINING_AGE_CONFIG
 from .v1_football_constants import SPORT_TYPES, FOOTBALL_ASSESSMENT_TESTS
 from .v1_safety_logic import compute_pattern_priorities, get_asymmetry_rules
 
-TOTAL_ONBOARDING_STEPS = 11
+TOTAL_ONBOARDING_STEPS = 10  # Default for males; females get 11
+
+def _total_steps(patient):
+    """Males = 10 steps (no hormonal), females = 11 steps."""
+    if patient and getattr(patient, 'biological_sex', '') == 'female':
+        return 11
+    return 10
 
 # ============================================================================
 # 7 STRENGTH TESTS
@@ -360,7 +366,7 @@ def onboarding_start(request):
             request.session.flush()
     return render(request, 'strength_app/onboarding_start.html', {
         'step': 1,
-        'total': TOTAL_ONBOARDING_STEPS,
+        'total': _total_steps(patient if 'patient' in locals() else None),
         'tests': V1_STRENGTH_TESTS,
     })
 
@@ -382,7 +388,7 @@ def onboarding_identity(request):
         if not name or len(name) < 2:
             messages.error(request, 'Please enter a valid name (at least 2 characters).')
             return render(request, 'strength_app/onboarding_identity.html', {
-                'step': 2, 'total': TOTAL_ONBOARDING_STEPS,
+                'step': 2, 'total': _total_steps(patient if 'patient' in locals() else None),
             })
 
         # Phone validation — strip non-digits then validate length
@@ -391,7 +397,7 @@ def onboarding_identity(request):
         if len(phone) < 10 or len(phone) > 15:
             messages.error(request, 'Please enter a valid phone number (10-15 digits).')
             return render(request, 'strength_app/onboarding_identity.html', {
-                'step': 2, 'total': TOTAL_ONBOARDING_STEPS,
+                'step': 2, 'total': _total_steps(patient if 'patient' in locals() else None),
             })
 
         # Age validation
@@ -402,7 +408,7 @@ def onboarding_identity(request):
         except (ValueError, TypeError):
             messages.error(request, 'You must be 18 or older to use VYAYAM.')
             return render(request, 'strength_app/onboarding_identity.html', {
-                'step': 2, 'total': TOTAL_ONBOARDING_STEPS,
+                'step': 2, 'total': _total_steps(patient if 'patient' in locals() else None),
             })
 
         # Height/weight validation (optional fields)
@@ -424,23 +430,23 @@ def onboarding_identity(request):
         if not request.POST.get('consent_terms'):
             messages.error(request, 'You must agree to the Terms of Service to register.')
             return render(request, 'strength_app/onboarding_identity.html', {
-                'step': 2, 'total': TOTAL_ONBOARDING_STEPS,
+                'step': 2, 'total': _total_steps(patient if 'patient' in locals() else None),
             })
         # Password validation
         if len(password) < 8:
             messages.error(request, 'Password must be at least 8 characters.')
             return render(request, 'strength_app/onboarding_identity.html', {
-                'step': 2, 'total': TOTAL_ONBOARDING_STEPS,
+                'step': 2, 'total': _total_steps(patient if 'patient' in locals() else None),
             })
         if password.isdigit() or password.isalpha():
             messages.error(request, 'Password must contain both letters and numbers.')
             return render(request, 'strength_app/onboarding_identity.html', {
-                'step': 2, 'total': TOTAL_ONBOARDING_STEPS,
+                'step': 2, 'total': _total_steps(patient if 'patient' in locals() else None),
             })
         if password != confirm:
             messages.error(request, 'Passwords do not match.')
             return render(request, 'strength_app/onboarding_identity.html', {
-                'step': 2, 'total': TOTAL_ONBOARDING_STEPS,
+                'step': 2, 'total': _total_steps(patient if 'patient' in locals() else None),
             })
 
         existing_pid = request.session.get('patient_id')
@@ -451,7 +457,7 @@ def onboarding_identity(request):
                 if patient.phone != phone and PatientProfile.objects.filter(phone=phone).exclude(patient_id=existing_pid).exists():
                     messages.error(request, 'This phone number is already registered. Please log in.')
                     return render(request, 'strength_app/onboarding_identity.html', {
-                        'step': 2, 'total': TOTAL_ONBOARDING_STEPS,
+                        'step': 2, 'total': _total_steps(patient if 'patient' in locals() else None),
                     })
                 patient.name = name
                 patient.age = age
@@ -477,7 +483,7 @@ def onboarding_identity(request):
         if PatientProfile.objects.filter(phone=phone).exists():
             messages.error(request, 'This phone number is already registered. Please log in.')
             return render(request, 'strength_app/onboarding_identity.html', {
-                'step': 2, 'total': TOTAL_ONBOARDING_STEPS,
+                'step': 2, 'total': _total_steps(patient if 'patient' in locals() else None),
             })
 
         from django.utils import timezone as _tz
@@ -502,7 +508,7 @@ def onboarding_identity(request):
 
     return render(request, 'strength_app/onboarding_identity.html', {
         'step': 2,
-        'total': TOTAL_ONBOARDING_STEPS,
+        'total': _total_steps(patient if 'patient' in locals() else None),
     })
 
 
@@ -531,7 +537,7 @@ def onboarding_training_history(request):
     return render(request, 'strength_app/onboarding_training_history.html', {
         'patient': patient,
         'step': 3,
-        'total': TOTAL_ONBOARDING_STEPS,
+        'total': _total_steps(patient if 'patient' in locals() else None),
         'training_types': PatientProfile.TRAINING_TYPES,
     })
 
@@ -549,10 +555,14 @@ def onboarding_strength_test(request):
         request.session['test_results'] = {}
         return redirect('onboarding_strength_test_execute', test_index=0)
 
+    # Restore test results from database if session was lost
+    if 'test_results' not in request.session and patient.raw_test_data_json:
+        request.session['test_results'] = patient.raw_test_data_json
+
     return render(request, 'strength_app/onboarding_strength_test.html', {
         'tests': V1_STRENGTH_TESTS,
         'step': 4,
-        'total': TOTAL_ONBOARDING_STEPS,
+        'total': _total_steps(patient if 'patient' in locals() else None),
     })
 
 
@@ -600,7 +610,7 @@ def onboarding_strength_test_execute(request, test_index):
                 'scoring_items': scoring_items,
                 'patient': patient,
                 'step': 5,
-                'total': TOTAL_ONBOARDING_STEPS,
+                'total': _total_steps(patient if 'patient' in locals() else None),
                 'show_variant_picker': True,
                 'variant_options': variant_options,
                 'has_variants': True,
@@ -668,7 +678,7 @@ def onboarding_strength_test_execute(request, test_index):
         'assessment_scoring_json': json.dumps(scoring),
         'progress_pct': progress_pct,
         'step': 5,
-        'total': TOTAL_ONBOARDING_STEPS,
+        'total': _total_steps(patient if 'patient' in locals() else None),
     }
     return render(request, 'strength_app/v1_exercise_execute.html', context)
 
@@ -710,6 +720,15 @@ def onboarding_save_test_result(request):
 
     request.session['test_results'] = results
     request.session.modified = True
+
+    # Persist to database so progress survives browser close
+    try:
+        _patient, _ = _require_patient(request)
+        if _patient:
+            _patient.raw_test_data_json = results
+            _patient.save(update_fields=['raw_test_data_json'])
+    except Exception:
+        pass
 
     # Determine next URL
     is_bilateral = test.get('is_bilateral', False)
@@ -811,7 +830,7 @@ def onboarding_asymmetry(request):
         'patient': patient,
         'auto': auto,
         'step': 5,
-        'total': TOTAL_ONBOARDING_STEPS,
+        'total': _total_steps(patient if 'patient' in locals() else None),
     })
 
 
@@ -875,7 +894,7 @@ def onboarding_goals(request):
         'initial_goal_type': initial_goal_type,
         'initial_goal_secondary': initial_goal_secondary,
         'step': 6,
-        'total': TOTAL_ONBOARDING_STEPS,
+        'total': _total_steps(patient if 'patient' in locals() else None),
     })
 
 
@@ -905,7 +924,7 @@ def onboarding_equipment(request):
         'location_choices':  PatientProfile.TRAINING_LOCATION_CHOICES,
         'sessions_per_week_options': [2, 3, 4, 5, 6],
         'step': 7,
-        'total': TOTAL_ONBOARDING_STEPS,
+        'total': _total_steps(patient if 'patient' in locals() else None),
     })
 
 
@@ -945,7 +964,7 @@ def onboarding_hormonal(request):
     return render(request, 'strength_app/onboarding_hormonal.html', {
         'patient': patient,
         'step': 8,
-        'total': TOTAL_ONBOARDING_STEPS,
+        'total': _total_steps(patient if 'patient' in locals() else None),
     })
 
 
@@ -990,7 +1009,7 @@ def onboarding_red_flags(request):
                 'absolute_stop_options': ABSOLUTE_STOP_OPTIONS,
                 'stopped': True,
                 'step': 8,
-                'total': TOTAL_ONBOARDING_STEPS,
+                'total': _total_steps(patient if 'patient' in locals() else None),
             })
 
         return redirect('onboarding_lifestyle')
@@ -1001,7 +1020,7 @@ def onboarding_red_flags(request):
         'absolute_stop_options': ABSOLUTE_STOP_OPTIONS,
         'stopped': False,
         'step': 8,
-        'total': TOTAL_ONBOARDING_STEPS,
+        'total': _total_steps(patient if 'patient' in locals() else None),
     })
 
 
@@ -1030,7 +1049,7 @@ def onboarding_lifestyle(request):
         'patient': patient,
         'lifestyle_choices': PatientProfile.LIFESTYLE_CHOICES,
         'step': 9,
-        'total': TOTAL_ONBOARDING_STEPS,
+        'total': _total_steps(patient if 'patient' in locals() else None),
     })
 
 
@@ -1115,7 +1134,7 @@ def onboarding_nutrition(request):
         'goal_choices': goal_choices,
         'np': existing_np,
         'step': 10,
-        'total': TOTAL_ONBOARDING_STEPS,
+        'total': _total_steps(patient if 'patient' in locals() else None),
     })
 
 
@@ -1137,7 +1156,7 @@ def onboarding_mind_muscle(request):
     return render(request, 'strength_app/onboarding_mind_muscle.html', {
         'patient': patient,
         'step': 11,
-        'total': TOTAL_ONBOARDING_STEPS,
+        'total': _total_steps(patient if 'patient' in locals() else None),
     })
 
 
@@ -1224,5 +1243,5 @@ def onboarding_complete(request):
         'aa_weeks': aa_weeks,
         'athlete_tier_eligible': patient.athlete_tier_eligible,
         'step': 10,
-        'total': TOTAL_ONBOARDING_STEPS,
+        'total': _total_steps(patient if 'patient' in locals() else None),
     })

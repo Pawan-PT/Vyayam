@@ -128,6 +128,7 @@ class PatientProfile(models.Model):
         ('full_gym', 'Full Gym Access'),
     ]
     equipment_available_json = models.JSONField(default=list, blank=True)
+    raw_test_data_json = models.JSONField(default=dict, blank=True)
     TRAINING_LOCATION_CHOICES = [
         ('home_none', 'Home — No Equipment'),
         ('home_some', 'Home — Some Equipment'),
