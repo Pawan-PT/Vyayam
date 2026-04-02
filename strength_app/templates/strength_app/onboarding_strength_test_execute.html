@@ -226,7 +226,7 @@
   // ── Voice Coach ───────────────────────────────────────────────────────────
   const VoiceCoach = {
     enabled: true,
-    lastSpoken: '', lastSpokenTime: 0, cooldownMs: 3000,
+    lastSpoken: '', lastSpokenTime: 0, cooldownMs: 3000, generalCooldownMs: 3000,
     init: function() {
       if (!('speechSynthesis' in window)) { this.enabled = false; return; }
       var w = new SpeechSynthesisUtterance(''); w.volume = 0; speechSynthesis.speak(w);
@@ -234,11 +234,12 @@
     speak: function(text, priority) {
       if (!this.enabled || !text) return;
       var now = Date.now();
+      if (!priority && (now - this.lastSpokenTime) < this.generalCooldownMs) return;
       if (text === this.lastSpoken && (now - this.lastSpokenTime) < this.cooldownMs) return;
       if (speechSynthesis.speaking && !priority) return;
       if (priority && speechSynthesis.speaking) speechSynthesis.cancel();
       var utt = new SpeechSynthesisUtterance(text);
-      utt.rate = 1.05; utt.pitch = 1.0; utt.volume = 0.9; utt.lang = 'en-IN';
+      utt.rate = 0.85; utt.pitch = 1.0; utt.volume = 0.9; utt.lang = 'en-IN';
       var voices = speechSynthesis.getVoices();
       var v = voices.find(function(v) { return v.lang === 'en-IN'; })
            || voices.find(function(v) { return v.lang.startsWith('en'); });
@@ -343,9 +344,26 @@
       ctx.restore();
       if (results.poseLandmarks) {
         const fb = computeTestFeedback(results.poseLandmarks);
-        // Voice feedback on color change
+        // Voice feedback — only during positioning, not during hold
         if (fb.color !== window._lastFbColor) {
-          VoiceCoach.speak(fb.text, false);
+          // Once user has held green for 3+ seconds, stop form corrections
+          if (!window._holdReached) {
+            VoiceCoach.speak(fb.text, false);
+          }
+          if (fb.color === '#22c55e' && !window._holdReached) {
+            window._greenStart = window._greenStart || Date.now();
+            if (Date.now() - window._greenStart > 2000) {
+              window._holdReached = true;
+              VoiceCoach.speak('Good. Now hold it there.', true);
+            }
+          } else if (fb.color !== '#22c55e') {
+            window._greenStart = null;
+            // If they break the hold, resume corrections
+            if (window._holdReached) {
+              window._holdReached = false;
+              VoiceCoach.speak('Get back into position.', true);
+            }
+          }
           window._lastFbColor = fb.color;
         }
         drawConnectors(ctx, results.poseLandmarks, POSE_CONNECTIONS, { color: fb.color, lineWidth: 3 });
