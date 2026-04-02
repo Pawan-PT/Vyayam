@@ -2693,8 +2693,15 @@ async function startCamera() {
       }
       var bendFactor = Math.max(0, Math.min(1, (175 - targetElbow) / 85));
       var drop = bendFactor * 0.15;  // tuned for standard body proportions
+      // Whole body drops as a plank — shoulder, hip, knee, ankle all lower together
       ghost[LM.leftShoulder].y  += drop;
       ghost[LM.rightShoulder].y += drop;
+      ghost[LM.leftHip].y       += drop;
+      ghost[LM.rightHip].y      += drop;
+      ghost[LM.leftKnee].y      += drop;
+      ghost[LM.rightKnee].y     += drop;
+      ghost[LM.leftAnkle].y     += drop;
+      ghost[LM.rightAnkle].y    += drop;
       ghost[LM.leftElbow].y     += drop * 0.7;
       ghost[LM.rightElbow].y    += drop * 0.7;
       // Elbows flare slightly outward during push-up descent
