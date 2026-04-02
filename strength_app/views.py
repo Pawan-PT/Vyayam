@@ -57,10 +57,14 @@ def patient_login(request: HttpRequest):
                 # Flush old session to prevent data leakage / session fixation.
                 request.session.flush()
                 request.session['patient_id'] = patient.patient_id
-                request.session['has_strength_profile'] = patient.strength_profiles.exists()
-                if patient.gate_test_completed:
+                has_profile = patient.strength_profiles.exists()
+                request.session['has_strength_profile'] = has_profile
+                if has_profile:
                     return redirect('v1_dashboard')
-                return redirect('dashboard')
+                elif patient.gate_test_completed:
+                    return redirect('v1_dashboard')
+                else:
+                    return redirect('onboarding_start')
             else:
                 messages.error(request, 'Invalid phone number or password')
         except PatientProfile.DoesNotExist:

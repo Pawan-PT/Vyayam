@@ -399,7 +399,7 @@
     startBtn.disabled = true;
     startBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Starting...';
     try {
-      stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 640 }, height: { ideal: 480 } } });
+      stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } } });
       cameraFeed.srcObject = stream;
       placeholder.style.display = 'none';
       videoCanvas.style.display = 'block';
