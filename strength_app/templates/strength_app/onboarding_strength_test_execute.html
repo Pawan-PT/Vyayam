@@ -42,14 +42,14 @@
   .score-grid { display: flex; flex-direction: column; gap: 8px; }
   .score-btn {
     background: #2a2f4a; border: 2px solid transparent; border-radius: 10px;
-    padding: 10px 14px; display: flex; align-items: center; gap: 14px;
-    cursor: pointer; transition: all .2s;
+    padding: 12px 14px; display: flex; align-items: flex-start; gap: 14px;
+    cursor: pointer; transition: all .2s; min-height: 48px;
   }
   .score-btn:hover, .score-btn.selected {
     border-color: #667eea; background: rgba(102,126,234,.15);
   }
   .score-btn .score-num { font-size: 1.5rem; font-weight: 800; color: #667eea; flex-shrink: 0; min-width: 28px; }
-  .score-desc { font-size: .82rem; color: rgba(255,255,255,.7); line-height: 1.4; }
+  .score-desc { font-size: .85rem; color: rgba(255,255,255,.7); line-height: 1.5; word-wrap: break-word; overflow-wrap: break-word; }
   .variant-picker { display: flex; flex-direction: column; gap: 12px; }
   .variant-btn {
     background: #2a2f4a; border: 2px solid rgba(102,126,234,.3); border-radius: 12px;

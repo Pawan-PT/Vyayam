@@ -61,11 +61,11 @@ V1_STRENGTH_TESTS = [
         'duration_seconds': 30,
         'is_bilateral': False,
         'scoring': {
-            1: 'Cannot reach 45° or significant compensation (heel rise, severe valgus)',
-            2: 'Reaches 45-60° with moderate compensation',
-            3: 'Reaches parallel (90°) with minor compensation',
-            4: 'Below parallel clean, holds 30s',
-            5: 'Full depth, perfect alignment, holds 30s',
+            1: 'Cannot squat or falls over',
+            2: 'Shallow squat, knees cave or heels lift',
+            3: 'Thighs reach parallel, mostly steady',
+            4: 'Deep squat, good form, holds 30s',
+            5: 'Full deep squat, rock solid, holds 30s',
         },
     },
     {
@@ -85,10 +85,10 @@ V1_STRENGTH_TESTS = [
         'is_bilateral': True,
         'scoring': {
             1: 'Cannot balance on one leg for 5 seconds',
-            2: 'Balances but spine rounds during hinge',
-            3: 'Hinge to 45° with neutral spine',
-            4: 'Hinge to parallel, neutral spine, holds 5s',
-            5: 'Full hinge, perfect position, equal both sides',
+            2: 'Balances but back rounds when bending',
+            3: 'Bends halfway with straight back',
+            4: 'Bends fully, back straight, holds 5s',
+            5: 'Perfect both sides, holds easily',
         },
     },
     {
