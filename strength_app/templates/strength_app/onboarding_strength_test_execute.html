@@ -402,8 +402,14 @@
       try {
         stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } } });
       } catch(camErr) {
-        console.warn('Camera fallback:', camErr);
-        stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        console.warn('Camera fallback 1:', camErr);
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        } catch(camErr2) {
+          console.error('Camera fallback 2 also failed:', camErr2);
+          alert('Camera error details:\n\nError 1: ' + camErr.name + ' — ' + camErr.message + '\n\nError 2: ' + camErr2.name + ' — ' + camErr2.message + '\n\nHTTPS: ' + location.protocol + '\nSecure context: ' + window.isSecureContext + '\nmediaDevices exists: ' + !!navigator.mediaDevices);
+          throw camErr2;
+        }
       }
       cameraFeed.srcObject = stream;
       placeholder.style.display = 'none';

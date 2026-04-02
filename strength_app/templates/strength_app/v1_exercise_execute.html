@@ -391,8 +391,14 @@ async function startCamera() {
       try {
         stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } } });
       } catch(e1) {
-        console.warn('Camera fallback: trying without constraints', e1);
-        stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        console.warn('Camera fallback 1: trying without constraints', e1);
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        } catch(e2) {
+          console.error('Camera fallback 2 also failed:', e2);
+          alert('Camera error details:\n\nError 1: ' + e1.name + ' — ' + e1.message + '\n\nError 2: ' + e2.name + ' — ' + e2.message + '\n\nHTTPS: ' + location.protocol + '\nSecure context: ' + window.isSecureContext + '\nmediaDevices exists: ' + !!navigator.mediaDevices);
+          throw e2;
+        }
       }
       const video = document.getElementById('cameraFeed');
       video.srcObject = stream;
