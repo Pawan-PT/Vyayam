@@ -3955,10 +3955,10 @@ async function startCamera() {
       else score = 1;
 
       if (stream) stream.getTracks().forEach(function(t) { t.stop(); });
-      var btn = document.getElementById('submitBtn');
-      btn.disabled = true;
-      btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Scoring...  (Held ' + holdTime + 's → Score ' + score + ')';
-
+      var assessBtn = document.getElementById('submitBtn');
+      assessBtn.disabled = true;
+      assessBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Scoring...  (Held ' + holdTime + 's → Score ' + score + ')';
+      
       fetch("{% url 'onboarding_save_test_result' %}", {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

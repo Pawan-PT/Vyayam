@@ -20,7 +20,10 @@
       "Bash(cd /Users/pawandangarwala/Documents/vyayam/vyayam_django __NEW_LINE_edfcf583796e753d__ echo \"=== 1. Knees go outward ===\" grep \"leftKnee.*-.*hipDropFactor\\\\|rightKnee.*+.*hipDropFactor\" strength_app/templates/strength_app/v1_exercise_execute.html)",
       "Bash(DJANGO_DEBUG=True python manage.py check)",
       "Bash(cd /Users/pawandangarwala/Documents/vyayam/vyayam_django __NEW_LINE_d988f41431984562__ echo \"=== 1. ROW ghost type ===\" grep -c \"ROW: {\" strength_app/templates/strength_app/v1_exercise_execute.html __NEW_LINE_d988f41431984562__ echo \"=== 2. ROW_HORIZONTAL in templateToType ===\" grep \"ROW_HORIZONTAL\" strength_app/templates/strength_app/v1_exercise_execute.html)",
-      "Bash(DJANGO_SETTINGS_MODULE=vyayam_django.settings python -c \"import django; django.setup\\(\\); from strength_app.models import FootballProfile; from strength_app.v1_football_constants import FOOTBALL_ASSESSMENT_TESTS, FOOTBALL_LEVELS, HSR_PHASES, CONTRAST_PAIRS, PLYOMETRIC_GATES, FV_TENDENCY_CONFIG, FOOTBALL_PERIODISATION_PHASES, SPORT_TYPES; print\\(''''all imports OK''''\\); print\\(''''tests:'''', len\\(FOOTBALL_ASSESSMENT_TESTS\\)\\); print\\(''''levels:'''', list\\(FOOTBALL_LEVELS.keys\\(\\)\\)\\); print\\(''''pairs:'''', len\\(CONTRAST_PAIRS\\)\\)\")"
+      "Bash(DJANGO_SETTINGS_MODULE=vyayam_django.settings python -c \"import django; django.setup\\(\\); from strength_app.models import FootballProfile; from strength_app.v1_football_constants import FOOTBALL_ASSESSMENT_TESTS, FOOTBALL_LEVELS, HSR_PHASES, CONTRAST_PAIRS, PLYOMETRIC_GATES, FV_TENDENCY_CONFIG, FOOTBALL_PERIODISATION_PHASES, SPORT_TYPES; print\\(''''all imports OK''''\\); print\\(''''tests:'''', len\\(FOOTBALL_ASSESSMENT_TESTS\\)\\); print\\(''''levels:'''', list\\(FOOTBALL_LEVELS.keys\\(\\)\\)\\); print\\(''''pairs:'''', len\\(CONTRAST_PAIRS\\)\\)\")",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)"
     ]
   }
 }
