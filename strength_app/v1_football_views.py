@@ -70,6 +70,7 @@ def football_assessment(request):
 
     if request.method == 'POST':
         request.session['football_test_results'] = {}
+        request.session['football_season_phase'] = request.POST.get('season_phase', 'in_season')
         return redirect(reverse('football_assessment_execute', args=[0]))
 
     return render(request, 'strength_app/football_assessment.html', {
@@ -285,6 +286,7 @@ def football_assessment_results(request):
     fp.compute_lsi()
     fp.compute_fv_tendency()
     fp.check_plyometric_gate()
+    fp.season_phase = request.session.pop('football_season_phase', 'in_season')
     fp.save()
 
     # Mark patient as athlete tier active
@@ -369,3 +371,72 @@ def football_update_after_session(patient):
         pass
 
     fp.save(update_fields=['hsr_weeks_completed', 'plyometric_cleared'])
+
+
+# ============================================================================
+# MATCH CALENDAR — P29 Microcycle Management
+# ============================================================================
+
+def match_calendar(request):
+    """Display and manage upcoming match dates."""
+    patient, err = _get_patient(request)
+    if err:
+        return err
+
+    from .models import MatchDate
+    from datetime import date, timedelta
+
+    today = date.today()
+    matches = MatchDate.objects.filter(
+        patient=patient,
+        match_date__gte=today - timedelta(days=7)
+    ).order_by('match_date')
+
+    return render(request, 'strength_app/match_calendar.html', {
+        'patient': patient,
+        'matches': matches,
+        'today': today,
+    })
+
+
+def match_add(request):
+    """Add a match date via POST."""
+    patient, err = _get_patient(request)
+    if err:
+        return err
+
+    if request.method != 'POST':
+        return redirect('match_calendar')
+
+    from .models import MatchDate
+    from datetime import datetime
+
+    match_date_str = request.POST.get('match_date', '')
+    opponent = request.POST.get('opponent', '')
+
+    if match_date_str:
+        try:
+            md = datetime.strptime(match_date_str, '%Y-%m-%d').date()
+            MatchDate.objects.get_or_create(
+                patient=patient,
+                match_date=md,
+                defaults={'opponent': opponent}
+            )
+        except (ValueError, Exception):
+            pass
+
+    return redirect('match_calendar')
+
+
+def match_delete(request, match_id):
+    """Delete a match date via POST."""
+    patient, err = _get_patient(request)
+    if err:
+        return err
+
+    if request.method != 'POST':
+        return redirect('match_calendar')
+
+    from .models import MatchDate
+    MatchDate.objects.filter(id=match_id, patient=patient).delete()
+    return redirect('match_calendar')

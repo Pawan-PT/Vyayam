@@ -493,6 +493,7 @@ def v1_post_session_feedback(request):
             pain_severity=pain_severity,
             energy_level=energy_level,
             hormonal_phase=hormonal_phase,
+            session_rpe=int(request.POST.get('session_rpe', 5)),
         )
 
         # Update patient's sleep_quality from latest feedback for next session's modifier

@@ -220,6 +220,13 @@
     <a href="{% url 'disclaimer' %}" style="color:#fca5a5;text-decoration:underline;" target="_blank">Read full disclaimer</a>
   </div>
 
+  {% if patient.athlete_tier_active %}
+  <div style="text-align:center;margin-bottom:12px;">
+    <a href="{% url 'match_calendar' %}" style="color:#a5b4fc;font-size:.85rem;text-decoration:underline;">
+      <i class="fas fa-calendar-alt me-1"></i>Manage Match Calendar
+    </a>
+  </div>
+  {% endif %}
   <div class="cta-row">
     <a href="{% url 'v1_warmup' %}" class="cta-btn cta-primary">
       <i class="fas fa-fire me-2"></i>Begin Warm-Up

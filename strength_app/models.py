@@ -251,6 +251,22 @@ class PatientProfile(models.Model):
 # STRENGTH PROFILE — 7-test assessment radar chart
 # ============================================================================
 
+class MatchDate(models.Model):
+    """Monthly match calendar for in-season microcycle management (P29)."""
+    patient = models.ForeignKey(PatientProfile, on_delete=models.CASCADE, related_name='match_dates')
+    match_date = models.DateField()
+    opponent = models.CharField(max_length=100, blank=True, default='')
+    notes = models.CharField(max_length=200, blank=True, default='')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['match_date']
+        unique_together = ['patient', 'match_date']
+
+    def __str__(self):
+        return f"{self.patient.name} — Match {self.match_date}"
+
+
 class StrengthProfile(models.Model):
     """7-test strength assessment producing a radar chart strength profile."""
     patient = models.ForeignKey(PatientProfile, on_delete=models.CASCADE, related_name='strength_profiles')
@@ -588,6 +604,13 @@ class SessionFeedback(models.Model):
     ]
     energy_level = models.CharField(max_length=10, choices=ENERGY_CHOICES, blank=True, default='')
     hormonal_phase = models.CharField(max_length=20, blank=True, default='')
+
+    # Session RPE for ACWR calculation (P31)
+    session_rpe = models.IntegerField(
+        default=5,
+        validators=[MinValueValidator(1), MaxValueValidator(10)],
+        help_text='Session RPE 1-10: How hard was this session overall?'
+    )
 
     TRAFFIC_LIGHT_CHOICES = [
         ('green', 'Green — Safe to progress'),
@@ -1117,6 +1140,19 @@ class FootballProfile(models.Model):
         default='balanced',
     )
     lsi_flag = models.BooleanField(default=False)   # True if any LSI < 90 %
+
+    SEASON_PHASE_CHOICES = [
+        ('off_season', 'Off-Season'),
+        ('pre_season', 'Pre-Season'),
+        ('in_season', 'In-Season'),
+        ('post_season', 'Post-Season'),
+    ]
+    season_phase = models.CharField(
+        max_length=20,
+        choices=SEASON_PHASE_CHOICES,
+        default='in_season',
+    )
+
     hop_lsi_pct = models.FloatField(null=True, blank=True)
     cod_lsi_pct = models.FloatField(null=True, blank=True)
     ybalance_lsi_pct = models.FloatField(null=True, blank=True)

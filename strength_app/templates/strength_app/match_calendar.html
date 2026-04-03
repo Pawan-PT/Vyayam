@@ -1,0 +1,78 @@
+{% extends 'strength_app/base.html' %}
+{% block title %}Match Calendar — VYAYAM{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card" style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;">
+        <div class="card-body p-4">
+          <h3 class="fw-800 mb-2"><i class="fas fa-calendar-alt me-2"></i>Match Calendar</h3>
+          <p class="mb-0 opacity-85">Add your upcoming matches. VYAYAM auto-adjusts your training around each match day.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card mb-4">
+    <div class="card-body p-4">
+      <h6 class="fw-700 mb-3">Add a Match</h6>
+      <form method="post" action="{% url 'match_add' %}">
+        {% csrf_token %}
+        <div class="row g-3">
+          <div class="col-6">
+            <label class="form-label small text-muted">Match Date</label>
+            <input type="date" class="form-control" name="match_date" required min="{{ today|date:'Y-m-d' }}">
+          </div>
+          <div class="col-6">
+            <label class="form-label small text-muted">Opponent (optional)</label>
+            <input type="text" class="form-control" name="opponent" placeholder="e.g. FC Goa">
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary mt-3 fw-600">
+          <i class="fas fa-plus me-1"></i>Add Match
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <div class="card mb-4">
+    <div class="card-body p-4">
+      <h6 class="fw-700 mb-3">Your Matches</h6>
+      {% if matches %}
+        {% for match in matches %}
+        <div class="d-flex align-items-center justify-content-between py-2 {% if not forloop.last %}border-bottom{% endif %}">
+          <div>
+            <span class="fw-600">{{ match.match_date|date:"D, d M Y" }}</span>
+            {% if match.opponent %}
+              <span class="text-muted ms-2">vs {{ match.opponent }}</span>
+            {% endif %}
+            {% if match.match_date == today %}
+              <span class="badge bg-danger ms-2">Today</span>
+            {% elif match.match_date < today %}
+              <span class="badge bg-secondary ms-2">Played</span>
+            {% endif %}
+          </div>
+          <form method="post" action="{% url 'match_delete' match.id %}" class="m-0">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Remove this match?')">
+              <i class="fas fa-trash"></i>
+            </button>
+          </form>
+        </div>
+        {% endfor %}
+      {% else %}
+        <p class="text-muted mb-0">No matches scheduled yet.</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="text-center">
+    <a href="{% url 'v1_session_overview' %}" class="btn btn-outline-secondary">
+      <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+    </a>
+  </div>
+
+</div>
+{% endblock %}
