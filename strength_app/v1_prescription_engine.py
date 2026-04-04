@@ -468,8 +468,39 @@ def _determine_day_type(patterns_today):
     return 'squat_day'
 
 
-def _build_warmup(patterns_today, working_sets, hormonal_mods):
-    """Build the 4-phase warm-up sequence."""
+def _build_warmup(patterns_today, working_sets, hormonal_mods, patient=None):
+    """Build the 4-phase warm-up sequence. Football athletes get FIFA 11+ (P32)."""
+
+    # ── P32: FIFA 11+ for football athletes ──────────────────────────────
+    if (patient and hasattr(patient, 'athlete_tier_active') and patient.athlete_tier_active
+            and getattr(patient, 'athlete_sport', '') == 'football'):
+        try:
+            from .warmup_library import (
+                FIFA_11_PART1_RUNNING, FIFA_11_PART2_STRENGTH, FIFA_11_PART3_RUNNING_ADVANCED
+            )
+            # Determine level from football profile
+            fp = patient.football_profile
+            level = getattr(fp, 'football_level', 1)
+            if level >= 4:
+                lvl_key = 'level_3'
+            elif level >= 3:
+                lvl_key = 'level_2'
+            else:
+                lvl_key = 'level_1'
+
+            return {
+                'estimated_minutes': 20,
+                'is_fifa_11': True,
+                'phases': {
+                    'part1_running': FIFA_11_PART1_RUNNING.get(lvl_key, FIFA_11_PART1_RUNNING['level_1']),
+                    'part2_strength': FIFA_11_PART2_STRENGTH.get(lvl_key, FIFA_11_PART2_STRENGTH['level_1']),
+                    'part3_advanced_running': FIFA_11_PART3_RUNNING_ADVANCED.get(lvl_key, FIFA_11_PART3_RUNNING_ADVANCED['level_1']),
+                },
+            }
+        except Exception:
+            pass  # Fall through to standard warmup if FIFA data unavailable
+
+
     day_type = _determine_day_type(patterns_today)
 
     # Phase 1: Elevate — first 3 exercises, skip high-impact if plyometric not cleared
@@ -1495,8 +1526,8 @@ def generate_v1_session(patient):
         except Exception:
             pass
 
-    # ── 14. Warm-up (Principle 14) ────────────────────────────────────────
-    warmup = _build_warmup(patterns_today, working_sets, hormonal_mods)
+    # ── 14. Warm-up (Principle 14 / P32 FIFA 11+ for football) ───────────
+    warmup = _build_warmup(patterns_today, working_sets, hormonal_mods, patient=patient)
 
     # ── 15. Cool-down (Principle 15) ──────────────────────────────────────
     cooldown = _build_cooldown(patterns_today)

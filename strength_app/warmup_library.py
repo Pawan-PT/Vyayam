@@ -594,3 +594,149 @@ COOLDOWN_BREATHING = [
         'purpose': 'Scientifically validated protocol for maximising HRV. Ideal end-of-session practice for recovery tracking.',
     },
 ]
+
+
+# ============================================================================
+# FIFA 11+ NEUROMUSCULAR WARMUP (P32)
+# For football athletes only. Replaces standard warmup.
+# 3 parts, 3 progressive levels per part.
+# Research: Soligard 2008 (BMJ), Silvers-Granelli 2015 (AJSM). 30-46% injury reduction.
+# ============================================================================
+
+FIFA_11_PART1_RUNNING = {
+    # Part 1: Running exercises — 8 minutes
+    'level_1': [
+        {'id': 'fifa_straight_run', 'name': 'Straight Running', 'duration_seconds': 60,
+         'instructions': 'Jog straight across the field at an easy pace. Focus on relaxed upright posture.',
+         'cues': ['Relaxed shoulders', 'Light foot contact', 'Upright torso']},
+        {'id': 'fifa_hip_out', 'name': 'Hip Out (External Rotation Run)', 'duration_seconds': 60,
+         'instructions': 'Jog forward. Every 3 steps, lift one knee and rotate it outward, opening the hip. Alternate legs.',
+         'cues': ['Knee to hip height', 'Rotate outward from the hip, not the ankle', 'Stay balanced']},
+        {'id': 'fifa_hip_in', 'name': 'Hip In (Internal Rotation Run)', 'duration_seconds': 60,
+         'instructions': 'Jog forward. Every 3 steps, lift one knee and rotate it inward across the body. Alternate legs.',
+         'cues': ['Controlled rotation', 'Do not twist the trunk', 'Light and rhythmic']},
+        {'id': 'fifa_circling_partner', 'name': 'Circling Partner', 'duration_seconds': 60,
+         'instructions': 'Jog side by side with a partner or imaginary partner. At a cone, shuffle around each other and continue. If alone, jog to a marker, circle it, jog back.',
+         'cues': ['Stay low during the circle', 'Keep hips square', 'Quick feet around the turn']},
+        {'id': 'fifa_shoulder_contact', 'name': 'Shoulder Contact Run', 'duration_seconds': 60,
+         'instructions': 'Jog with a partner. At each cone, lean into each other shoulder to shoulder briefly, then continue. If alone, jog and perform a lateral lean every 5 steps.',
+         'cues': ['Brace core on contact', 'Stay balanced through the bump', 'Keep running rhythm']},
+    ],
+    'level_2': [
+        {'id': 'fifa_straight_run', 'name': 'Straight Running', 'duration_seconds': 60,
+         'instructions': 'Jog at moderate pace with higher knees than Level 1.',
+         'cues': ['Knees higher', 'Faster arm drive', 'Light ground contact']},
+        {'id': 'fifa_hip_out', 'name': 'Hip Out Run (Faster)', 'duration_seconds': 60,
+         'instructions': 'Same as Level 1 but at a faster jog and every 2 steps.',
+         'cues': ['Quicker hip rotation', 'Maintain speed', 'Balanced landing']},
+        {'id': 'fifa_hip_in', 'name': 'Hip In Run (Faster)', 'duration_seconds': 60,
+         'instructions': 'Same as Level 1 but faster, every 2 steps.',
+         'cues': ['Speed with control', 'Core tight', 'Smooth rhythm']},
+        {'id': 'fifa_circling_partner', 'name': 'Circling Partner (Quick)', 'duration_seconds': 60,
+         'instructions': 'Same movement at higher speed. Circle tighter and faster.',
+         'cues': ['Low centre of gravity', 'Quick direction change', 'Explosive out of the circle']},
+        {'id': 'fifa_quick_forwards_back', 'name': 'Quick Forwards and Back', 'duration_seconds': 60,
+         'instructions': 'Sprint forward 5m, backpedal 3m, sprint forward again. Continuous for 60 seconds.',
+         'cues': ['Explosive first step', 'Stay low on backpedal', 'Quick transition']},
+    ],
+    'level_3': [
+        {'id': 'fifa_straight_run', 'name': 'Straight Running (Fast)', 'duration_seconds': 45,
+         'instructions': 'Run at 75% speed. Near-sprint effort.',
+         'cues': ['Aggressive arm drive', 'High knee lift', 'Short ground contact time']},
+        {'id': 'fifa_hip_out', 'name': 'Hip Out Run (Sprint Pace)', 'duration_seconds': 45,
+         'instructions': 'Same movement at sprint speed. Every 2 steps.',
+         'cues': ['Maximum hip range', 'Do not slow down for the rotation', 'Power through']},
+        {'id': 'fifa_hip_in', 'name': 'Hip In Run (Sprint Pace)', 'duration_seconds': 45,
+         'instructions': 'Same movement at sprint speed.',
+         'cues': ['Fast and controlled', 'Brace on each rotation', 'Athletic posture']},
+        {'id': 'fifa_bounding_run', 'name': 'Bounding Run', 'duration_seconds': 60,
+         'instructions': 'Exaggerated running strides. Push off each foot with maximum extension. Cover distance with each bound.',
+         'cues': ['Triple extension: hip, knee, ankle', 'Arms drive hard', 'Land softly, push explosively']},
+        {'id': 'fifa_plant_and_cut', 'name': 'Plant and Cut', 'duration_seconds': 60,
+         'instructions': 'Sprint 5m, plant outside foot hard, cut 90 degrees, sprint 5m. Alternate directions.',
+         'cues': ['Low hips on the cut', 'Outside foot plants firm', 'Explode out of the cut']},
+    ],
+}
+
+FIFA_11_PART2_STRENGTH = {
+    # Part 2: Strength, plyometrics, balance — 10 minutes
+    'level_1': [
+        {'id': 'planks', 'name': 'Front Plank', 'duration_seconds': 30, 'sets': 3,
+         'instructions': 'Hold a front plank on forearms and toes. Body straight from head to heels.',
+         'cues': ['No hip sag', 'Squeeze glutes', 'Breathe normally']},
+        {'id': 'side_plank', 'name': 'Side Plank', 'duration_seconds': 20, 'sets': 2,
+         'instructions': 'Side plank on forearm. Hold each side.',
+         'cues': ['Hips stacked', 'Top arm on hip', 'Do not rotate forward']},
+        {'id': 'nordic_hamstring_curl', 'name': 'Nordic Hamstring Curl (Partial)', 'sets': 3, 'reps': 3,
+         'instructions': 'Kneel with ankles anchored. Slowly lower chest toward floor, catching yourself with hands. Only go as far as you can control.',
+         'cues': ['Hips stay extended', 'Slow descent — 5 seconds minimum', 'Catch with hands, push back up']},
+        {'id': 'single_leg_balance', 'name': 'Single Leg Balance (Eyes Open)', 'duration_seconds': 30, 'sets': 2,
+         'instructions': 'Stand on one leg. Hold for 30 seconds each side.',
+         'cues': ['Fix eyes on a point ahead', 'Slight knee bend', 'Hip level — do not drop']},
+        {'id': 'partial_squats', 'name': 'Bodyweight Squats', 'sets': 2, 'reps': 10,
+         'instructions': 'Bodyweight squat to parallel. Controlled descent and ascent.',
+         'cues': ['Knees track over toes', 'Chest up', 'Full depth to parallel']},
+    ],
+    'level_2': [
+        {'id': 'planks', 'name': 'Front Plank (Leg Lift)', 'duration_seconds': 40, 'sets': 3,
+         'instructions': 'Front plank, alternating lifting one leg 15cm off the ground every 5 seconds.',
+         'cues': ['No hip shift when leg lifts', 'Keep core braced', 'Slow controlled lifts']},
+        {'id': 'side_plank_hip_dip', 'name': 'Side Plank with Hip Dip', 'duration_seconds': 30, 'sets': 2,
+         'instructions': 'Side plank. Lower hip toward floor, then raise back to straight line. Each side.',
+         'cues': ['Controlled dip — do not collapse', 'Full hip extension at top', 'Core tight throughout']},
+        {'id': 'nordic_hamstring_curl', 'name': 'Nordic Hamstring Curl (Deeper)', 'sets': 3, 'reps': 5,
+         'instructions': 'Same movement but lower further before catching. Aim for 60% of full range.',
+         'cues': ['5-second controlled descent', 'Hips extended — no hip flexion', 'Hamstrings control the lowering']},
+        {'id': 'single_leg_balance', 'name': 'Single Leg Balance (Eyes Closed)', 'duration_seconds': 20, 'sets': 2,
+         'instructions': 'Single leg balance with eyes closed. 20 seconds each side.',
+         'cues': ['Close eyes gently', 'Activate foot muscles', 'Small corrections at the ankle']},
+        {'id': 'jump_squats', 'name': 'Jump Squats (Controlled)', 'sets': 2, 'reps': 8,
+         'instructions': 'Squat to parallel, explode upward. Land softly with bent knees.',
+         'cues': ['Soft landing — absorb through hips and knees', 'No knee valgus on landing', 'Arms drive the jump']},
+    ],
+    'level_3': [
+        {'id': 'planks', 'name': 'Front Plank (Opposite Arm-Leg Lift)', 'duration_seconds': 45, 'sets': 3,
+         'instructions': 'Front plank. Lift right arm and left leg simultaneously. Hold 3 seconds. Alternate.',
+         'cues': ['Zero hip rotation', 'Reach long through fingertips and heel', 'Brace hard before each lift']},
+        {'id': 'copenhagen_plank', 'name': 'Copenhagen Plank', 'duration_seconds': 20, 'sets': 2,
+         'instructions': 'Side plank with top leg on a bench, bottom leg unsupported. Hold each side.',
+         'cues': ['Squeeze adductors to hold', 'Hips stacked and elevated', 'Brutal — scale time if needed']},
+        {'id': 'nordic_hamstring_curl', 'name': 'Nordic Hamstring Curl (Full Range)', 'sets': 3, 'reps': 5,
+         'instructions': 'Full Nordic curl. Lower all the way to the floor under control. Push up and repeat.',
+         'cues': ['6-second eccentric', 'Hips MUST stay extended the entire time', 'This is the gold standard hamstring exercise']},
+        {'id': 'single_leg_balance', 'name': 'Single Leg Squat Touch', 'duration_seconds': 30, 'sets': 2,
+         'instructions': 'Stand on one leg. Squat down and touch the floor with opposite hand. Return to standing.',
+         'cues': ['Knee tracks over toe', 'Hip stays level', 'Control the entire range']},
+        {'id': 'jump_squats', 'name': 'Tuck Jumps', 'sets': 2, 'reps': 8,
+         'instructions': 'Jump and pull knees to chest at the peak. Land softly. Immediately repeat.',
+         'cues': ['Knees to chest, not chest to knees', 'Land soft and reload instantly', 'Maximum height every rep']},
+    ],
+}
+
+FIFA_11_PART3_RUNNING_ADVANCED = {
+    # Part 3: Advanced running — 2 minutes
+    'level_1': [
+        {'id': 'fifa_high_knees_accel', 'name': 'High Knees into Acceleration', 'duration_seconds': 40,
+         'instructions': '10 high knees on the spot, then sprint 10m. Walk back. Repeat 3 times.',
+         'cues': ['Knees to waist', 'Explode into the sprint from the last high knee', 'Full sprint effort for 10m']},
+        {'id': 'fifa_bounding_short', 'name': 'Bounding (Short)', 'duration_seconds': 40,
+         'instructions': 'Exaggerated skipping strides across 15m. Walk back. Repeat 3 times.',
+         'cues': ['Drive knee high', 'Push off forcefully', 'Cover ground with each bound']},
+    ],
+    'level_2': [
+        {'id': 'fifa_high_knees_accel', 'name': 'High Knees into Sprint', 'duration_seconds': 40,
+         'instructions': '10 high knees then sprint 15m. Walk back. Repeat 3 times. Faster than Level 1.',
+         'cues': ['Transition from knees to sprint must be instant', 'Arms drive hard', 'Sprint at 90% effort']},
+        {'id': 'fifa_plant_and_cut', 'name': 'Plant and Cut (Moderate)', 'duration_seconds': 40,
+         'instructions': 'Sprint 8m, plant and cut 45 degrees, sprint 8m. Alternate sides. 4 reps.',
+         'cues': ['Lower hips into the cut', 'Push off outside foot', 'Accelerate out of every cut']},
+    ],
+    'level_3': [
+        {'id': 'fifa_high_knees_accel', 'name': 'High Knees into Max Sprint', 'duration_seconds': 40,
+         'instructions': '8 rapid high knees then all-out sprint 20m. Walk back. Repeat 3 times.',
+         'cues': ['Maximum knee frequency', 'Explosive transition', '100% sprint effort']},
+        {'id': 'fifa_plant_and_cut', 'name': 'Plant and Cut (Max Speed)', 'duration_seconds': 40,
+         'instructions': 'Sprint 10m at maximum speed, plant and cut 90 degrees, sprint 10m. 4 reps alternating.',
+         'cues': ['Full speed into the cut', 'Decelerate, plant, explode — no stutter steps', 'This is match-intensity']},
+    ],
+}

@@ -3374,4 +3374,225 @@ EXERCISE_CONTENT_GAP_FILL = {
         'language_athlete': 'Loaded walking lunge. Unilateral strength and stability under forward motion.',
     },
 
+    # ====================================================================
+    # P28: SPRINT MECHANICS DRILLS (text-instruction, no ghost overlay)
+    # ====================================================================
+
+    'wall_drives': {
+        'display_name': 'Wall Drives',
+        'movement_pattern': 'sprint',
+        'level': 'intermediate',
+        'target_muscles': ['Hip Flexors', 'Glutes', 'Core', 'Calves'],
+        'instructions': [
+            'Stand facing a wall at arm distance. Lean forward, hands on wall at shoulder height.',
+            'Drive one knee up to hip height aggressively, keeping the stance leg fully extended.',
+            'Return foot to the ground and immediately drive the other knee.',
+            'Alternate legs in a running motion against the wall.',
+        ],
+        'form_cues': ['Body at 45-degree angle from wall', 'Knee drives to hip height — not higher', 'Ground contact under hips', 'Stance leg fully extended on each drive'],
+        'mind_muscle_cue': {'during': 'Feel the hip flexor pull the knee up and the glute of the stance leg lock out.'},
+        'common_mistakes': ['Standing too upright', 'Knee not reaching hip height', 'Shuffling feet instead of driving'],
+        'language_athlete': 'Wall drive for acceleration mechanics. Teaches the 45-degree body angle and aggressive knee drive of the first 10 metres.',
+    },
+
+    'deceleration_stops': {
+        'display_name': 'Deceleration Stops',
+        'movement_pattern': 'sprint',
+        'level': 'intermediate',
+        'target_muscles': ['Quadriceps', 'Hamstrings', 'Glutes', 'Core'],
+        'instructions': [
+            'Sprint 15 metres at 80% effort.',
+            'At the 15-metre mark, decelerate and come to a complete stop within 3 steps.',
+            'Stick the landing: stand tall and balanced at the stop point.',
+            'Walk back to start. Full recovery. Repeat.',
+        ],
+        'form_cues': ['Land stiff and tall on deceleration — NOT soft and collapsed', 'Lower your centre of gravity as you stop', 'Short choppy steps to brake', 'No knee valgus on the stop'],
+        'mind_muscle_cue': {'during': 'Feel the quads and hamstrings absorb the braking force. This is where ACL injuries happen in football — train it.'},
+        'common_mistakes': ['Stopping with straight legs', 'Collapsing into the stop instead of braking actively', 'Not enough sprint speed before the stop'],
+        'language_athlete': 'Deceleration drill for ACL prevention (P15/P28). Teaches the stiff-tall landing pattern that protects the knee during rapid speed reduction.',
+    },
+
+    'fly_in_sprints': {
+        'display_name': 'Fly-In Sprints',
+        'movement_pattern': 'sprint',
+        'level': 'advanced',
+        'target_muscles': ['Hamstrings', 'Glutes', 'Hip Flexors', 'Calves'],
+        'instructions': [
+            'Mark a 20-metre acceleration zone and a 20-metre timing zone.',
+            'Build up to maximum speed during the first 20 metres.',
+            'Maintain top speed through the 20-metre timing zone.',
+            'Decelerate gradually after the timing zone. Walk back for full recovery.',
+        ],
+        'form_cues': ['Upright posture in the timing zone', 'High knee recovery — pawing action', 'Relax the face and jaw at top speed', 'Ground contact under the hips, not in front'],
+        'mind_muscle_cue': {'during': 'In the timing zone, think: tall posture, fast feet, relaxed shoulders. Speed comes from relaxation at the top end.'},
+        'common_mistakes': ['Decelerating before the timing zone', 'Tensing up at maximum speed', 'Overstriding — reaching the foot out in front'],
+        'language_athlete': 'Fly-in sprint for maximum velocity mechanics (P28 Phase B). Teaches top-speed posture and front-side mechanics.',
+    },
+
+    'wicket_runs': {
+        'display_name': 'Wicket Runs',
+        'movement_pattern': 'sprint',
+        'level': 'advanced',
+        'target_muscles': ['Hip Flexors', 'Hamstrings', 'Calves'],
+        'instructions': [
+            'Set up 6-8 low obstacles (sticks, cones, small hurdles) spaced at your natural stride length (approximately 1.5-2 metres apart).',
+            'Sprint through the obstacles, stepping over each one without hitting them.',
+            'The obstacles force correct stride length and rhythm.',
+            'Walk back for full recovery between reps.',
+        ],
+        'form_cues': ['Do not overstride or understride — let the wickets set your rhythm', 'High knee lift to clear each obstacle', 'Fast ground contact — spend minimum time on the ground', 'Upright posture throughout'],
+        'mind_muscle_cue': {'during': 'The wickets teach your legs the correct spacing. Trust the rhythm. Fast feet, high knees, minimal ground time.'},
+        'common_mistakes': ['Hitting the wickets — means stride is too long or too short', 'Slowing down to avoid hitting', 'Looking down at feet instead of ahead'],
+        'language_athlete': 'Wicket runs for stride length regulation at maximum velocity (P28 Phase B). Forces correct front-side mechanics.',
+    },
+
+    'resisted_sprints': {
+        'display_name': 'Resisted Sprints (Sled or Band)',
+        'movement_pattern': 'sprint',
+        'level': 'advanced',
+        'target_muscles': ['Glutes', 'Hamstrings', 'Quadriceps', 'Calves', 'Core'],
+        'instructions': [
+            'Attach a resistance band to a fixed point behind you, or use a sled with 10% of your bodyweight.',
+            'Sprint 15 metres against the resistance.',
+            'Focus on powerful push-off and forward lean. The resistance teaches acceleration posture.',
+            'Walk back for full recovery between reps.',
+        ],
+        'form_cues': ['Forward lean into the resistance — 45 degrees', 'Drive knees forward and up aggressively', 'Push the ground AWAY behind you', 'Short, powerful ground contacts'],
+        'mind_muscle_cue': {'during': 'The resistance forces you into the correct acceleration position. Feel the glutes driving every step.'},
+        'common_mistakes': ['Standing too upright against the resistance', 'Too much resistance — slows you to a walk', 'Shuffling instead of sprinting'],
+        'language_athlete': 'Resisted sprint for acceleration mechanics (P28 Phase A). 10% BW load preserves sprint-specific movement pattern.',
+    },
+
+    'speed_skater_landings': {
+        'display_name': 'Speed Skater Landings',
+        'movement_pattern': 'sprint',
+        'level': 'intermediate',
+        'target_muscles': ['Glutes', 'Adductors', 'Quadriceps', 'Core'],
+        'instructions': [
+            'Stand on one leg. Jump laterally to the opposite leg.',
+            'Land on the outside leg and stick the landing for 2 seconds.',
+            'The landing leg should be slightly bent, hip and knee absorbing the force.',
+            'Jump back to the other side. Alternate for prescribed reps.',
+        ],
+        'form_cues': ['Stick every landing — do not wobble', 'Land stiff and tall, not soft and collapsed', 'Knee tracks over toe on landing — no valgus', 'Reach the back leg behind for counterbalance'],
+        'mind_muscle_cue': {'during': 'Each landing is a deceleration drill. Feel the glute and quad of the landing leg absorbing the force. This is how you protect your knee when cutting in a match.'},
+        'common_mistakes': ['Not sticking the landing', 'Knee caving inward on landing', 'Rushing between jumps'],
+        'language_athlete': 'Speed skater for lateral deceleration and landing mechanics (P28 Phase C / P15 ACL prevention). Builds single-leg landing control.',
+    },
+
+    # ====================================================================
+    # P30: MOBILITY EXERCISES (daily micro-routines)
+    # ====================================================================
+
+    'couch_stretch_hip_flexor': {
+        'display_name': 'Couch Stretch (Hip Flexor)',
+        'movement_pattern': 'mobility',
+        'level': 'foundation',
+        'target_muscles': ['Hip Flexors', 'Rectus Femoris', 'Psoas'],
+        'instructions': [
+            'Kneel in front of a wall or couch. Place the top of one foot on the wall behind you, knee on the ground.',
+            'Step the other foot forward into a lunge position.',
+            'Squeeze the glute of the back leg and push hips forward gently.',
+            'Hold for 90 seconds. Switch sides.',
+        ],
+        'form_cues': ['Squeeze the glute of the stretching leg — this deepens the stretch through reciprocal inhibition', 'Upright torso — do not lean forward', 'Breathe normally throughout', 'If the wall version is too intense, start by putting your foot on a couch cushion instead'],
+        'mind_muscle_cue': {'during': 'Feel the deep stretch in the front of the hip of the back leg. This is the muscle that gets tight from sitting and inhibits your glute from firing during sprints.'},
+        'common_mistakes': ['Arching the lower back instead of tucking the pelvis', 'Not squeezing the glute', 'Holding for too short — 90 seconds minimum for tissue change'],
+        'language_athlete': 'Loaded hip flexor stretch (P30). Restores hip extension range that sitting destroys. Unlocks glute activation for sprinting and shooting.',
+    },
+
+    # ====================================================================
+    # FIFA 11+ SPECIFIC DRILLS (used in warmup Part 1 and Part 3)
+    # ====================================================================
+
+    'fifa_straight_run': {
+        'display_name': 'FIFA 11+ Straight Run',
+        'movement_pattern': 'cardio',
+        'level': 'foundation',
+        'target_muscles': ['Full Body Cardiovascular'],
+        'instructions': ['Jog straight across the pitch at an easy pace.', 'Focus on relaxed upright posture and light foot contact.', 'Gradually increase pace with each length.'],
+        'form_cues': ['Relaxed shoulders', 'Arms swing naturally', 'Upright torso'],
+        'language_athlete': 'FIFA 11+ Part 1 running drill. General cardiovascular preparation.',
+    },
+
+    'fifa_hip_out': {
+        'display_name': 'FIFA 11+ Hip Out Run',
+        'movement_pattern': 'mobility',
+        'level': 'foundation',
+        'target_muscles': ['Hip External Rotators', 'Glutes', 'Hip Flexors'],
+        'instructions': ['Jog forward. Every 3 steps, lift one knee and rotate it outward, opening the hip.', 'Alternate legs. Maintain forward momentum.'],
+        'form_cues': ['Rotation comes from the hip, not the ankle or knee', 'Knee to hip height before rotating', 'Stay balanced and rhythmic'],
+        'language_athlete': 'FIFA 11+ hip opening drill. Dynamic external rotation warm-up for cutting and change of direction.',
+    },
+
+    'fifa_hip_in': {
+        'display_name': 'FIFA 11+ Hip In Run',
+        'movement_pattern': 'mobility',
+        'level': 'foundation',
+        'target_muscles': ['Hip Internal Rotators', 'Adductors', 'Hip Flexors'],
+        'instructions': ['Jog forward. Every 3 steps, lift one knee and rotate it inward across the body.', 'Alternate legs. Do not twist the trunk.'],
+        'form_cues': ['Controlled rotation', 'Trunk stays square to the direction of travel', 'Light and rhythmic'],
+        'language_athlete': 'FIFA 11+ hip closing drill. Dynamic internal rotation warm-up.',
+    },
+
+    'fifa_circling_partner': {
+        'display_name': 'FIFA 11+ Circling Partner',
+        'movement_pattern': 'cardio',
+        'level': 'foundation',
+        'target_muscles': ['Full Body', 'Core', 'Hip Stabilisers'],
+        'instructions': ['Jog side by side with a partner. At each cone, shuffle around each other and continue.', 'If alone, jog to a marker, circle it tightly, and jog back.'],
+        'form_cues': ['Stay low during the circle', 'Quick feet', 'Keep hips square'],
+        'language_athlete': 'FIFA 11+ agility drill. Proprioceptive activation and change of direction.',
+    },
+
+    'fifa_shoulder_contact': {
+        'display_name': 'FIFA 11+ Shoulder Contact Run',
+        'movement_pattern': 'cardio',
+        'level': 'foundation',
+        'target_muscles': ['Core', 'Shoulder Stabilisers', 'Full Body'],
+        'instructions': ['Jog with a partner. At each cone, lean into each other shoulder to shoulder briefly, then continue.', 'If alone, jog and perform a lateral lean with core brace every 5 steps.'],
+        'form_cues': ['Brace core on contact', 'Stay balanced', 'Keep running rhythm'],
+        'language_athlete': 'FIFA 11+ contact preparation drill. Builds trunk stability under perturbation.',
+    },
+
+    'fifa_quick_forwards_back': {
+        'display_name': 'FIFA 11+ Quick Forwards and Back',
+        'movement_pattern': 'cardio',
+        'level': 'intermediate',
+        'target_muscles': ['Quadriceps', 'Hamstrings', 'Calves', 'Core'],
+        'instructions': ['Sprint forward 5 metres. Immediately backpedal 3 metres. Sprint forward again.', 'Continuous for 60 seconds.'],
+        'form_cues': ['Explosive first step', 'Stay low on backpedal', 'Quick transition between directions'],
+        'language_athlete': 'FIFA 11+ multidirectional running. Teaches rapid acceleration and deceleration.',
+    },
+
+    'fifa_plant_and_cut': {
+        'display_name': 'FIFA 11+ Plant and Cut',
+        'movement_pattern': 'sprint',
+        'level': 'intermediate',
+        'target_muscles': ['Glutes', 'Quadriceps', 'Hamstrings', 'Adductors', 'Core'],
+        'instructions': ['Sprint 5-10 metres at speed. Plant outside foot firmly and cut 45-90 degrees.', 'Sprint 5-10 metres in the new direction. Alternate cut directions.'],
+        'form_cues': ['Low hips into the cut', 'Outside foot plants firm — do not slip', 'Explode out of the cut', 'No knee valgus on the plant leg'],
+        'language_athlete': 'FIFA 11+ change-of-direction drill. Match-intensity cutting for ACL prevention and agility.',
+    },
+
+    'fifa_high_knees_accel': {
+        'display_name': 'FIFA 11+ High Knees into Sprint',
+        'movement_pattern': 'sprint',
+        'level': 'intermediate',
+        'target_muscles': ['Hip Flexors', 'Calves', 'Hamstrings', 'Glutes'],
+        'instructions': ['Perform 8-10 rapid high knees on the spot.', 'Immediately transition into a 10-20 metre sprint.', 'Walk back for recovery. Repeat.'],
+        'form_cues': ['Maximum knee frequency during high knees', 'Explosive transition into the sprint', 'Sprint at prescribed effort level'],
+        'language_athlete': 'FIFA 11+ Part 3 advanced running. Neural activation for sprint readiness.',
+    },
+
+    'fifa_bounding_short': {
+        'display_name': 'FIFA 11+ Bounding',
+        'movement_pattern': 'sprint',
+        'level': 'intermediate',
+        'target_muscles': ['Glutes', 'Hip Flexors', 'Calves', 'Core'],
+        'instructions': ['Exaggerated skipping strides across 15-20 metres.', 'Drive knee high, push off forcefully, cover maximum ground with each bound.', 'Walk back for recovery.'],
+        'form_cues': ['Triple extension on push-off', 'Arms drive upward aggressively', 'Land softly, push explosively'],
+        'language_athlete': 'FIFA 11+ bounding drill. Develops reactive strength and stride power.',
+    },
+
 }
