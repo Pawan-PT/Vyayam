@@ -631,7 +631,27 @@ def onboarding_strength_test_execute(request, test_index):
     map_key = f'pull_test_{variant}' if (test_id == 'pull_test' and variant) else test_id
     ex_map = ASSESSMENT_EXERCISE_MAP.get(map_key, {})
     exercise_id = ex_map.get('exercise_id', '')
+    assessment_mode = ex_map.get('mode', 'hold')
     assessment_duration = ex_map.get('duration', 60)
+
+    # Max-reps tests (push-ups, rows) → assessment template with timer + self-report
+    # Hold tests (squat, hinge, plank, lunge) → exercise template with ghost overlay
+    if assessment_mode == 'max_reps':
+        scoring_items = [{'score': k, 'desc': v} for k, v in active_test.get('scoring', {}).items()]
+        return render(request, 'strength_app/onboarding_strength_test_execute.html', {
+            'test': active_test,
+            'test_index': test_index,
+            'total_tests': len(V1_STRENGTH_TESTS),
+            'side': side,
+            'variant': variant,
+            'is_bilateral': is_bilateral,
+            'progress_pct': progress_pct,
+            'scoring_items': scoring_items,
+            'patient': patient,
+            'step': 5,
+            'total': _total_steps(patient if 'patient' in locals() else None),
+            'show_variant_picker': False,
+        })
 
     from .exercise_content import EXERCISE_CONTENT
     content = EXERCISE_CONTENT.get(exercise_id, {})

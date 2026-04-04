@@ -347,8 +347,16 @@
         const fb = computeTestFeedback(results.poseLandmarks);
         // Voice feedback — only during positioning, not during hold
         if (fb.color !== window._lastFbColor) {
-          // Once user has held green for 3+ seconds, stop form corrections
-          if (!window._holdReached) {
+          // Max reps: don't nag about form, just show skeleton color
+          if (!HOLD_TESTS.includes(TEST_ID)) {
+            // Only speak once at the start for reps tests
+            if (!window._firstFormCueDone) {
+              VoiceCoach.speak(fb.text, false);
+              if (fb.color === '#22c55e') window._firstFormCueDone = true;
+            }
+          }
+          // Hold tests: stop corrections after hold reached
+          else if (!window._holdReached) {
             VoiceCoach.speak(fb.text, false);
           }
           if (fb.color === '#22c55e' && !window._holdReached) {
@@ -482,10 +490,22 @@
       testSeconds++;
       updateRing(timeLeft);
       // Voice hold milestones
-      if (testSeconds === 5)  VoiceCoach.speak('Five seconds', false);
-      else if (testSeconds === 10) VoiceCoach.speak('Ten seconds. Keep going.', false);
-      else if (testSeconds === 20) VoiceCoach.speak('Twenty seconds.', false);
-      else if (testSeconds === 30) VoiceCoach.speak('Thirty. Hold strong.', false);
+      // Voice milestones — different for holds vs max reps
+      if (HOLD_TESTS.includes(TEST_ID)) {
+        // Hold tests: count UP
+        if (testSeconds === 5)  VoiceCoach.speak('Five seconds', false);
+        else if (testSeconds === 10) VoiceCoach.speak('Ten seconds. Keep going.', false);
+        else if (testSeconds === 20) VoiceCoach.speak('Twenty seconds.', false);
+        else if (testSeconds === 30) VoiceCoach.speak('Thirty. Hold strong.', false);
+        else if (testSeconds === 45) VoiceCoach.speak('Forty five. Amazing.', false);
+      } else {
+        // Max reps tests: count DOWN remaining time + encouragement
+        if (timeLeft === 50) VoiceCoach.speak('Fifty seconds left. Keep pushing.', false);
+        else if (timeLeft === 30) VoiceCoach.speak('Thirty seconds. Halfway. Keep going.', false);
+        else if (timeLeft === 15) VoiceCoach.speak('Fifteen seconds left. Push through.', false);
+        else if (timeLeft === 10) VoiceCoach.speak('Ten seconds. Give it everything.', true);
+        else if (timeLeft === 5) VoiceCoach.speak('Five. Four. Three. Two. One.', true);
+      }
       if (timeLeft <= 0) {
         clearInterval(timerInterval);
         countdownText.textContent = '✓';
