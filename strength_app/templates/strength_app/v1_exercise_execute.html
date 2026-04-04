@@ -1804,7 +1804,7 @@ async function startCamera() {
     ghostState.phaseStartTime    = Date.now();
     ghostState.repCount          = 0;
     ghostState.demoRepsDone      = 0;
-    ghostState.isHoldExercise    = ghostState.exerciseDef.phases.length <= 1;
+    ghostState.isHoldExercise    = ghostState.exerciseDef.phases.length <= 1 || (ghostState.exerciseDef.phases[ghostState.exerciseDef.phases.length - 1].duration === 0 && ghostState.exerciseDef.phases[ghostState.exerciseDef.phases.length - 1].name === 'hold');
     ghostState.holdSeconds       = 0;
     ghostState.calibrationFrames = 0;
 
