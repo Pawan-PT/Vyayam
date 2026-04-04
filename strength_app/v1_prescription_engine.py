@@ -833,7 +833,7 @@ def _apply_football_principles(patient, working_sets, meta, modifier_notes, vol_
                         'priority_rank': 0,
                         'football_tag': 'contrast',
                     })
-                    modifier_notes.append(f'P21: Contrast pair — {strength_id} → {explosive_id}')
+                    modifier_notes.append(f'P21: Contrast pair — {strength_id} → {explosive_id}. Rest 5-6 min between heavy and explosive set (PAP window 4-8 min).')
                     break
 
     # ── P22: Plyometric Gating ────────────────────────────────────────────
@@ -851,6 +851,24 @@ def _apply_football_principles(patient, working_sets, meta, modifier_notes, vol_
             ex for ex in additional_exercises
             if not any(kw in ex['exercise_id'] for kw in blocked_keywords)
         ]
+
+    # ── P22 ext: Plyometric volume cap per session ────────────────────────
+    plyo_contact_limit = 100  # beginner default
+    if hasattr(fp, 'football_level'):
+        if fp.football_level >= 4:
+            plyo_contact_limit = 200
+        elif fp.football_level >= 3:
+            plyo_contact_limit = 150
+    # Match week reduction: check via microcycle helper
+    try:
+        _mc_days, _mc_type = _get_microcycle_day(patient)
+        if _mc_days is not None and 0 < _mc_days <= 5:
+            plyo_contact_limit = int(plyo_contact_limit * 0.6)
+            modifier_notes.append(f'P22: Match week — plyometric contacts capped at {plyo_contact_limit} (40% reduction)')
+        else:
+            modifier_notes.append(f'P22: Plyometric volume cap: {plyo_contact_limit} contacts this session')
+    except Exception:
+        modifier_notes.append(f'P22: Plyometric volume cap: {plyo_contact_limit} contacts this session')
 
     # ── P26: F-V Tendency Weighting ──────────────────────────────────────
     strength_weight = fv_weights.get('strength', 1.0)
@@ -878,31 +896,173 @@ def _apply_football_principles(patient, working_sets, meta, modifier_notes, vol_
 
 def _get_football_periodisation_phase(patient):
     """
-    Determine which football periodisation phase applies based on
-    weeks remaining to competition_date.
-    Returns (phase_key, phase_config) or (None, None).
+    Determine football periodisation phase.
+    Priority:
+    1. competition_date set → weeks-to-competition micro-phases
+    2. No competition_date → season_phase from FootballProfile
+    3. Fallback → in_season_maintenance
     """
     if not _FOOTBALL_AVAILABLE:
         return None, None
 
+    # Priority 1: competition date drives micro-periodisation
     comp_date = patient.competition_date
-    if not comp_date:
-        return None, None
+    if comp_date:
+        weeks_to_comp = (comp_date - date.today()).days / 7
+        if weeks_to_comp <= 0:
+            key = 'in_season_maintenance'
+        elif weeks_to_comp <= 1:
+            key = 'deload'
+        elif weeks_to_comp <= 3:
+            key = 'realisation'
+        elif weeks_to_comp <= 6:
+            key = 'intensification'
+        else:
+            key = 'accumulation'
+        return key, FOOTBALL_PERIODISATION_PHASES.get(key, {})
 
-    weeks_to_comp = (comp_date - date.today()).days / 7
+    # Priority 2: season context from FootballProfile
+    try:
+        fp = patient.football_profile
+        season = fp.season_phase
+        season_map = {
+            'off_season': 'accumulation',
+            'pre_season': 'pre_season_strength',
+            'in_season': 'in_season_maintenance',
+            'post_season': 'post_season_recovery',
+        }
+        key = season_map.get(season, 'in_season_maintenance')
+        return key, FOOTBALL_PERIODISATION_PHASES.get(key, {})
+    except Exception:
+        pass
 
-    if weeks_to_comp <= 0:
-        key = 'in_season_maintenance'
-    elif weeks_to_comp <= 1:
-        key = 'deload'
-    elif weeks_to_comp <= 3:
-        key = 'realisation'
-    elif weeks_to_comp <= 6:
-        key = 'intensification'
+    # Fallback
+    return 'in_season_maintenance', FOOTBALL_PERIODISATION_PHASES.get('in_season_maintenance', {})
+
+
+def _get_microcycle_day(patient):
+    """
+    P29: Match microcycle management.
+    Reads MatchDate calendar, calculates days to next match.
+    Returns (days_to_match: int or None, session_type: str).
+    Session types: 'strength', 'power_speed', 'light_activation',
+                   'neural_prime', 'match_day', 'recovery',
+                   'return_to_training', 'standard'.
+    """
+    from .models import MatchDate
+
+    try:
+        fp = patient.football_profile
+        if fp.season_phase in ('off_season', 'post_season'):
+            return None, 'standard'
+    except Exception:
+        return None, 'standard'
+
+    today = date.today()
+
+    # Next upcoming match
+    next_match = MatchDate.objects.filter(
+        patient=patient, match_date__gte=today
+    ).order_by('match_date').first()
+
+    if not next_match:
+        return None, 'standard'
+
+    days_to = (next_match.match_date - today).days
+
+    # Most recent past match for MD+1/MD+2
+    last_match = MatchDate.objects.filter(
+        patient=patient, match_date__lt=today
+    ).order_by('-match_date').first()
+
+    days_since_last = None
+    if last_match:
+        days_since_last = (today - last_match.match_date).days
+
+    # MD+1 and MD+2 take priority if very recent
+    if days_since_last == 1:
+        return -1, 'recovery'
+    if days_since_last == 2:
+        return -2, 'return_to_training'
+
+    # Double gameweek: match just played AND next match within 3 days
+    if days_since_last is not None and days_since_last <= 2 and days_to <= 3:
+        if days_to <= 1:
+            return days_to, 'neural_prime'
+        return days_to, 'light_activation'
+
+    # Standard microcycle
+    if days_to == 0:
+        return 0, 'match_day'
+    elif days_to == 1:
+        return 1, 'neural_prime'
+    elif days_to == 2:
+        return 2, 'light_activation'
+    elif days_to == 3:
+        return 3, 'power_speed'
+    elif days_to == 4:
+        return 4, 'strength'
+    elif days_to == 5:
+        return 5, 'recovery'
     else:
-        key = 'accumulation'
+        # 6+ days: standard periodised session
+        return days_to, 'standard'
 
-    return key, FOOTBALL_PERIODISATION_PHASES.get(key, {})
+
+def _compute_acwr(patient):
+    """
+    P31: Acute:Chronic Workload Ratio.
+    Session Load = duration_minutes × session_rpe.
+    Acute = sum of last 7 days. Chronic = 28-day weekly average.
+    Returns (acwr, acute, chronic, status).
+    Status: 'undertrained', 'sweet_spot', 'caution', 'danger', 'insufficient_data'.
+    """
+    from .models import WorkoutSession, SessionFeedback
+
+    today = date.today()
+    cutoff_28 = today - timedelta(days=28)
+    cutoff_7 = today - timedelta(days=7)
+
+    sessions_28 = WorkoutSession.objects.filter(
+        patient=patient,
+        session_date__date__gte=cutoff_28
+    ).select_related('feedback')
+
+    loads = []
+    for s in sessions_28:
+        try:
+            fb = s.feedback
+            rpe = fb.session_rpe if fb.session_rpe else 5
+        except Exception:
+            rpe = 5
+        duration = s.total_duration_minutes or 30
+        loads.append({
+            'date': s.session_date.date() if hasattr(s.session_date, 'date') else s.session_date,
+            'load': duration * rpe
+        })
+
+    if len(loads) < 4:
+        return 1.0, 0, 0, 'insufficient_data'
+
+    acute = sum(l['load'] for l in loads if l['date'] >= cutoff_7)
+    chronic_total = sum(l['load'] for l in loads)
+    chronic = chronic_total / 4.0
+
+    if chronic == 0:
+        return 1.0, acute, 0, 'insufficient_data'
+
+    acwr = acute / chronic
+
+    if acwr < 0.8:
+        status = 'undertrained'
+    elif acwr <= 1.3:
+        status = 'sweet_spot'
+    elif acwr <= 1.5:
+        status = 'caution'
+    else:
+        status = 'danger'
+
+    return round(acwr, 2), round(acute, 1), round(chronic, 1), status
 
 
 def _advance_hsr_phase(patient, fp):
@@ -1230,6 +1390,86 @@ def generate_v1_session(patient):
     # ── 13b. Football P21-P26 integration ─────────────────────────────────
     if (hasattr(patient, 'athlete_tier_active') and patient.athlete_tier_active
             and patient.athlete_sport == 'football' and _FOOTBALL_AVAILABLE):
+
+        # ── P29: Match microcycle management ──────────────────────────────
+        days_to_match, microcycle_type = _get_microcycle_day(patient)
+        meta['microcycle_type'] = microcycle_type
+        if days_to_match is not None:
+            meta['days_to_match'] = days_to_match
+
+        # Match day: no training
+        if microcycle_type == 'match_day':
+            return {
+                'status': 'match_day',
+                'stop_reason': 'Match day — no training prescribed. Good luck!',
+                'meta': {'patient_id': patient.patient_id, 'patient_name': patient.name,
+                         'microcycle_type': 'match_day'},
+                'modifiers_applied': {'notes': ['P29: Match day — rest.']},
+                'warmup': {}, 'working_sets': [], 'cooldown': {}, 'session_summary': {},
+            }
+
+        # Light days: MD-2, MD-1 — strip to mobility/activation only
+        if microcycle_type in ('light_activation', 'neural_prime'):
+            modifier_notes.append(f'P29: {microcycle_type.replace("_", " ").title()} day — minimal loading')
+            # Keep only stretching/mobility exercises, drop all strength
+            working_sets[:] = [
+                ex for ex in working_sets
+                if ex.get('movement_pattern') in ('stretching', 'mobility', 'balance')
+            ]
+            # Cap at 3 exercises max
+            working_sets[:] = working_sets[:3]
+            for ex in working_sets:
+                ex['sets'] = min(ex['sets'], 2)
+
+        # Recovery: MD+1, MD-5 — very light
+        elif microcycle_type == 'recovery':
+            modifier_notes.append('P29: Recovery day — light mobility only')
+            working_sets[:] = [
+                ex for ex in working_sets
+                if ex.get('movement_pattern') in ('stretching', 'mobility', 'balance')
+            ]
+            working_sets[:] = working_sets[:2]
+
+        # Return to training: MD+2
+        elif microcycle_type == 'return_to_training':
+            modifier_notes.append('P29: Return to training day — reduced volume')
+            vol_modifier *= 0.7
+
+        # Power/speed day: MD-3
+        elif microcycle_type == 'power_speed':
+            modifier_notes.append('P29: Power/speed day (MD-3) — plyometrics and contrast pairs prioritised')
+            # Reduce heavy strength sets, keep explosive work
+            for ex in working_sets:
+                if ex.get('movement_pattern') not in ('power', 'plyometric'):
+                    ex['sets'] = max(1, ex['sets'] - 1)
+
+        # Strength day: MD-4 — standard heavy session, no modification needed
+        elif microcycle_type == 'strength':
+            modifier_notes.append('P29: Strength day (MD-4) — full loading')
+
+        # ── P31: ACWR check ──────────────────────────────────────────────
+        acwr_val, acwr_acute, acwr_chronic, acwr_status = _compute_acwr(patient)
+        meta['acwr'] = acwr_val
+        meta['acwr_status'] = acwr_status
+
+        if acwr_status == 'danger':
+            # Auto-reduce volume 30%
+            vol_modifier *= 0.7
+            for ex in working_sets:
+                ex['sets'] = max(1, round(ex['sets'] * 0.7))
+            modifier_notes.append(
+                f'P31: ACWR {acwr_val} (DANGER — spike detected). Volume auto-reduced 30%.'
+            )
+        elif acwr_status == 'undertrained':
+            modifier_notes.append(
+                f'P31: ACWR {acwr_val} (undertrained). Gradual ramp-up recommended.'
+            )
+        elif acwr_status == 'caution':
+            modifier_notes.append(
+                f'P31: ACWR {acwr_val} (caution). Load rising — monitoring.'
+            )
+
+        # ── Apply football principles P21-P26 ────────────────────────────
         football_extras = _apply_football_principles(
             patient, working_sets, meta, modifier_notes, vol_modifier
         )
