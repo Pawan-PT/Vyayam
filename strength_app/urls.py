@@ -63,6 +63,7 @@ urlpatterns = [
     path('v1/session/exercise/<int:exercise_index>/',       views_session.v1_execute_exercise,      name='v1_execute_exercise'),
     path('v1/session/save-exercise/',                       views_session.v1_save_exercise_result,  name='v1_save_exercise_result'),
     path('v1/session/cooldown/',                            views_session.v1_cooldown,              name='v1_cooldown'),
+    path('v1/session/conditioning/',                        views_session.v1_conditioning_session,  name='v1_conditioning_session'),
     path('v1/session/feedback/',                            views_session.v1_post_session_feedback, name='v1_post_session_feedback'),
     path('v1/session/complete/',                            views_session.v1_session_complete,      name='v1_session_complete'),
     path('v1/progress/',                                    views_progress.v1_progress_dashboard,   name='v1_progress'),

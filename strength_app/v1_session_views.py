@@ -408,6 +408,66 @@ def v1_cooldown(request):
 
 
 # ============================================================================
+# VIEW: CONDITIONING SESSION (P27)
+# ============================================================================
+
+def v1_conditioning_session(request):
+    """
+    P27: Energy system conditioning session for football athletes.
+    Timer-based protocols with talk test cues. Separate from strength sessions.
+    """
+    patient, err = _require_patient(request)
+    if err:
+        return err
+
+    # Only for football athletes
+    if not (hasattr(patient, 'athlete_tier_active') and patient.athlete_tier_active
+            and patient.athlete_sport == 'football'):
+        return redirect('v1_session_overview')
+
+    from .v1_football_constants import CONDITIONING_PROTOCOLS, CONDITIONING_SEASON_MAP
+
+    # Get season phase
+    try:
+        fp = patient.football_profile
+        season = fp.season_phase or 'in_season'
+    except Exception:
+        season = 'in_season'
+
+    # Get recommended protocols for this season
+    recommended_keys = CONDITIONING_SEASON_MAP.get(season, ['zone_3_vo2max'])
+
+    # If a specific protocol was requested via GET param
+    selected_key = request.GET.get('protocol', '')
+    if selected_key not in CONDITIONING_PROTOCOLS:
+        selected_key = recommended_keys[0] if recommended_keys else 'zone_3_vo2max'
+
+    protocol = CONDITIONING_PROTOCOLS[selected_key]
+
+    # Build available protocols list for selection
+    available = []
+    for key in recommended_keys:
+        p = CONDITIONING_PROTOCOLS.get(key)
+        if p:
+            available.append({
+                'key': key,
+                'name': p['name'],
+                'description': p['description'],
+                'rpe_target': p['rpe_target'],
+                'is_selected': key == selected_key,
+            })
+
+    context = {
+        'patient': patient,
+        'protocol': protocol,
+        'protocol_key': selected_key,
+        'available_protocols': available,
+        'season_phase': season,
+    }
+    return render(request, 'strength_app/v1_conditioning_session.html', context)
+
+
+# ============================================================================
 # VIEW 7: POST-SESSION FEEDBACK
 # ============================================================================
 

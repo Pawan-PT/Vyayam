@@ -618,6 +618,96 @@ FOOTBALL_PERIODISATION_PHASES = {
 # SPORT TYPES — used by athlete_sport field on PatientProfile
 # ============================================================================
 
+# ============================================================================
+# P27: CONDITIONING PROTOCOLS — Energy System Training
+# Prescribed by Talk Test (no HR monitor required).
+# Research: Platonov three-zone model, Helgerud et al. 2007 (4x4), Hoff 2002.
+# Persinger et al. 2004: Talk Test correlates r=0.84 with ventilatory threshold.
+# ============================================================================
+
+CONDITIONING_PROTOCOLS = {
+    'zone_1_aerobic_base': {
+        'name': 'Aerobic Base (Zone 1)',
+        'zone': 1,
+        'talk_test': 'You should be able to hold a full conversation comfortably throughout. If you cannot, slow down.',
+        'rpe_target': '3-4 out of 10',
+        'description': 'Build your aerobic engine. This feels easy — that is correct. Without this base, your body cannot recover between sprints during a match.',
+        'protocol': {
+            'type': 'continuous',
+            'duration_minutes': 30,
+            'instructions': 'Choose any activity: jogging, cycling, brisk walking, skipping rope. Maintain an easy pace for 30 minutes. You should be able to talk in full sentences the entire time.',
+        },
+        'modality_options': ['Easy jog', 'Cycling', 'Brisk walking', 'Skipping rope', 'Swimming'],
+        'season': ['off_season', 'post_season'],
+    },
+
+    'zone_2_lactate_threshold': {
+        'name': 'Lactate Threshold (Zone 2)',
+        'zone': 2,
+        'talk_test': 'You can speak in short sentences only — not full paragraphs. Breathing is noticeably harder.',
+        'rpe_target': '5-6 out of 10',
+        'description': 'Raise the speed at which your body accumulates fatigue. This is the pace where talking becomes difficult.',
+        'protocol': {
+            'type': 'intervals',
+            'rounds': 4,
+            'work_seconds': 480,
+            'rest_seconds': 120,
+            'work_label': 'Threshold pace — short sentences only',
+            'rest_label': 'Easy jog — recover your breathing',
+            'instructions': '4 rounds of 8 minutes at threshold pace with 2 minutes easy jog between rounds. Or: 2 x 15-20 minutes steady at threshold pace with 3 minutes rest.',
+        },
+        'modality_options': ['Running', 'Cycling', 'Football dribbling at pace'],
+        'season': ['pre_season'],
+    },
+
+    'zone_3_vo2max': {
+        'name': 'VO2max — Norwegian 4x4 (Zone 3)',
+        'zone': 3,
+        'talk_test': 'You can only say a few words. Cannot hold a conversation. Very hard breathing.',
+        'rpe_target': '7-8 out of 10',
+        'description': 'The Norwegian 4x4 protocol — the most researched VO2max method in existence. 4 rounds of 4 minutes hard, with 3 minutes easy between rounds. This improves your maximum oxygen uptake by up to 11% in 8 weeks.',
+        'protocol': {
+            'type': 'intervals',
+            'rounds': 4,
+            'work_seconds': 240,
+            'rest_seconds': 180,
+            'work_label': 'HARD — only a few words possible',
+            'rest_label': 'Easy walking or light jog — recover',
+            'instructions': '4 rounds of 4 minutes at very hard effort with 3 minutes easy walking/jogging between rounds. Start each round by building up to target intensity in the first minute.',
+        },
+        'modality_options': ['Running (uphill is best)', 'Cycling', 'Football dribbling at high intensity'],
+        'season': ['off_season', 'pre_season', 'in_season'],
+    },
+
+    'rsa_repeat_sprint': {
+        'name': 'Repeat Sprint Ability (RSA)',
+        'zone': 4,
+        'talk_test': 'Maximum effort. No talking possible. All-out sprint.',
+        'rpe_target': '9-10 out of 10',
+        'description': 'This is what separates general fitness from football fitness. RSA is your ability to sprint at maximum speed, recover in 25-30 seconds, and sprint again. When this is trained, you do not slow down in the second half.',
+        'protocol': {
+            'type': 'sprint_intervals',
+            'sets': 3,
+            'sprints_per_set': 6,
+            'sprint_distance_metres': 30,
+            'rest_between_sprints_seconds': 25,
+            'rest_between_sets_seconds': 180,
+            'instructions': '3 sets of 6 x 30-metre all-out sprints. 25-30 seconds passive rest (walk back) between sprints. 3 minutes full rest between sets. Every sprint must be maximum effort.',
+        },
+        'modality_options': ['Flat grass or track', 'Indoor court'],
+        'season': ['pre_season', 'in_season'],
+    },
+}
+
+# Maps season_phase to which conditioning protocols to recommend
+CONDITIONING_SEASON_MAP = {
+    'off_season': ['zone_1_aerobic_base', 'zone_3_vo2max'],
+    'pre_season': ['zone_2_lactate_threshold', 'zone_3_vo2max', 'rsa_repeat_sprint'],
+    'in_season': ['zone_3_vo2max'],
+    'post_season': ['zone_1_aerobic_base'],
+}
+
+
 SPORT_TYPES = [
     ('football', 'Football (Soccer)'),
     ('rugby', 'Rugby'),
