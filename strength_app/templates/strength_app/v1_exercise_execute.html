@@ -1165,8 +1165,7 @@ async function startCamera() {
         label: 'Feet shoulder width, toes slightly out',
       },
       phases: [
-        { name: 'stand', duration: 2500, joints: { knee: 175, hip: 175, trunk: 175 }, voice: 'Stand tall. Now squat down slowly.' },
-        { name: 'hold',  duration: 0,    joints: { knee: 90,  hip: 90,  trunk: 160 }, voice: 'Hold this position. Stay strong.' },
+        { name: 'hold', duration: 0, joints: { knee: 90, hip: 90, trunk: 160 }, voice: 'Squat down and hold' },
       ],
       checkAngles: function(lm) {
         var knee = (calcAngle(lm[LM.leftHip], lm[LM.leftKnee], lm[LM.leftAnkle]) +
@@ -1192,8 +1191,7 @@ async function startCamera() {
       ],
       stanceCheck: { hipLevel: true, label: 'Hips level' },
       phases: [
-        { name: 'stand', duration: 2500, joints: { workingHip: 175 }, voice: 'Stand on one leg. Now hinge forward slowly.' },
-        { name: 'hold',  duration: 0,    joints: { workingHip: 100 }, voice: 'Hold here. Keep your back straight.' },
+        { name: 'hold', duration: 0, joints: { workingHip: 100 }, voice: 'Hinge forward and hold' },
       ],
       checkAngles: function(lm) {
         var leftHip = calcAngle(lm[LM.leftShoulder], lm[LM.leftHip], lm[LM.leftKnee]);
@@ -1216,8 +1214,7 @@ async function startCamera() {
       ],
       stanceCheck: { hipLevel: true, kneeOverAnkle: true, label: 'Feet split, torso upright' },
       phases: [
-        { name: 'stand', duration: 2500, joints: { knee: 170, trunk: 175 }, voice: 'Step into a lunge. Now lower down slowly.' },
-        { name: 'hold',  duration: 0,    joints: { knee: 90,  trunk: 170 }, voice: 'Hold this position. Stay steady.' },
+        { name: 'hold', duration: 0, joints: { knee: 90, trunk: 170 }, voice: 'Lunge down and hold' },
       ],
       checkAngles: function(lm) {
         var knee = Math.min(
@@ -1804,7 +1801,7 @@ async function startCamera() {
     ghostState.phaseStartTime    = Date.now();
     ghostState.repCount          = 0;
     ghostState.demoRepsDone      = 0;
-    ghostState.isHoldExercise    = ghostState.exerciseDef.phases.length <= 1 || (ghostState.exerciseDef.phases[ghostState.exerciseDef.phases.length - 1].duration === 0 && ghostState.exerciseDef.phases[ghostState.exerciseDef.phases.length - 1].name === 'hold');
+    ghostState.isHoldExercise    = ghostState.exerciseDef.phases.length <= 1;
     ghostState.holdSeconds       = 0;
     ghostState.calibrationFrames = 0;
 
