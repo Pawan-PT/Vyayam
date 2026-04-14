@@ -1,0 +1,169 @@
+{% load static %}
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>{% block title %}VYAYAM{% endblock %}</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary-fixed-dim":           "#83d8a1",
+            "error-container":             "#ffdad6",
+            "on-secondary-fixed-variant":  "#474747",
+            "surface-bright":              "#f9f9f9",
+            "surface-container-low":       "#f3f3f3",
+            "surface-container-high":      "#e8e8e8",
+            "surface-dim":                 "#dadada",
+            "secondary":                   "#5f5e5e",
+            "on-primary":                  "#ffffff",
+            "surface-variant":             "#e2e2e2",
+            "on-secondary":                "#ffffff",
+            "on-primary-container":        "#004c2a",
+            "on-error":                    "#ffffff",
+            "surface-container-lowest":    "#ffffff",
+            "primary":                     "#0c6c3f",
+            "secondary-fixed":             "#e4e2e1",
+            "inverse-primary":             "#83d8a1",
+            "primary-container":           "#6bbf8a",
+            "on-surface":                  "#1a1c1c",
+            "error":                       "#ba1a1a",
+            "on-secondary-fixed":          "#1b1c1c",
+            "on-secondary-container":      "#656464",
+            "on-tertiary":                 "#ffffff",
+            "on-primary-fixed-variant":    "#00522e",
+            "inverse-surface":             "#2f3131",
+            "on-tertiary-fixed":           "#241a00",
+            "background":                  "#f9f9f9",
+            "secondary-container":         "#e4e2e1",
+            "tertiary-container":          "#d4a825",
+            "surface":                     "#f9f9f9",
+            "on-background":               "#1a1c1c",
+            "inverse-on-surface":          "#f1f1f1",
+            "primary-fixed":               "#9ff5bc",
+            "on-tertiary-container":       "#533f00",
+            "surface-tint":                "#0c6c3f",
+            "surface-container":           "#eeeeee",
+            "on-error-container":          "#93000a",
+            "outline-variant":             "#bec9be",
+            "outline":                     "#6f7a70",
+            "secondary-fixed-dim":         "#c8c6c6",
+            "surface-container-highest":   "#e2e2e2",
+            "tertiary-fixed-dim":          "#efc13e",
+            "on-tertiary-fixed-variant":   "#594400",
+            "tertiary":                    "#765b00",
+            "on-surface-variant":          "#3f4941",
+            "on-primary-fixed":            "#00210f",
+            "tertiary-fixed":              "#ffdf94"
+          },
+          borderRadius: {
+            DEFAULT: "1rem",
+            lg:      "2rem",
+            xl:      "3rem",
+            full:    "9999px"
+          },
+          fontFamily: {
+            headline: ["Plus Jakarta Sans"],
+            body:     ["Plus Jakarta Sans"],
+            label:    ["Plus Jakarta Sans"]
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      min-height: max(884px, 100dvh);
+    }
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+    .tonal-transition { transition: background-color 0.3s ease; }
+    ::-webkit-scrollbar { display: none; }
+  </style>
+  {% block extra_head %}{% endblock %}
+</head>
+<body class="{% block body_class %}bg-surface text-on-surface min-h-screen pb-32{% endblock %}">
+
+  {% block header %}
+  {# Default header: VYAYAM logo centred, small CSS avatar top-right #}
+  <header class="bg-zinc-50/80 backdrop-blur-md sticky top-0 z-50">
+    <div class="flex justify-between items-center w-full px-6 py-4">
+      <div class="w-10"></div>
+      <h1 class="text-2xl font-extrabold tracking-tighter text-emerald-800 font-headline">VYAYAM</h1>
+      {# CSS-only geometric avatar: dark green circle + user initial #}
+      <div class="w-10 h-10 rounded-full bg-emerald-700 flex items-center justify-center flex-shrink-0">
+        <span class="text-white font-bold text-base leading-none">{{ user.first_name|first|upper }}</span>
+      </div>
+    </div>
+  </header>
+  {% endblock %}
+
+  {% block content %}{% endblock %}
+
+  {% block bottom_nav %}
+  {# Bottom navigation — highlights the active tab via URL name #}
+  <nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-6 pb-8 pt-4
+              bg-white/80 backdrop-blur-xl rounded-t-[2rem]
+              shadow-[0_-12px_40px_rgba(26,28,28,0.04)]">
+
+    {# Home tab #}
+    {% with active_home=request.resolver_match.url_name %}
+    {% if active_home == 'v1_dashboard' or active_home == 'v1_home_gamified' %}
+    <a href="{% url 'v1_dashboard' %}"
+       class="flex flex-col items-center justify-center bg-emerald-100 text-emerald-900 rounded-full px-5 py-2 transition-all duration-300">
+      <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">home_health</span>
+      <span class="text-[11px] font-medium tracking-wide uppercase mt-1">Home</span>
+    </a>
+    {% else %}
+    <a href="{% url 'v1_dashboard' %}"
+       class="flex flex-col items-center justify-center text-zinc-500 p-2 hover:opacity-80 transition-opacity">
+      <span class="material-symbols-outlined">home_health</span>
+      <span class="text-[11px] font-medium tracking-wide uppercase mt-1">Home</span>
+    </a>
+    {% endif %}
+
+    {# Progress tab #}
+    {% if active_home == 'v1_progress' or active_home == 'v1_progress_dashboard' %}
+    <a href="{% url 'v1_progress' %}"
+       class="flex flex-col items-center justify-center bg-emerald-100 text-emerald-900 rounded-full px-5 py-2 transition-all duration-300">
+      <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">monitoring</span>
+      <span class="text-[11px] font-medium tracking-wide uppercase mt-1">Progress</span>
+    </a>
+    {% else %}
+    <a href="{% url 'v1_progress' %}"
+       class="flex flex-col items-center justify-center text-zinc-500 p-2 hover:opacity-80 transition-opacity">
+      <span class="material-symbols-outlined">monitoring</span>
+      <span class="text-[11px] font-medium tracking-wide uppercase mt-1">Progress</span>
+    </a>
+    {% endif %}
+
+    {# Profile tab — URL to be wired when v1_profile view is created #}
+    {% if active_home == 'v1_profile' %}
+    <a href="{% url 'v1_profile' %}"
+       class="flex flex-col items-center justify-center bg-emerald-100 text-emerald-900 rounded-full px-5 py-2 transition-all duration-300">
+      <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">person</span>
+      <span class="text-[11px] font-medium tracking-wide uppercase mt-1">Profile</span>
+    </a>
+    {% else %}
+    <a href="#"
+       class="flex flex-col items-center justify-center text-zinc-500 p-2 hover:opacity-80 transition-opacity">
+      <span class="material-symbols-outlined">person</span>
+      <span class="text-[11px] font-medium tracking-wide uppercase mt-1">Profile</span>
+    </a>
+    {% endif %}
+    {% endwith %}
+
+  </nav>
+  {% endblock %}
+
+  {% block extra_scripts %}{% endblock %}
+</body>
+</html>

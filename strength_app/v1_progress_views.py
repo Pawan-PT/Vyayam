@@ -159,6 +159,14 @@ def v1_progress_dashboard(request):
 
     adherence_ring_offset = round(283 - (adherence / 100 * 283))
 
+    # ── Gamified radar + patterns ─────────────────────────────────────────
+    from .v1_gamification import (
+        compute_movement_patterns, compute_radar_path, compute_asymmetry,
+    )
+    movement_patterns = compute_movement_patterns(current_profile, first_profile)
+    radar_path = compute_radar_path(movement_patterns)
+    asymmetry = compute_asymmetry(current_profile)
+
     context = {
         'patient': patient,
         'profiles': profiles,
@@ -173,6 +181,10 @@ def v1_progress_dashboard(request):
         'radar_first_json': json.dumps(radar_first),
         'has_comparison': bool(first_profile),
         'has_strength_profile': True,
+        # Gamified vars
+        'movement_patterns': movement_patterns,
+        'radar_path': radar_path,
+        'asymmetry': asymmetry,
     }
     return render(request, 'strength_app/v1_progress.html', context)
 
@@ -221,3 +233,34 @@ def v1_progress_api(request):
         'milestones': milestones,
         'total_sessions': total_sessions,
     })
+
+
+# ============================================================================
+# VIEW: PROFILE
+# ============================================================================
+
+def v1_profile(request):
+    patient, err = _require_patient(request)
+    if err:
+        return err
+
+    from .v1_gamification import (
+        compute_xp_and_level, compute_streak_days, compute_achievements,
+    )
+
+    gam = compute_xp_and_level(patient)
+    streak_days = compute_streak_days(patient)
+    achievements = compute_achievements(patient, gam['sessions_count'], streak_days)
+
+    context = {
+        'patient': patient,
+        'user_level': gam['user_level'],
+        'level_title': gam['level_title'],
+        'level_pct': gam['xp_percentage'],
+        'total_xp': gam['total_xp'],
+        'streak_days': streak_days,
+        'sessions_count': gam['sessions_count'],
+        'achievements': achievements,
+        'has_strength_profile': True,
+    }
+    return render(request, 'strength_app/v1_profile.html', context)

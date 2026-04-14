@@ -68,6 +68,7 @@ urlpatterns = [
     path('v1/session/complete/',                            views_session.v1_session_complete,      name='v1_session_complete'),
     path('v1/progress/',                                    views_progress.v1_progress_dashboard,   name='v1_progress'),
     path('v1/progress/api/',                                views_progress.v1_progress_api,         name='v1_progress_api'),
+    path('v1/profile/',                                     views_progress.v1_profile,              name='v1_profile'),
     path('v1/test-exercises/',                              views_session.v1_test_list,             name='v1_test_list'),
     path('v1/test-exercise/<str:exercise_id>/',             views_session.v1_test_exercise,         name='v1_test_exercise'),
 

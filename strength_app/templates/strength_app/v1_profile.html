@@ -1,0 +1,139 @@
+{% extends 'strength_app/base_gamified.html' %}
+{% comment %}
+Context variables expected:
+  user            — Django User object (first_name for avatar initial)
+  user_level      — int
+  level_title     — string, e.g. "Dedicated Athlete"
+  level_pct       — int 0-100, % progress to next level
+  total_xp        — int
+  streak_days     — int
+  sessions_count  — int
+  achievements    — list of dicts/objects, each with:
+                      .name      — string
+                      .icon      — Material Symbol name
+                      .unlocked  — bool
+                      .status    — "Completed" | "Locked"
+{% endcomment %}
+
+{% block title %}Profile — VYAYAM{% endblock %}
+
+{# Profile header: VYAYAM logo centred only, small avatar top-right (bug fix: no hamburger menu) #}
+{% block header %}
+<header class="bg-zinc-50/80 backdrop-blur-md sticky top-0 z-50">
+  <div class="flex justify-between items-center w-full px-6 py-4">
+    <div class="w-10"></div>
+    <h1 class="text-2xl font-extrabold tracking-tighter text-emerald-800 font-headline">VYAYAM</h1>
+    <div class="w-10 h-10 rounded-full bg-emerald-700 flex items-center justify-center flex-shrink-0">
+      <span class="text-white font-bold text-base leading-none">{{ user.first_name|first|upper }}</span>
+    </div>
+  </div>
+</header>
+{% endblock %}
+
+{% block content %}
+<main class="px-6 pt-8">
+
+  <!-- Character / Avatar Section -->
+  <section class="flex flex-col items-center mb-10">
+    <div class="relative mb-6">
+      {# Large CSS-only avatar: dark green circle with user initial #}
+      <div class="relative w-56 h-56 bg-emerald-700 rounded-full flex items-center justify-center shadow-xl ring-4 ring-[#6BBF8A]/20">
+        <span class="text-white font-extrabold text-7xl leading-none select-none">{{ user.first_name|first|upper }}</span>
+        <!-- Level Badge overlapping bottom-centre -->
+        <div class="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-[#0c6c3f] text-white px-8 py-2.5 rounded-full shadow-2xl border-4 border-white z-20">
+          <p class="text-[10px] font-bold tracking-[0.2em] uppercase mb-0.5 opacity-80 text-center leading-none">Level</p>
+          <p class="text-2xl font-extrabold leading-none text-center">{{ user_level|default:1 }}</p>
+        </div>
+      </div>
+    </div>
+    <div class="text-center">
+      <h2 class="text-3xl font-extrabold text-on-surface tracking-tight mb-1">
+        {{ level_title|default:"Athlete" }}
+      </h2>
+      <p class="text-on-secondary-container font-medium tracking-wide">
+        Elite Tier • {{ level_pct|default:0 }}% to Level {{ user_level|add:1 }}
+      </p>
+    </div>
+  </section>
+
+  <!-- Stats Grid -->
+  <section class="grid grid-cols-3 gap-4 mb-10">
+    <div class="bg-surface-container-lowest p-4 rounded-lg flex flex-col items-center justify-center text-center shadow-[0_8px_30px_rgba(0,0,0,0.02)]">
+      <span class="text-on-secondary-container text-[10px] font-bold uppercase tracking-wider mb-1">Total XP</span>
+      <span class="text-primary font-extrabold text-lg">{{ total_xp|default:0 }}</span>
+    </div>
+    <div class="bg-surface-container-lowest p-4 rounded-lg flex flex-col items-center justify-center text-center shadow-[0_8px_30px_rgba(0,0,0,0.02)] border-b-4 border-emerald-500/20">
+      <span class="text-on-secondary-container text-[10px] font-bold uppercase tracking-wider mb-1">Streak</span>
+      <span class="text-emerald-700 font-extrabold text-lg flex items-center gap-1">
+        {{ streak_days|default:0 }}
+        <span class="material-symbols-outlined text-sm" style="font-variation-settings:'FILL' 1;">local_fire_department</span>
+      </span>
+    </div>
+    <div class="bg-surface-container-lowest p-4 rounded-lg flex flex-col items-center justify-center text-center shadow-[0_8px_30px_rgba(0,0,0,0.02)]">
+      <span class="text-on-secondary-container text-[10px] font-bold uppercase tracking-wider mb-1">Sessions</span>
+      <span class="text-primary font-extrabold text-lg">{{ sessions_count|default:0 }}</span>
+    </div>
+  </section>
+
+  <!-- Achievements Section -->
+  <section class="mb-10">
+    <div class="flex justify-between items-end mb-6">
+      <h3 class="text-xl font-bold text-on-surface">Achievements</h3>
+    </div>
+    <div class="grid grid-cols-2 gap-4">
+      {% for a in achievements %}
+        {% if a.unlocked %}
+        <div class="bg-surface-container-lowest p-5 rounded-lg flex flex-col items-center text-center">
+          <div class="w-16 h-16 rounded-full bg-tertiary-fixed flex items-center justify-center mb-3 shadow-inner">
+            <span class="material-symbols-outlined text-on-tertiary-fixed text-3xl" style="font-variation-settings:'FILL' 1;">{{ a.icon }}</span>
+          </div>
+          <p class="font-bold text-on-surface text-sm mb-1 leading-tight">{{ a.name }}</p>
+          <p class="text-[10px] uppercase tracking-tighter text-on-secondary-container font-medium">Completed</p>
+        </div>
+        {% else %}
+        <div class="bg-surface-container-low p-5 rounded-lg flex flex-col items-center text-center opacity-60">
+          <div class="w-16 h-16 rounded-full bg-surface-dim flex items-center justify-center mb-3 border-2 border-dashed border-outline-variant">
+            <span class="material-symbols-outlined text-outline text-3xl">lock</span>
+          </div>
+          <p class="font-bold text-on-surface text-sm mb-1 leading-tight">{{ a.name }}</p>
+          <p class="text-[10px] uppercase tracking-tighter text-on-secondary-container font-medium">Locked</p>
+        </div>
+        {% endif %}
+      {% empty %}
+      {# Static fallback — remove once view passes achievements #}
+      <div class="bg-surface-container-lowest p-5 rounded-lg flex flex-col items-center text-center">
+        <div class="w-16 h-16 rounded-full bg-tertiary-fixed flex items-center justify-center mb-3 shadow-inner">
+          <span class="material-symbols-outlined text-on-tertiary-fixed text-3xl" style="font-variation-settings:'FILL' 1;">workspace_premium</span>
+        </div>
+        <p class="font-bold text-on-surface text-sm mb-1 leading-tight">First Session</p>
+        <p class="text-[10px] uppercase tracking-tighter text-on-secondary-container font-medium">Completed</p>
+      </div>
+      <div class="bg-surface-container-lowest p-5 rounded-lg flex flex-col items-center text-center">
+        <div class="w-16 h-16 rounded-full bg-primary-fixed flex items-center justify-center mb-3 shadow-inner">
+          <span class="material-symbols-outlined text-on-primary-fixed-variant text-3xl" style="font-variation-settings:'FILL' 1;">calendar_today</span>
+        </div>
+        <p class="font-bold text-on-surface text-sm mb-1 leading-tight">7-Day Streak</p>
+        <p class="text-[10px] uppercase tracking-tighter text-on-secondary-container font-medium">Completed</p>
+      </div>
+      <div class="bg-surface-container-low p-5 rounded-lg flex flex-col items-center text-center opacity-60">
+        <div class="w-16 h-16 rounded-full bg-surface-dim flex items-center justify-center mb-3 border-2 border-dashed border-outline-variant">
+          <span class="material-symbols-outlined text-outline text-3xl">lock</span>
+        </div>
+        <p class="font-bold text-on-surface text-sm mb-1 leading-tight">All Patterns Trained</p>
+        <p class="text-[10px] uppercase tracking-tighter text-on-secondary-container font-medium">Locked</p>
+      </div>
+      <div class="bg-surface-container-low p-5 rounded-lg flex flex-col items-center text-center opacity-60">
+        <div class="w-16 h-16 rounded-full bg-surface-dim flex items-center justify-center mb-3 border-2 border-dashed border-outline-variant">
+          <span class="material-symbols-outlined text-outline text-3xl">fitness_center</span>
+        </div>
+        <p class="font-bold text-on-surface text-sm mb-1 leading-tight">Deload Warrior</p>
+        <p class="text-[10px] uppercase tracking-tighter text-on-secondary-container font-medium">Locked</p>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  {# "Continue Training" CTA card removed — profile is read-only (bug fix) #}
+
+</main>
+{% endblock %}

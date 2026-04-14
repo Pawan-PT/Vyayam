@@ -1,9 +1,25 @@
-{% extends 'strength_app/base.html' %}
+{% extends 'strength_app/base_gamified.html' %}
 {% load vyayam_filters %}
 {% load static %}
 {% block title %}{{ exercise.exercise_name }} — VYAYAM{% endblock %}
 
-{% block extra_css %}
+{# Override header with focused session chrome (no avatar, close button + timer) #}
+{% block header %}
+<header class="flex justify-between items-center w-full px-6 py-4 bg-zinc-50/80 backdrop-blur-md sticky top-0 z-50">
+  <a href="{% url 'v1_dashboard' %}" class="p-2 hover:bg-zinc-200/50 rounded-full transition-colors active:opacity-70">
+    <span class="material-symbols-outlined text-emerald-700">close</span>
+  </a>
+  <h1 class="text-lg font-bold tracking-tight text-emerald-700 font-headline">VYAYAM</h1>
+  <div class="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center">
+    <span class="material-symbols-outlined text-secondary">timer</span>
+  </div>
+</header>
+{% endblock %}
+
+{# Suppress bottom nav on the focused workout screen #}
+{% block bottom_nav %}{% endblock %}
+
+{% block extra_head %}
 <style>
   body { background: #0a0e27; color: #fff; }
   .ex-wrap { max-width: 1100px; margin: 0 auto; padding: 20px 16px; }
@@ -116,7 +132,7 @@
   .asym-left  { background: #1d4ed8; }
   .asym-right { background: #b45309; }
 </style>
-{% endblock %}
+{% endblock extra_head %}
 
 {% block content %}
 <div class="ex-wrap">
@@ -341,7 +357,7 @@
 
 {% endblock %}
 
-{% block extra_js %}
+{% block extra_scripts %}
 <!-- MediaPipe CDN -->
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
@@ -4219,4 +4235,4 @@ async function startCamera() {
     };
   }
 </script>
-{% endblock %}
+{% endblock extra_scripts %}

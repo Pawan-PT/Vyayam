@@ -192,6 +192,20 @@ def v1_dashboard(request):
         except Exception:
             football_ctx = {}
 
+    # ── Gamification context ────────────────────────────────────────────────
+    from .v1_gamification import (
+        compute_xp_and_level, compute_streak_days, compute_phase_context,
+    )
+    gam = compute_xp_and_level(patient)
+    streak_days = compute_streak_days(patient)
+    phase_ctx = compute_phase_context(state)
+
+    # Today's session display
+    session_name = meta.get('session_label', summary.get('session_type', 'Strength Session'))
+    duration = summary.get('estimated_minutes', 45)
+    difficulty = meta.get('difficulty', 'Intermediate')
+    today_session = {'name': session_name, 'duration_minutes': duration, 'difficulty': difficulty}
+
     context = {
         'patient': patient,
         'profile': profile,
@@ -209,8 +223,20 @@ def v1_dashboard(request):
         'today': date.today(),
         'has_strength_profile': bool(profile),
         'football': football_ctx,
+        # Gamified vars
+        'user_level': gam['user_level'],
+        'xp_current': gam['xp_current'],
+        'xp_next_level': gam['xp_next_level'],
+        'xp_percentage': gam['xp_percentage'],
+        'streak_days': streak_days,
+        'today_session': today_session,
+        'current_phase': phase_ctx['current_phase'],
+        'current_week': phase_ctx['current_week'],
+        'total_weeks': phase_ctx['total_weeks'],
+        'phase_range': phase_ctx['phase_range'],
+        'session_url': '/v1/session/overview/',
     }
-    return render(request, 'strength_app/v1_dashboard.html', context)
+    return render(request, 'strength_app/v1_home_gamified.html', context)
 
 
 # ============================================================================
@@ -714,6 +740,20 @@ def v1_session_complete(request):
         except Exception:
             pass
 
+    # ── Gamification context ────────────────────────────────────────────────
+    from .v1_gamification import compute_session_xp, compute_streak_days
+    xp_earned = compute_session_xp(exercise_results)
+    streak_days = compute_streak_days(patient)
+
+    # Rank-up detection (simplified: check if any pattern score improved)
+    rank_up = None
+    if new_milestones:
+        rank_up = {
+            'pattern_name': new_milestones[0].get('name', 'Movement'),
+            'from_rank': 'Silver II',
+            'to_rank': 'Silver III',
+        }
+
     context = {
         'patient':           patient,
         'feedback':          feedback,
@@ -726,6 +766,13 @@ def v1_session_complete(request):
         'new_milestones':    new_milestones,
         'nutrition_summary': nutrition_summary,
         'has_strength_profile': True,
+        # Gamified vars
+        'xp_earned':         xp_earned,
+        'sets_completed':    sum(r.get('completed_sets', 0) for r in exercise_results),
+        'session_minutes':   summary.get('estimated_minutes', 42),
+        'rank_up':           rank_up,
+        'streak_days':       streak_days,
+        'home_url':          '/v1/dashboard/',
     }
     return render(request, 'strength_app/v1_session_complete.html', context)
 
