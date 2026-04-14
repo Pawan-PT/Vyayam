@@ -1,111 +1,115 @@
-{% extends 'strength_app/base.html' %}
+{% extends 'strength_app/base_gamified.html' %}
 {% block title %}Football Assessment Results — VYAYAM{% endblock %}
+{% block bottom_nav %}{% endblock %}
 
 {% block content %}
-<div class="fade-in">
+<div class="max-w-xl mx-auto px-4 pt-6 pb-12 space-y-5">
 
   <!-- Header -->
-  <div class="card mb-4" style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;">
-    <div class="card-body p-5 text-center">
-      <i class="fas fa-futbol fa-3x mb-3" style="opacity:.85"></i>
-      <h2 class="fw-800 mb-2">Football Level {{ fp.football_level }}</h2>
-      <p class="fs-5 opacity-85 mb-0">{{ level_config.name }}</p>
-    </div>
+  <div class="rounded-2xl px-5 py-7 text-white text-center" style="background:linear-gradient(135deg,#0c6c3f 0%,#6bbf8a 100%);box-shadow:0 8px 28px rgba(12,108,63,0.28);">
+    <i class="fas fa-futbol fa-3x mb-3 block" style="opacity:.85;"></i>
+    <h2 class="text-2xl font-extrabold mb-1">Football Level {{ fp.football_level }}</h2>
+    <p class="text-base" style="opacity:.9;">{{ level_config.name }}</p>
   </div>
 
   <!-- Test scores -->
-  <div class="card mb-4">
-    <div class="card-body p-4">
-      <h5 class="fw-700 mb-3"><i class="fas fa-chart-bar me-2 text-primary"></i>Your Scores</h5>
+  <div class="bg-surface-container-lowest rounded-xl px-5 py-5 shadow-[0_4px_20px_rgba(26,28,28,0.06)]">
+    <h5 class="font-bold text-sm text-on-surface mb-3">
+      <i class="fas fa-chart-bar me-2 text-primary/70"></i>Your Scores
+    </h5>
+    <div class="divide-y divide-outline-variant/15">
       {% for ts in test_scores %}
-      <div class="d-flex align-items-center justify-content-between py-2 {% if not forloop.last %}border-bottom{% endif %}">
-        <div class="d-flex align-items-center gap-2">
-          <i class="{{ ts.icon }} text-muted" style="width:20px;"></i>
-          <span class="fw-600">{{ ts.name }}</span>
+      <div class="flex items-center justify-between gap-3 py-2.5">
+        <div class="flex items-center gap-2 min-w-0">
+          <i class="{{ ts.icon }} text-on-secondary-container/60 text-sm flex-shrink-0" style="width:18px;"></i>
+          <span class="font-semibold text-sm text-on-surface">{{ ts.name }}</span>
         </div>
-        <div class="d-flex align-items-center gap-2">
+        <div class="flex items-center gap-1.5 flex-shrink-0">
           {% for i in "12345" %}
           {% if forloop.counter <= ts.score %}
-          <div style="width:12px;height:12px;border-radius:50%;background:#667eea;"></div>
+          <div class="w-3 h-3 rounded-full bg-primary"></div>
           {% else %}
-          <div style="width:12px;height:12px;border-radius:50%;background:#e2e8f0;"></div>
+          <div class="w-3 h-3 rounded-full bg-surface-container-high"></div>
           {% endif %}
           {% endfor %}
-          <span class="fw-700 ms-1" style="min-width:20px;">{{ ts.score }}</span>
+          <span class="font-extrabold text-sm text-primary ms-1 min-w-[20px]">{{ ts.score }}</span>
         </div>
       </div>
       {% endfor %}
-      <div class="alert border-0 mt-3 mb-0" style="background:rgba(102,126,234,.08);">
-        <small><i class="fas fa-info-circle me-1 text-primary"></i>
-        Your training level is set by your <strong>lowest score</strong> ({{ fp.football_level }}). This is the weakest-link principle — your programme builds from the bottom up.</small>
-      </div>
+    </div>
+    <div class="mt-3 bg-primary/8 border border-primary/15 rounded-lg px-3 py-2.5">
+      <p class="text-xs text-on-surface mb-0">
+        <i class="fas fa-info-circle me-1 text-primary"></i>
+        Your training level is set by your <strong>lowest score</strong> ({{ fp.football_level }}). This is the weakest-link principle — your programme builds from the bottom up.
+      </p>
     </div>
   </div>
 
   <!-- LSI flags -->
   {% if lsi_flag %}
-  <div class="card mb-4 border-warning">
-    <div class="card-body p-4">
-      <h5 class="fw-700 mb-2"><i class="fas fa-exclamation-triangle me-2 text-warning"></i>Asymmetry Detected</h5>
-      <p class="text-muted small mb-2">A difference of more than 10 % between legs has been detected. Your programme will include extra unilateral work to address this.</p>
-      <div class="row g-3">
-        {% if lsi_hop %}
-        <div class="col-6">
-          <div class="p-3 rounded-3" style="background:#f8fafc;">
-            <div class="small text-muted">Hop LSI</div>
-            <div class="fw-700 fs-5 {% if lsi_hop < 90 %}text-warning{% else %}text-success{% endif %}">{{ lsi_hop }}%</div>
-          </div>
-        </div>
-        {% endif %}
-        {% if lsi_ybalance %}
-        <div class="col-6">
-          <div class="p-3 rounded-3" style="background:#f8fafc;">
-            <div class="small text-muted">Y-Balance LSI</div>
-            <div class="fw-700 fs-5 {% if lsi_ybalance < 90 %}text-warning{% else %}text-success{% endif %}">{{ lsi_ybalance }}%</div>
-          </div>
-        </div>
-        {% endif %}
+  <div class="bg-surface-container-lowest rounded-xl px-5 py-5 shadow-[0_4px_20px_rgba(26,28,28,0.06)] border border-outline-variant/30">
+    <h5 class="font-bold text-sm mb-2" style="color:#b08800;">
+      <i class="fas fa-exclamation-triangle me-2"></i>Asymmetry Detected
+    </h5>
+    <p class="text-xs text-on-secondary-container mb-3">A difference of more than 10% between legs has been detected. Your programme will include extra unilateral work to address this.</p>
+    <div class="grid grid-cols-2 gap-3">
+      {% if lsi_hop %}
+      <div class="bg-surface-container rounded-xl p-3 text-center">
+        <div class="text-xs text-on-secondary-container mb-1">Hop LSI</div>
+        <div class="text-xl font-extrabold {% if lsi_hop < 90 %}text-error{% else %}text-primary{% endif %}">{{ lsi_hop }}%</div>
       </div>
+      {% endif %}
+      {% if lsi_ybalance %}
+      <div class="bg-surface-container rounded-xl p-3 text-center">
+        <div class="text-xs text-on-secondary-container mb-1">Y-Balance LSI</div>
+        <div class="text-xl font-extrabold {% if lsi_ybalance < 90 %}text-error{% else %}text-primary{% endif %}">{{ lsi_ybalance }}%</div>
+      </div>
+      {% endif %}
     </div>
   </div>
   {% endif %}
 
   <!-- F-V tendency -->
-  <div class="card mb-4">
-    <div class="card-body p-4">
-      <h5 class="fw-700 mb-2"><i class="fas fa-tachometer-alt me-2 text-primary"></i>Force-Velocity Tendency</h5>
-      <div class="p-3 rounded-3 mb-2" style="background:rgba(102,126,234,.08);">
-        <div class="fw-700">{{ fv_config.label }}</div>
-        <div class="small text-muted mt-1">{{ fv_config.description }}</div>
-      </div>
+  <div class="bg-surface-container-lowest rounded-xl px-5 py-5 shadow-[0_4px_20px_rgba(26,28,28,0.06)]">
+    <h5 class="font-bold text-sm text-on-surface mb-2">
+      <i class="fas fa-tachometer-alt me-2 text-primary/70"></i>Force-Velocity Tendency
+    </h5>
+    <div class="bg-primary/8 border border-primary/15 rounded-lg px-4 py-3">
+      <div class="font-bold text-sm text-on-surface">{{ fv_config.label }}</div>
+      <div class="text-xs text-on-secondary-container mt-1">{{ fv_config.description }}</div>
     </div>
   </div>
 
   <!-- Training focus -->
-  <div class="card mb-4">
-    <div class="card-body p-4">
-      <h5 class="fw-700 mb-3"><i class="fas fa-bullseye me-2 text-primary"></i>Your Training Focus</h5>
-      <p class="text-muted small mb-2">{{ level_config.description }}</p>
+  <div class="bg-surface-container-lowest rounded-xl px-5 py-5 shadow-[0_4px_20px_rgba(26,28,28,0.06)]">
+    <h5 class="font-bold text-sm text-on-surface mb-2">
+      <i class="fas fa-bullseye me-2 text-primary/70"></i>Your Training Focus
+    </h5>
+    <p class="text-xs text-on-secondary-container mb-3">{{ level_config.description }}</p>
+    <div class="space-y-2">
       {% for focus in level_config.training_focus %}
-      <div class="d-flex align-items-start gap-2 mb-2">
-        <i class="fas fa-check-circle text-success mt-1" style="font-size:.8rem;flex-shrink:0;"></i>
-        <span class="small">{{ focus }}</span>
+      <div class="flex items-start gap-2">
+        <i class="fas fa-check-circle text-primary mt-0.5 flex-shrink-0 text-xs"></i>
+        <span class="text-sm text-on-surface">{{ focus }}</span>
       </div>
       {% endfor %}
-
-      {% if plyometric_cleared == 'none' %}
-      <div class="alert border-0 mt-3 mb-0" style="background:rgba(240,147,251,.1);">
-        <small><i class="fas fa-lock me-1"></i>
-        <strong>Plyometric training locked.</strong> You need a Nordic hold of 4+ seconds and a Pogo score of 3+ before explosive jump training is safe for your tendons.</small>
-      </div>
-      {% endif %}
     </div>
+
+    {% if plyometric_cleared == 'none' %}
+    <div class="mt-4 bg-error-container/30 border border-error/20 rounded-lg px-3 py-2.5">
+      <p class="text-xs text-on-surface mb-0">
+        <i class="fas fa-lock me-1 text-error"></i>
+        <strong>Plyometric training locked.</strong> You need a Nordic hold of 4+ seconds and a Pogo score of 3+ before explosive jump training is safe for your tendons.
+      </p>
+    </div>
+    {% endif %}
   </div>
 
   <!-- CTA -->
-  <div class="text-center mb-5">
-    <a href="{% url 'v1_session_overview' %}" class="btn btn-lg px-5 py-3 fw-700 fs-5" style="background:var(--success-gradient);color:white;border:none;border-radius:14px;">
-      <i class="fas fa-play me-2"></i>Start Football Training
+  <div class="text-center pt-2">
+    <a href="{% url 'v1_session_overview' %}"
+       class="inline-flex items-center gap-2 px-8 py-3.5 bg-primary text-white font-bold text-sm rounded-xl shadow-[0_4px_16px_rgba(12,108,63,0.25)] no-underline">
+      <i class="fas fa-play"></i>Start Football Training
     </a>
   </div>
 

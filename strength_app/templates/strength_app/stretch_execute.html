@@ -1,9 +1,10 @@
-{% extends 'strength_app/base.html' %}
+{% extends 'strength_app/base_gamified.html' %}
 {% load static %}
 
 {% block title %}{{ stretch.name }} — VYAYAM Stretching{% endblock %}
+{% block bottom_nav %}{% endblock %}
 
-{% block extra_css %}
+{% block extra_head %}
 <style>
     body {
         background: #0a0e27;
@@ -52,7 +53,7 @@
 
     .progress-bar-inner {
         height: 100%;
-        background: linear-gradient(90deg, #667eea, #764ba2);
+        background: linear-gradient(90deg, #0c6c3f, #6bbf8a);
         border-radius: 8px;
         transition: width 0.5s ease;
     }
@@ -117,7 +118,7 @@
     }
 
     #startCameraBtn {
-        background: linear-gradient(135deg, #667eea, #764ba2);
+        background: linear-gradient(135deg, #0c6c3f, #6bbf8a);
         border: none;
         color: white;
         padding: 12px 28px;
@@ -131,7 +132,7 @@
 
     #startCameraBtn:hover {
         transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(102,126,234,0.4);
+        box-shadow: 0 6px 20px rgba(12,108,63,0.4);
     }
 
     #startCameraBtn:disabled {
@@ -169,7 +170,7 @@
         font-weight: 800;
         text-align: center;
         line-height: 1;
-        color: #667eea;
+        color: #0c6c3f;
         font-variant-numeric: tabular-nums;
         transition: color 0.3s;
     }
@@ -204,9 +205,9 @@
 
     .muscle-chip {
         display: inline-block;
-        background: rgba(102,126,234,0.15);
+        background: rgba(12,108,63,0.15);
         color: #a5b4fc;
-        border: 1px solid rgba(102,126,234,0.3);
+        border: 1px solid rgba(12,108,63,0.3);
         border-radius: 20px;
         padding: 4px 14px;
         font-size: 0.8rem;
@@ -263,7 +264,7 @@
     /* Loading spinner */
     .loading-spinner {
         border: 3px solid rgba(255,255,255,0.1);
-        border-top: 3px solid #667eea;
+        border-top: 3px solid #0c6c3f;
         width: 40px;
         height: 40px;
         border-radius: 50%;
@@ -358,7 +359,7 @@
 </div>
 {% endblock %}
 
-{% block extra_js %}
+{% block extra_scripts %}
 <!-- MediaPipe -->
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>

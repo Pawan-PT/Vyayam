@@ -4,125 +4,155 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{% block title %}VYAYAM Coach{% endblock %}</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      --primary: #667eea;
-      --primary-dark: #764ba2;
-      --sidebar-bg: #0d1117;
-      --content-bg: #0a0e27;
-      --card-bg: #1a1f3a;
-      --card2-bg: #141928;
-      --text: #e2e8f0;
-      --text-muted: rgba(255,255,255,.5);
-      --border: rgba(255,255,255,.08);
+  <script>
+    tailwind.config = {
+      corePlugins: { preflight: false },
+      theme: {
+        extend: {
+          colors: {
+            'primary': '#0c6c3f',
+            'primary-container': '#6bbf8a',
+            'on-primary': '#ffffff',
+            'surface': '#f9f9f9',
+            'surface-container': '#eff1f0',
+            'surface-container-high': '#e9ebe9',
+            'surface-container-highest': '#e3e5e4',
+            'surface-container-lowest': '#ffffff',
+            'on-surface': '#1a1c1c',
+            'on-secondary-container': '#3d4f42',
+            'outline-variant': '#bfc9c2',
+            'error': '#ba1a1a',
+            'error-container': '#ffdad6',
+            'tertiary-container': '#d4a825',
+          }
+        }
+      }
     }
+  </script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Inter', sans-serif; background: var(--content-bg); color: var(--text); min-height: 100vh; display: flex; }
+    body { font-family: 'Plus Jakarta Sans', sans-serif; background: #f4f7f5; color: #1a1c1c; min-height: 100vh; display: flex; }
 
-    /* Sidebar */
+    /* ── Sidebar ── */
     .sidebar {
-      width: 240px; min-height: 100vh; background: var(--sidebar-bg);
+      width: 240px; min-height: 100vh; background: #fff;
       display: flex; flex-direction: column;
-      border-right: 1px solid var(--border); flex-shrink: 0;
+      border-right: 1px solid rgba(26,28,28,.10); flex-shrink: 0;
       position: sticky; top: 0; height: 100vh; overflow-y: auto;
     }
     .sidebar-brand {
-      padding: 24px 20px 16px;
-      border-bottom: 1px solid var(--border);
+      padding: 22px 20px 16px;
+      border-bottom: 1px solid rgba(26,28,28,.08);
     }
     .brand-logo {
-      font-size: 1.3rem; font-weight: 800;
-      background: linear-gradient(135deg, #667eea, #764ba2);
+      font-size: 1.25rem; font-weight: 800;
+      background: linear-gradient(135deg, #0c6c3f, #6bbf8a);
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
     }
-    .brand-sub { font-size: .72rem; opacity: .5; margin-top: 3px; text-transform: uppercase; letter-spacing: 1px; }
-    .sidebar-nav { flex: 1; padding: 16px 12px; }
+    .brand-sub {
+      font-size: .7rem; color: #3d4f42; opacity: .65; margin-top: 3px;
+      text-transform: uppercase; letter-spacing: 1px;
+    }
+    .therapist-badge-sidebar {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: rgba(12,108,63,.1); border: 1px solid rgba(12,108,63,.2);
+      color: #0c6c3f; border-radius: 20px;
+      font-size: .68rem; font-weight: 700; padding: 3px 9px; margin-top: 8px;
+    }
+    .sidebar-nav { flex: 1; padding: 14px 10px; }
     .nav-item {
       display: flex; align-items: center; gap: 10px;
-      padding: 10px 14px; border-radius: 10px;
-      color: rgba(255,255,255,.6); text-decoration: none;
-      font-size: .88rem; font-weight: 500; margin-bottom: 4px;
-      transition: all .2s;
+      padding: 9px 13px; border-radius: 10px;
+      color: #3d4f42; text-decoration: none;
+      font-size: .87rem; font-weight: 500; margin-bottom: 3px;
+      transition: all .15s;
     }
-    .nav-item:hover, .nav-item.active {
-      background: rgba(102,126,234,.15); color: #a5b4fc;
-    }
-    .nav-item i { width: 18px; text-align: center; font-size: .9rem; }
+    .nav-item:hover { background: rgba(12,108,63,.08); color: #0c6c3f; }
+    .nav-item.active { background: rgba(12,108,63,.12); color: #0c6c3f; font-weight: 700; }
+    .nav-item i { width: 18px; text-align: center; font-size: .88rem; }
     .sidebar-footer {
-      padding: 16px 20px; border-top: 1px solid var(--border);
+      padding: 14px 18px; border-top: 1px solid rgba(26,28,28,.08);
       font-size: .8rem;
     }
-    .coach-name { font-weight: 700; color: var(--text); }
-    .coach-role { font-size: .72rem; color: var(--text-muted); margin-top: 2px; }
+    .coach-name { font-weight: 700; color: #1a1c1c; }
+    .coach-role { font-size: .72rem; color: #3d4f42; opacity: .7; margin-top: 2px; }
     .logout-btn {
-      display: block; margin-top: 12px; padding: 8px 14px;
-      background: rgba(239,68,68,.1); border: 1px solid rgba(239,68,68,.2);
-      border-radius: 8px; color: #fca5a5; text-decoration: none;
-      font-size: .8rem; font-weight: 600; text-align: center;
+      display: block; margin-top: 10px; padding: 7px 14px;
+      background: rgba(186,26,26,.08); border: 1px solid rgba(186,26,26,.2);
+      border-radius: 8px; color: #ba1a1a; text-decoration: none;
+      font-size: .78rem; font-weight: 600; text-align: center;
     }
-    .logout-btn:hover { background: rgba(239,68,68,.2); }
+    .logout-btn:hover { background: rgba(186,26,26,.15); }
 
-    /* Main */
-    .main-content { flex: 1; min-height: 100vh; overflow-y: auto; }
+    /* ── Main ── */
+    .main-content { flex: 1; min-height: 100vh; overflow-y: auto; display: flex; flex-direction: column; }
     .page-header {
-      background: var(--sidebar-bg); border-bottom: 1px solid var(--border);
-      padding: 16px 28px; display: flex; align-items: center;
+      background: #fff; border-bottom: 1px solid rgba(26,28,28,.08);
+      padding: 14px 26px; display: flex; align-items: center;
       justify-content: space-between; gap: 12px; flex-wrap: wrap;
       position: sticky; top: 0; z-index: 10;
     }
-    .page-header h1 { font-size: 1.05rem; font-weight: 700; margin: 0; }
-    .page-body { padding: 24px 28px; }
+    .page-header h1 { font-size: 1rem; font-weight: 700; margin: 0; color: #1a1c1c; }
+    .therapist-pill {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: rgba(12,108,63,.1); border: 1px solid rgba(12,108,63,.2);
+      color: #0c6c3f; border-radius: 20px;
+      font-size: .72rem; font-weight: 700; padding: 4px 10px;
+    }
+    .page-body { padding: 22px 26px; flex: 1; }
 
-    /* Cards */
-    .c-card { background: var(--card-bg); border-radius: 14px; padding: 20px; margin-bottom: 16px; border: 1px solid var(--border); }
-    .c-card-title { font-size: .68rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; opacity: .5; margin-bottom: 14px; }
+    /* ── Cards ── */
+    .c-card { background: #fff; border-radius: 14px; padding: 18px 20px; margin-bottom: 14px; border: 1px solid rgba(26,28,28,.08); box-shadow: 0 2px 8px rgba(26,28,28,.05); }
+    .c-card-title { font-size: .67rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; color: #3d4f42; opacity: .6; margin-bottom: 13px; }
 
-    /* Badges */
+    /* ── Badges ── */
     .badge-status { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 20px; font-size: .72rem; font-weight: 700; }
-    .badge-green { background: rgba(34,197,94,.15); color: #6ee7b7; }
-    .badge-yellow { background: rgba(245,158,11,.15); color: #fcd34d; }
-    .badge-red { background: rgba(239,68,68,.15); color: #fca5a5; }
+    .badge-green  { background: rgba(12,108,63,.1);  color: #0c6c3f; }
+    .badge-yellow { background: rgba(176,136,0,.12); color: #b08800; }
+    .badge-red    { background: rgba(186,26,26,.1);  color: #ba1a1a; }
     .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
-    .dot-green { background: #22c55e; }
+    .dot-green  { background: #22c55e; }
     .dot-yellow { background: #f59e0b; }
-    .dot-red { background: #ef4444; }
+    .dot-red    { background: #ef4444; }
 
-    /* Stat boxes */
+    /* ── Stat boxes ── */
     .stat-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px,1fr)); gap: 12px; margin-bottom: 20px; }
-    .stat-box { background: var(--card2-bg); border-radius: 12px; padding: 16px; text-align: center; border: 1px solid var(--border); }
-    .stat-box .val { font-size: 1.9rem; font-weight: 800; color: var(--primary); }
-    .stat-box .lbl { font-size: .72rem; opacity: .55; margin-top: 4px; }
+    .stat-box { background: #fff; border-radius: 12px; padding: 16px; text-align: center; border: 1px solid rgba(26,28,28,.08); box-shadow: 0 2px 8px rgba(26,28,28,.04); }
+    .stat-box .val { font-size: 1.9rem; font-weight: 800; color: #0c6c3f; }
+    .stat-box .lbl { font-size: .72rem; color: #3d4f42; opacity: .6; margin-top: 4px; }
 
-    /* Tables */
-    .c-table { width: 100%; border-collapse: collapse; font-size: .85rem; }
-    .c-table th { font-size: .65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; opacity: .5; padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border); }
-    .c-table td { padding: 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    /* ── Tables ── */
+    .c-table { width: 100%; border-collapse: collapse; font-size: .84rem; color: #1a1c1c; }
+    .c-table th { font-size: .64rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: #3d4f42; opacity: .6; padding: 9px 10px; text-align: left; border-bottom: 1px solid rgba(26,28,28,.08); }
+    .c-table td { padding: 11px 10px; border-bottom: 1px solid rgba(26,28,28,.06); vertical-align: middle; }
     .c-table tr:last-child td { border-bottom: none; }
-    .c-table tr:hover td { background: rgba(102,126,234,.04); }
+    .c-table tr:hover td { background: rgba(12,108,63,.03); }
 
-    /* Buttons */
-    .btn-coach { padding: 8px 16px; border-radius: 8px; font-size: .82rem; font-weight: 700; border: none; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; transition: all .2s; }
-    .btn-primary-c { background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; }
+    /* ── Buttons ── */
+    .btn-coach { padding: 8px 16px; border-radius: 8px; font-size: .82rem; font-weight: 700; border: none; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; transition: all .15s; }
+    .btn-primary-c { background: linear-gradient(135deg, #0c6c3f, #6bbf8a); color: #fff; }
     .btn-primary-c:hover { opacity: .9; color: #fff; }
-    .btn-outline-c { background: transparent; border: 1px solid var(--primary); color: var(--primary); }
-    .btn-outline-c:hover { background: rgba(102,126,234,.15); }
-    .btn-danger-c { background: rgba(239,68,68,.15); border: 1px solid rgba(239,68,68,.3); color: #fca5a5; }
+    .btn-outline-c { background: transparent; border: 1px solid #0c6c3f; color: #0c6c3f; }
+    .btn-outline-c:hover { background: rgba(12,108,63,.08); }
+    .btn-danger-c { background: rgba(186,26,26,.1); border: 1px solid rgba(186,26,26,.25); color: #ba1a1a; }
+    .btn-danger-c:hover { background: rgba(186,26,26,.18); }
     .btn-sm-c { padding: 5px 12px; font-size: .78rem; }
 
-    /* Search / filter bar */
-    .filter-bar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; align-items: center; }
-    .filter-btn { padding: 7px 16px; border-radius: 20px; border: 1px solid var(--border); background: transparent; color: rgba(255,255,255,.6); font-size: .8rem; cursor: pointer; transition: all .2s; }
-    .filter-btn.active { background: rgba(102,126,234,.2); border-color: #667eea; color: #a5b4fc; }
-    .search-input { flex: 1; min-width: 200px; background: var(--card2-bg); border: 1px solid var(--border); border-radius: 10px; padding: 8px 14px; color: var(--text); font-size: .85rem; }
-    .search-input:focus { outline: none; border-color: #667eea; }
-    .search-input::placeholder { color: var(--text-muted); }
+    /* ── Filter bar ── */
+    .filter-bar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 18px; align-items: center; }
+    .filter-btn { padding: 6px 15px; border-radius: 20px; border: 1px solid rgba(26,28,28,.12); background: transparent; color: #3d4f42; font-size: .8rem; cursor: pointer; transition: all .15s; }
+    .filter-btn.active { background: rgba(12,108,63,.12); border-color: #0c6c3f; color: #0c6c3f; font-weight: 700; }
+    .search-input { flex: 1; min-width: 200px; background: #f4f7f5; border: 1px solid rgba(26,28,28,.12); border-radius: 10px; padding: 8px 14px; color: #1a1c1c; font-size: .85rem; }
+    .search-input:focus { outline: none; border-color: #0c6c3f; }
+    .search-input::placeholder { color: #3d4f42; opacity: .5; }
 
     @media(max-width:768px) {
       .sidebar { display: none; }
-      .page-body { padding: 16px; }
+      .page-body { padding: 14px 16px; }
     }
   </style>
   {% block extra_css %}{% endblock %}
@@ -133,6 +163,7 @@
     <div class="sidebar-brand">
       <div class="brand-logo"><i class="fas fa-dumbbell"></i> VYAYAM</div>
       <div class="brand-sub">Coach Dashboard</div>
+      <div class="therapist-badge-sidebar"><i class="fas fa-stethoscope"></i> Therapist Dashboard</div>
     </div>
     <nav class="sidebar-nav">
       <a class="nav-item {% block nav_squad %}{% endblock %}" href="{% url 'coach_squad' %}">
@@ -157,14 +188,16 @@
   <div class="main-content">
     <div class="page-header">
       <h1>{% block page_title %}Coach Dashboard{% endblock %}</h1>
-      <div>{% block header_actions %}{% endblock %}</div>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        <span class="therapist-pill"><i class="fas fa-stethoscope"></i> Therapist View</span>
+        {% block header_actions %}{% endblock %}
+      </div>
     </div>
     <div class="page-body">
       {% block content %}{% endblock %}
     </div>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   {% block extra_js %}{% endblock %}
 </body>
 </html>

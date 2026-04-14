@@ -1,163 +1,130 @@
-{% extends 'strength_app/base.html' %}
-
+{% extends 'strength_app/base_gamified.html' %}
 {% block title %}Gate Test Results — VYAYAM{% endblock %}
+{% block bottom_nav %}{% endblock %}
 
 {% block content %}
-<div class="fade-in">
+<div class="max-w-2xl mx-auto px-4 pt-5 pb-12 space-y-5">
 
   <!-- Header -->
-  <div class="text-center mb-5">
-    <div style="font-size:4rem; margin-bottom:12px;">🎉</div>
-    <h1 class="display-5 gradient-text">Gate Testing Complete!</h1>
-    <p class="lead text-muted">
-      {{ completed_count }} of {{ total_count }} patterns tested.
-      Here's your personalised starting prescription.
-    </p>
+  <div class="text-center">
+    <div class="text-6xl mb-3">🎉</div>
+    <h1 class="text-2xl font-extrabold text-on-surface mb-1">Gate Testing Complete!</h1>
+    <p class="text-sm text-on-secondary-container">{{ completed_count }} of {{ total_count }} patterns tested. Here's your personalised starting prescription.</p>
   </div>
 
   <!-- Results grid -->
-  <div class="row g-4 mb-5">
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
     {% for r in results_list %}
-    <div class="col-md-6 col-lg-4">
-      <div class="card h-100" style="
-        border-left: 4px solid
-        {% if r.capability == 'easy' %}#667eea
-        {% elif r.capability == 'manageable' %}#22c55e
-        {% elif r.capability == 'struggling' %}#f59e0b
-        {% elif r.capability == 'cannot_do' %}#ef4444
-        {% else %}#6b7280{% endif %};
-      ">
-        <div class="card-body">
+    <div class="bg-surface-container-lowest rounded-xl shadow-[0_2px_8px_rgba(26,28,28,0.06)] overflow-hidden"
+         style="border-left:4px solid {% if r.capability == 'easy' %}#0c6c3f{% elif r.capability == 'manageable' %}#22c55e{% elif r.capability == 'struggling' %}#b08800{% elif r.capability == 'cannot_do' %}#ba1a1a{% else %}#94a3b8{% endif %};">
 
-          <!-- Family header -->
-          <div class="d-flex align-items-center mb-3">
-            <span style="font-size:1.8rem; margin-right:10px;">
-              {% if r.family_id == 'squat_family' %}🦵
-              {% elif r.family_id == 'hip_hinge_family' %}🏋️
-              {% elif r.family_id == 'lunge_family' %}🤸
-              {% elif r.family_id == 'push_family' %}💪
-              {% elif r.family_id == 'balance_family' %}⚖️
-              {% elif r.family_id == 'cardio_family' %}🏃
-              {% else %}🏅{% endif %}
-            </span>
-            <div>
-              <h6 class="mb-0">{{ r.family_name }}</h6>
-              <small class="text-muted">{{ r.level_label|default:"—" }}</small>
-            </div>
-          </div>
+      <!-- Family header -->
+      <div class="px-4 pt-4 pb-2 flex items-center gap-3">
+        <span class="text-3xl flex-shrink-0">
+          {% if r.family_id == 'squat_family' %}🦵
+          {% elif r.family_id == 'hip_hinge_family' %}🏋️
+          {% elif r.family_id == 'lunge_family' %}🤸
+          {% elif r.family_id == 'push_family' %}💪
+          {% elif r.family_id == 'balance_family' %}⚖️
+          {% elif r.family_id == 'cardio_family' %}🏃
+          {% else %}🏅{% endif %}
+        </span>
+        <div>
+          <div class="font-bold text-sm text-on-surface">{{ r.family_name }}</div>
+          <div class="text-xs text-on-secondary-container">{{ r.level_label|default:"—" }}</div>
+        </div>
+      </div>
 
-          {% if r.status == 'completed' and r.capability != 'cannot_do' %}
+      <div class="px-4 pb-4">
+        {% if r.status == 'completed' and r.capability != 'cannot_do' %}
 
-          <!-- Prescribed exercise -->
-          <div class="p-3 rounded mb-3" style="background:rgba(102,126,234,0.08); border:1px solid rgba(102,126,234,0.2);">
-            <div style="font-size:11px; text-transform:uppercase; opacity:.6; margin-bottom:4px;">Prescribed Exercise</div>
-            <strong style="font-size:16px;">{{ r.prescribed_exercise }}</strong>
-            {% if r.levels_advanced %}
-            <div class="mt-1">
-              <small class="badge bg-secondary">Levels advanced: {{ r.levels_advanced }}</small>
-            </div>
-            {% endif %}
-          </div>
-
-          <!-- Prescription -->
-          <div class="d-flex gap-2 mb-3">
-            {% if r.hold_duration %}
-            <div class="text-center p-2 rounded flex-fill" style="background:rgba(255,255,255,0.05);">
-              <div style="font-size:22px; font-weight:700; color:#667eea;">{{ r.sets }}</div>
-              <div style="font-size:11px; opacity:.6;">SETS</div>
-            </div>
-            <div class="text-center p-2 rounded flex-fill" style="background:rgba(255,255,255,0.05);">
-              <div style="font-size:22px; font-weight:700; color:#22c55e;">{{ r.hold_duration }}s</div>
-              <div style="font-size:11px; opacity:.6;">HOLD</div>
-            </div>
-            {% else %}
-            <div class="text-center p-2 rounded flex-fill" style="background:rgba(255,255,255,0.05);">
-              <div style="font-size:22px; font-weight:700; color:#667eea;">{{ r.sets }}</div>
-              <div style="font-size:11px; opacity:.6;">SETS</div>
-            </div>
-            <div class="text-center p-2 rounded flex-fill" style="background:rgba(255,255,255,0.05);">
-              <div style="font-size:22px; font-weight:700; color:#22c55e;">{{ r.reps }}</div>
-              <div style="font-size:11px; opacity:.6;">REPS</div>
-            </div>
-            {% endif %}
-          </div>
-
-          <!-- Capability badge -->
-          <div class="text-center">
-            {% if r.capability == 'easy' %}
-            <span class="badge" style="background:#667eea;padding:8px 18px;font-size:13px;">★ Easy — will progress quickly</span>
-            {% elif r.capability == 'manageable' %}
-            <span class="badge" style="background:#22c55e;padding:8px 18px;font-size:13px;">✓ Manageable — perfect starting point</span>
-            {% elif r.capability == 'struggling' %}
-            <span class="badge" style="background:#f59e0b;padding:8px 18px;font-size:13px;">〰 Struggling — building tolerance</span>
-            {% elif r.capability == 'untested' %}
-            <span class="badge" style="background:#6b7280;padding:8px 18px;font-size:13px;">Default starting level</span>
-            {% endif %}
-          </div>
-
-          {% elif r.capability == 'cannot_do' %}
-          <div class="alert" style="background:rgba(239,68,68,0.1);border:1px solid #ef4444;border-radius:8px;">
-            <strong style="color:#ef4444;">✗ Cannot Do Yet</strong>
-            <p class="small mb-0 mt-1">No exercises from this pattern will be prescribed until you're ready.</p>
-          </div>
-
-          {% else %}
-          <div class="text-muted small">
-            <em>Skipped — default level will be used.</em>
+        <!-- Prescribed exercise -->
+        <div class="bg-primary/8 border border-primary/20 rounded-lg px-3 py-2.5 mb-3">
+          <div class="text-xs text-on-secondary-container/60 uppercase tracking-wide mb-1">Prescribed Exercise</div>
+          <div class="font-bold text-sm text-on-surface">{{ r.prescribed_exercise }}</div>
+          {% if r.levels_advanced %}
+          <div class="mt-1">
+            <span class="bg-surface-container text-on-secondary-container text-xs font-semibold px-2 py-0.5 rounded-full">Levels advanced: {{ r.levels_advanced }}</span>
           </div>
           {% endif %}
-
         </div>
+
+        <!-- Sets / reps or hold stats -->
+        <div class="flex gap-2 mb-3">
+          <div class="flex-1 text-center bg-surface-container rounded-lg py-2">
+            <div class="text-xl font-extrabold text-primary">{{ r.sets }}</div>
+            <div class="text-xs text-on-secondary-container/60 uppercase tracking-wide">Sets</div>
+          </div>
+          {% if r.hold_duration %}
+          <div class="flex-1 text-center bg-surface-container rounded-lg py-2">
+            <div class="text-xl font-extrabold text-primary">{{ r.hold_duration }}s</div>
+            <div class="text-xs text-on-secondary-container/60 uppercase tracking-wide">Hold</div>
+          </div>
+          {% else %}
+          <div class="flex-1 text-center bg-surface-container rounded-lg py-2">
+            <div class="text-xl font-extrabold text-primary">{{ r.reps }}</div>
+            <div class="text-xs text-on-secondary-container/60 uppercase tracking-wide">Reps</div>
+          </div>
+          {% endif %}
+        </div>
+
+        <!-- Capability badge -->
+        <div class="text-center">
+          {% if r.capability == 'easy' %}
+          <span class="inline-block bg-primary/10 text-primary text-xs font-bold px-4 py-1.5 rounded-full">★ Easy — will progress quickly</span>
+          {% elif r.capability == 'manageable' %}
+          <span class="inline-block bg-primary/10 text-primary text-xs font-bold px-4 py-1.5 rounded-full">✓ Manageable — perfect starting point</span>
+          {% elif r.capability == 'struggling' %}
+          <span class="inline-block text-xs font-bold px-4 py-1.5 rounded-full" style="background:rgba(176,136,0,0.12);color:#b08800;">〰 Struggling — building tolerance</span>
+          {% elif r.capability == 'untested' %}
+          <span class="inline-block bg-surface-container text-on-secondary-container text-xs font-bold px-4 py-1.5 rounded-full">Default starting level</span>
+          {% endif %}
+        </div>
+
+        {% elif r.capability == 'cannot_do' %}
+        <div class="bg-error-container/30 border border-error/20 rounded-lg px-3 py-2.5">
+          <div class="font-bold text-sm text-error mb-1">✗ Cannot Do Yet</div>
+          <p class="text-xs text-on-surface mb-0">No exercises from this pattern will be prescribed until you're ready.</p>
+        </div>
+
+        {% else %}
+        <p class="text-xs text-on-secondary-container italic">Skipped — default level will be used.</p>
+        {% endif %}
       </div>
     </div>
     {% endfor %}
   </div>
 
-  <!-- What these results mean -->
-  <div class="card mb-5" style="border-radius:14px;">
-    <div class="card-header"><h5 class="mb-0 text-white"><i class="fas fa-info-circle me-2"></i>What Happens Next</h5></div>
-    <div class="card-body">
-      <div class="row g-4">
-        <div class="col-md-4">
-          <h6>📋 Personalised Prescription</h6>
-          <p class="small text-muted">Your prescription now contains the exact exercise variation you tested at — not a random starting point.</p>
-        </div>
-        <div class="col-md-4">
-          <h6>📈 Progressive Overload</h6>
-          <p class="small text-muted">As you complete workouts and improve, you'll advance to the next level in each family's ladder automatically.</p>
-        </div>
-        <div class="col-md-4">
-          <h6>🔄 Reassessment</h6>
-          <p class="small text-muted">Every 4 weeks you'll re-run gate tests to objectively track your progress and advance the prescription.</p>
-        </div>
+  <!-- What Happens Next -->
+  <div class="bg-surface-container-lowest rounded-xl shadow-[0_4px_20px_rgba(26,28,28,0.06)] overflow-hidden">
+    <div class="flex items-center gap-2 px-5 py-3 bg-primary rounded-t-xl">
+      <i class="fas fa-info-circle text-white"></i>
+      <span class="font-bold text-white text-sm">What Happens Next</span>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 p-5">
+      <div>
+        <div class="font-bold text-sm text-on-surface mb-1">📋 Personalised Prescription</div>
+        <p class="text-xs text-on-secondary-container">Your prescription now contains the exact exercise variation you tested at — not a random starting point.</p>
+      </div>
+      <div>
+        <div class="font-bold text-sm text-on-surface mb-1">📈 Progressive Overload</div>
+        <p class="text-xs text-on-secondary-container">As you complete workouts and improve, you'll advance to the next level in each family's ladder automatically.</p>
+      </div>
+      <div>
+        <div class="font-bold text-sm text-on-surface mb-1">🔄 Reassessment</div>
+        <p class="text-xs text-on-secondary-container">Every 4 weeks you'll re-run gate tests to objectively track your progress and advance the prescription.</p>
       </div>
     </div>
   </div>
 
   <!-- CTA -->
-  <div class="text-center">
-    <a href="{% url 'prescription' %}" class="btn btn-success btn-lg px-5 py-3">
-      <i class="fas fa-prescription-bottle me-2"></i>Generate Your Prescription
+  <div class="text-center space-y-2">
+    <a href="{% url 'prescription' %}"
+       class="inline-flex items-center gap-2 px-8 py-3.5 bg-primary text-white font-bold text-base rounded-xl no-underline shadow-[0_4px_16px_rgba(12,108,63,0.25)]">
+      <i class="fas fa-prescription-bottle"></i>Generate Your Prescription
     </a>
-    <p class="text-muted small mt-3">
-      Your prescription will use exactly these exercises at exactly these levels.
-    </p>
+    <p class="text-xs text-on-secondary-container/60">Your prescription will use exactly these exercises at exactly these levels.</p>
   </div>
 
 </div>
-
-<style>
-.gradient-text {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-.card { border: none; box-shadow: 0 2px 12px rgba(0,0,0,0.08); border-radius: 12px; overflow: hidden; }
-.card-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 1rem 1.5rem; border: none; }
-.btn-success { background: linear-gradient(135deg, #22c55e, #16a34a); border: none; border-radius: 12px; }
-.btn-success:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(34,197,94,0.4); }
-.fade-in { animation: fadeIn 0.4s ease-in; }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
-</style>
 {% endblock %}

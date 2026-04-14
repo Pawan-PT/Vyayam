@@ -1,76 +1,117 @@
-{% extends 'strength_app/base.html' %}
+{% extends 'strength_app/base_gamified.html' %}
 {% block title %}Football Assessment — VYAYAM{% endblock %}
+{% block bottom_nav %}{% endblock %}
+
+{% block extra_head %}
+<style>
+  .phase-opt { transition: border-color .15s, background .15s; }
+  .phase-opt.selected { border-color: #0c6c3f; background: rgba(12,108,63,0.07); }
+  .phase-opt.selected .phase-dot { background: #0c6c3f; }
+  .phase-dot { width: 16px; height: 16px; border-radius: 50%; border: 2px solid #bdbdbd; flex-shrink: 0; transition: background .15s, border-color .15s; }
+  .phase-opt.selected .phase-dot { border-color: #0c6c3f; }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="fade-in">
+<div class="max-w-xl mx-auto px-4 pt-6 pb-12 space-y-5">
 
-  <div class="row mb-4">
-    <div class="col-12">
-      <div class="card" style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;">
-        <div class="card-body p-4">
-          <h3 class="fw-800 mb-2"><i class="fas fa-futbol me-2"></i>Football Assessment Battery</h3>
-          <p class="mb-0 opacity-85">{{ total_tests }} tests that measure your explosive power, reactive strength, speed, agility, and stability. Your weakest score sets your training level.</p>
-        </div>
-      </div>
-    </div>
+  <!-- Header -->
+  <div class="rounded-2xl px-5 py-5 text-white" style="background:linear-gradient(135deg,#0c6c3f 0%,#6bbf8a 100%);box-shadow:0 8px 28px rgba(12,108,63,0.28);">
+    <h3 class="text-xl font-extrabold mb-1"><i class="fas fa-futbol me-2"></i>Football Assessment Battery</h3>
+    <p class="text-sm" style="opacity:.9;">{{ total_tests }} tests that measure your explosive power, reactive strength, speed, agility, and stability. Your weakest score sets your training level.</p>
   </div>
 
-  <div class="row g-3 mb-4">
+  <!-- Test list -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
     {% for test in tests %}
-    <div class="col-md-6">
-      <div class="card h-100">
-        <div class="card-body p-3">
-          <div class="d-flex align-items-start gap-3">
-            <div class="rounded-circle d-flex align-items-center justify-content-center fw-800" style="width:36px;height:36px;background:rgba(102,126,234,.15);color:#667eea;flex-shrink:0;">{{ forloop.counter }}</div>
-            <div>
-              <h6 class="fw-700 mb-1">{{ test.name }}</h6>
-              <p class="text-muted small mb-0">{{ test.measure }}</p>
-            </div>
-          </div>
-        </div>
+    <div class="bg-surface-container-lowest rounded-xl p-4 shadow-[0_2px_8px_rgba(26,28,28,0.06)] flex items-start gap-3">
+      <div class="w-8 h-8 rounded-full flex items-center justify-center font-extrabold text-sm flex-shrink-0"
+           style="background:rgba(12,108,63,0.12);color:#0c6c3f;">{{ forloop.counter }}</div>
+      <div>
+        <div class="font-bold text-sm text-on-surface">{{ test.name }}</div>
+        <div class="text-xs text-on-secondary-container mt-0.5">{{ test.measure }}</div>
       </div>
     </div>
     {% endfor %}
   </div>
 
-  <div class="card mb-4">
-    <div class="card-body p-4">
-      <h6 class="fw-700 mb-2"><i class="fas fa-info-circle me-2 text-primary"></i>What You'll Need</h6>
-      <p class="text-muted small mb-0">A flat surface (at least 20 metres), a tape measure, a phone timer, and someone to anchor your ankles for the Nordic test. Each test takes about 2 minutes. Total assessment time: approximately 15 minutes.</p>
+  <!-- What you'll need -->
+  <div class="bg-primary/8 border border-primary/20 rounded-xl px-4 py-4">
+    <div class="font-bold text-sm text-primary mb-1.5">
+      <i class="fas fa-info-circle me-1.5"></i>What You'll Need
     </div>
+    <p class="text-sm text-on-surface leading-relaxed mb-0">A flat surface (at least 20 metres), a tape measure, a phone timer, and someone to anchor your ankles for the Nordic test. Each test takes about 2 minutes. Total assessment time: approximately 15 minutes.</p>
   </div>
 
-  <div class="card mb-4">
-    <div class="card-body p-4">
-      <h6 class="fw-700 mb-3"><i class="fas fa-calendar-alt me-2 text-primary"></i>Where are you in your season right now?</h6>
-      <form method="post" id="assessmentForm">
-        {% csrf_token %}
-        <div class="d-grid gap-2 mb-4">
-          <input type="radio" class="btn-check" name="season_phase" id="off_season" value="off_season">
-          <label class="btn btn-outline-secondary text-start py-3 px-3" for="off_season">
-            <strong>Off-Season</strong> — No competition for 3+ months. Building base.
-          </label>
-          <input type="radio" class="btn-check" name="season_phase" id="pre_season" value="pre_season">
-          <label class="btn btn-outline-secondary text-start py-3 px-3" for="pre_season">
-            <strong>Pre-Season</strong> — Competition is 4-12 weeks away. Ramping up.
-          </label>
-          <input type="radio" class="btn-check" name="season_phase" id="in_season" value="in_season" checked>
-          <label class="btn btn-outline-secondary text-start py-3 px-3" for="in_season">
-            <strong>In-Season</strong> — Actively competing. Maintaining gains.
-          </label>
-          <input type="radio" class="btn-check" name="season_phase" id="post_season" value="post_season">
-          <label class="btn btn-outline-secondary text-start py-3 px-3" for="post_season">
-            <strong>Post-Season</strong> — Season just ended. Recovery phase.
-          </label>
-        </div>
-        <div class="text-center">
-          <button type="submit" class="btn btn-lg px-5 py-3 fw-700" style="background:var(--primary-gradient);color:white;border:none;border-radius:14px;">
-            <i class="fas fa-play me-2"></i>Begin Assessment
-          </button>
-        </div>
-      </form>
-    </div>
+  <!-- Season phase + start -->
+  <div class="bg-surface-container-lowest rounded-xl px-5 py-5 shadow-[0_4px_20px_rgba(26,28,28,0.06)]">
+    <h6 class="font-bold text-sm text-on-surface mb-3">
+      <i class="fas fa-calendar-alt me-2 text-primary/70"></i>Where are you in your season right now?
+    </h6>
+
+    <form method="post" id="assessmentForm" class="space-y-4">
+      {% csrf_token %}
+
+      <div class="space-y-2" id="phaseOpts">
+
+        <label class="phase-opt flex items-center gap-3 border border-outline-variant/40 rounded-xl px-4 py-3 cursor-pointer" data-val="off_season">
+          <input type="radio" name="season_phase" value="off_season" class="hidden">
+          <div class="phase-dot"></div>
+          <div>
+            <div class="font-bold text-sm text-on-surface">Off-Season</div>
+            <div class="text-xs text-on-secondary-container">No competition for 3+ months. Building base.</div>
+          </div>
+        </label>
+
+        <label class="phase-opt flex items-center gap-3 border border-outline-variant/40 rounded-xl px-4 py-3 cursor-pointer" data-val="pre_season">
+          <input type="radio" name="season_phase" value="pre_season" class="hidden">
+          <div class="phase-dot"></div>
+          <div>
+            <div class="font-bold text-sm text-on-surface">Pre-Season</div>
+            <div class="text-xs text-on-secondary-container">Competition is 4–12 weeks away. Ramping up.</div>
+          </div>
+        </label>
+
+        <label class="phase-opt selected flex items-center gap-3 border border-outline-variant/40 rounded-xl px-4 py-3 cursor-pointer" data-val="in_season">
+          <input type="radio" name="season_phase" value="in_season" checked class="hidden">
+          <div class="phase-dot"></div>
+          <div>
+            <div class="font-bold text-sm text-on-surface">In-Season</div>
+            <div class="text-xs text-on-secondary-container">Actively competing. Maintaining gains.</div>
+          </div>
+        </label>
+
+        <label class="phase-opt flex items-center gap-3 border border-outline-variant/40 rounded-xl px-4 py-3 cursor-pointer" data-val="post_season">
+          <input type="radio" name="season_phase" value="post_season" class="hidden">
+          <div class="phase-dot"></div>
+          <div>
+            <div class="font-bold text-sm text-on-surface">Post-Season</div>
+            <div class="text-xs text-on-secondary-container">Season just ended. Recovery phase.</div>
+          </div>
+        </label>
+
+      </div>
+
+      <div class="text-center pt-2">
+        <button type="submit"
+                class="px-8 py-3.5 bg-primary text-white font-bold text-sm rounded-xl shadow-[0_4px_16px_rgba(12,108,63,0.25)]">
+          <i class="fas fa-play me-2"></i>Begin Assessment
+        </button>
+      </div>
+    </form>
   </div>
 
 </div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.querySelectorAll('#phaseOpts .phase-opt').forEach(function(lbl) {
+  lbl.addEventListener('click', function() {
+    document.querySelectorAll('#phaseOpts .phase-opt').forEach(function(l) { l.classList.remove('selected'); });
+    lbl.classList.add('selected');
+    lbl.querySelector('input[type=radio]').checked = true;
+  });
+});
+</script>
 {% endblock %}

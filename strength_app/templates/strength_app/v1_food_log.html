@@ -1,135 +1,121 @@
-{% extends 'strength_app/base.html' %}
+{% extends 'strength_app/base_gamified.html' %}
 {% block title %}Food Log — VYAYAM{% endblock %}
 
-{% block extra_css %}
+{% block extra_head %}
 <style>
-  body { background: #0a0e27; color: #fff; }
-  .fl-container { max-width: 900px; margin: 0 auto; padding: 24px 20px; }
-  h1 { font-size: 1.5rem; font-weight: 800; margin-bottom: 4px; }
-  .card { background: #1a1f3a; border-radius: 16px; padding: 20px; margin-bottom: 18px; }
-  .card-label { font-size: .7rem; text-transform: uppercase; letter-spacing: 1px; opacity: .5; margin-bottom: 12px; }
-  label { font-size: .85rem; opacity: .7; margin-bottom: 4px; display: block; }
-  input[type=text], input[type=number], select {
-    width: 100%; background: #2a2f4a; border: 1px solid rgba(255,255,255,.1);
-    color: #fff; border-radius: 10px; padding: 10px 14px; font-size: .9rem;
-  }
-  .form-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
-  @media (max-width: 580px) { .form-row { grid-template-columns: 1fr; } }
-  .search-results { background: #252b4a; border-radius: 10px; margin-top: 6px; overflow: hidden; display: none; }
-  .search-result-item {
-    padding: 10px 14px; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,.06);
-    transition: background .15s;
-  }
-  .search-result-item:hover { background: rgba(102,126,234,.15); }
-  .result-name { font-weight: 600; font-size: .9rem; }
-  .result-meta { font-size: .75rem; opacity: .55; margin-top: 2px; }
-  .selected-food-card {
-    background: rgba(102,126,234,.1); border: 1px solid rgba(102,126,234,.3);
-    border-radius: 10px; padding: 12px 16px; margin: 10px 0;
-    display: none;
-  }
-  .btn-log {
-    width: 100%; padding: 13px; font-weight: 700; font-size: 1rem;
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    border: none; border-radius: 12px; color: #fff; cursor: pointer; margin-top: 8px;
-  }
-  .btn-log:disabled { opacity: .5; cursor: default; }
-  .macro-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
-  .chip {
-    background: rgba(255,255,255,.08); border-radius: 20px;
-    padding: 3px 12px; font-size: .75rem;
-  }
-  /* Summary strip */
-  .summary-strip {
-    display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 18px;
-    background: #1a1f3a; border-radius: 14px; padding: 14px 18px; align-items: center;
-  }
-  .summary-strip .ss-item { text-align: center; }
-  .ss-val { font-size: 1.3rem; font-weight: 800; }
-  .ss-lbl { font-size: .7rem; opacity: .5; }
-  .back-link { color: rgba(255,255,255,.4); font-size: .85rem; text-decoration: none; display: inline-block; margin-bottom: 16px; }
-  .back-link:hover { color: #fff; }
+  /* JS-toggled search dropdown */
+  .search-results { background: #fff; border: 1px solid rgba(26,28,28,0.12); border-radius: 12px; margin-top: 4px; overflow: hidden; display: none; box-shadow: 0 8px 24px rgba(26,28,28,0.10); }
+  .search-result-item { padding: 10px 14px; cursor: pointer; border-bottom: 1px solid rgba(26,28,28,0.06); transition: background .15s; }
+  .search-result-item:hover { background: rgba(12,108,63,0.06); }
+  .search-result-item:last-child { border-bottom: none; }
+  .result-name { font-weight: 600; font-size: .9rem; color: #1a1c1c; }
+  .result-meta { font-size: .75rem; color: #3d4f42; opacity: .7; margin-top: 2px; }
+
+  /* JS-toggled selected food card */
+  .selected-food-card { display: none; }
+
+  /* Quick-add item hover */
+  .quick-item { transition: background .2s, border-color .2s; }
+  .quick-item:hover { background: rgba(12,108,63,0.06); border-color: #6bbf8a; }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="fl-container">
-  <a href="{% url 'v1_nutrition_dashboard' %}" class="back-link"><i class="fas fa-arrow-left me-1"></i> Back to Nutrition</a>
-  <h1>Log Food</h1>
-  <p style="opacity:.55;font-size:.9rem;margin-bottom:20px;">{{ selected_date|date:"D, d M Y" }}</p>
+<div class="max-w-xl mx-auto px-4 pt-4 pb-8 space-y-4">
+
+  <!-- Top bar -->
+  <div class="bg-surface-container-lowest rounded-lg px-5 py-4 shadow-[0_4px_20px_rgba(26,28,28,0.05)] flex items-center justify-between">
+    <div>
+      <div class="text-lg font-extrabold text-on-surface">Log Food</div>
+      <div class="text-xs text-on-secondary-container font-medium mt-0.5">{{ selected_date|date:"D, d M Y" }}</div>
+    </div>
+    <a href="{% url 'v1_nutrition_dashboard' %}"
+       class="inline-flex items-center gap-1.5 text-sm text-primary font-semibold no-underline">
+      <i class="fas fa-arrow-left text-xs"></i>Nutrition
+    </a>
+  </div>
 
   <!-- Daily summary strip -->
-  <div class="summary-strip">
-    <div class="ss-item">
-      <div class="ss-val">{{ summary.total_calories|floatformat:0 }}</div>
-      <div class="ss-lbl">kcal eaten</div>
+  <div class="bg-surface-container-lowest rounded-lg px-5 py-4 shadow-[0_4px_20px_rgba(26,28,28,0.04)] flex gap-4 flex-wrap">
+    <div class="text-center flex-1 min-w-0">
+      <div class="text-xl font-black text-on-surface">{{ summary.total_calories|floatformat:0 }}</div>
+      <div class="text-[0.65rem] text-on-secondary-container opacity-60 uppercase tracking-wide">kcal eaten</div>
     </div>
-    <div class="ss-item">
-      <div class="ss-val" style="color:#667eea;">{{ summary.remaining_calories }}</div>
-      <div class="ss-lbl">kcal left</div>
+    <div class="text-center flex-1 min-w-0">
+      <div class="text-xl font-black text-primary">{{ summary.remaining_calories }}</div>
+      <div class="text-[0.65rem] text-on-secondary-container opacity-60 uppercase tracking-wide">kcal left</div>
     </div>
-    <div class="ss-item">
-      <div class="ss-val">{{ summary.total_protein|floatformat:0 }}g</div>
-      <div class="ss-lbl">protein</div>
+    <div class="text-center flex-1 min-w-0">
+      <div class="text-xl font-black text-on-surface">{{ summary.total_protein|floatformat:0 }}g</div>
+      <div class="text-[0.65rem] text-on-secondary-container opacity-60 uppercase tracking-wide">protein</div>
     </div>
-    <div class="ss-item">
-      <div class="ss-val">{{ summary.total_carbs|floatformat:0 }}g</div>
-      <div class="ss-lbl">carbs</div>
+    <div class="text-center flex-1 min-w-0">
+      <div class="text-xl font-black text-on-surface">{{ summary.total_carbs|floatformat:0 }}g</div>
+      <div class="text-[0.65rem] text-on-secondary-container opacity-60 uppercase tracking-wide">carbs</div>
     </div>
-    <div class="ss-item">
-      <div class="ss-val">{{ summary.total_fat|floatformat:0 }}g</div>
-      <div class="ss-lbl">fat</div>
+    <div class="text-center flex-1 min-w-0">
+      <div class="text-xl font-black text-on-surface">{{ summary.total_fat|floatformat:0 }}g</div>
+      <div class="text-[0.65rem] text-on-secondary-container opacity-60 uppercase tracking-wide">fat</div>
     </div>
   </div>
 
   <!-- Log food form -->
-  <div class="card">
-    <div class="card-label">Add a food item</div>
-    <form method="post" id="logForm">
+  <div class="bg-surface-container-lowest rounded-lg p-5 shadow-[0_4px_20px_rgba(26,28,28,0.04)]">
+    <div class="text-[0.6rem] font-extrabold uppercase tracking-[0.12em] text-on-secondary-container opacity-60 mb-4">Add a food item</div>
+
+    <form method="post" id="logForm" class="space-y-3">
       {% csrf_token %}
       <input type="hidden" name="log_date" value="{{ selected_date|date:'Y-m-d' }}">
       <input type="hidden" name="food_id" id="selectedFoodId">
 
-      <label>Search food</label>
-      <input type="text" id="foodSearch" placeholder="Type food name (e.g. dal, roti, chicken...)" autocomplete="off">
-      <div class="search-results" id="searchResults"></div>
-
-      <div class="selected-food-card" id="selectedFoodCard">
-        <div id="selectedFoodName" style="font-weight:700;"></div>
-        <div class="macro-chips" id="selectedFoodMacros"></div>
+      <div class="relative">
+        <label class="block text-xs font-semibold text-on-surface mb-1">Search food</label>
+        <input type="text" id="foodSearch"
+               placeholder="Type food name (e.g. dal, roti, chicken…)" autocomplete="off"
+               class="w-full bg-surface-container border border-outline-variant/40 rounded-lg px-3 py-2 text-sm text-on-surface focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20">
+        <div class="search-results absolute left-0 right-0 z-20" id="searchResults"></div>
       </div>
 
-      <div class="form-row mt-3">
+      <!-- Selected food preview (JS-shown) -->
+      <div class="selected-food-card bg-primary/8 border border-primary/25 rounded-lg px-4 py-3" id="selectedFoodCard">
+        <div id="selectedFoodName" class="font-bold text-sm text-on-surface mb-1.5"></div>
+        <div class="flex flex-wrap gap-1.5" id="selectedFoodMacros"></div>
+      </div>
+
+      <div class="grid grid-cols-3 gap-3 items-end">
         <div>
-          <label>Quantity (grams)</label>
-          <input type="number" name="quantity_g" id="quantityInput" min="1" max="2000" step="1" value="100">
+          <label class="block text-xs font-semibold text-on-surface mb-1">Quantity (g)</label>
+          <input type="number" name="quantity_g" id="quantityInput" min="1" max="2000" step="1" value="100"
+                 class="w-full bg-surface-container border border-outline-variant/40 rounded-lg px-3 py-2 text-sm text-on-surface focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20">
         </div>
         <div>
-          <label>Meal</label>
-          <select name="meal_type">
+          <label class="block text-xs font-semibold text-on-surface mb-1">Meal</label>
+          <select name="meal_type"
+                  class="w-full bg-surface-container border border-outline-variant/40 rounded-lg px-3 py-2 text-sm text-on-surface focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20">
             {% for m in meal_types %}
             <option value="{{ m }}" {% if m == 'lunch' %}selected{% endif %}>{{ m|capfirst }}</option>
             {% endfor %}
           </select>
         </div>
-        <div style="display:flex;align-items:flex-end;">
-          <button type="submit" class="btn-log" id="logBtn" disabled>
-            <i class="fas fa-plus me-2"></i>Log it
+        <div>
+          <button type="submit" id="logBtn" disabled
+                  class="w-full py-2 bg-gradient-to-r from-primary to-primary-container text-white font-bold text-sm rounded-xl disabled:opacity-50">
+            <i class="fas fa-plus me-1 text-xs"></i>Log it
           </button>
         </div>
       </div>
     </form>
   </div>
 
-  <!-- Quick add: common items -->
-  <div class="card">
-    <div class="card-label">Quick Add — Common Items</div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;">
+  <!-- Quick add -->
+  <div class="bg-surface-container-lowest rounded-lg p-5 shadow-[0_4px_20px_rgba(26,28,28,0.04)]">
+    <div class="text-[0.6rem] font-extrabold uppercase tracking-[0.12em] text-on-secondary-container opacity-60 mb-3">Quick Add — Common Items</div>
+    <div class="grid gap-2" style="grid-template-columns:repeat(auto-fill,minmax(160px,1fr));">
       {% for food in top_foods %}
-      <div style="background:#252b4a;border-radius:10px;padding:10px 12px;cursor:pointer;transition:background .2s;"
+      <div class="quick-item bg-surface-container border border-outline-variant/30 rounded-lg p-3 cursor-pointer"
            onclick="quickSelect({{ food.id }}, '{{ food.name|escapejs }}', {{ food.calories_per_100g }}, {{ food.protein_per_100g }}, {{ food.carbs_per_100g }}, {{ food.fat_per_100g }}, {{ food.serving_size_g }}, '{{ food.serving_description|escapejs }}')">
-        <div style="font-weight:600;font-size:.88rem;">{{ food.name }}</div>
-        <div style="font-size:.72rem;opacity:.5;margin-top:2px;">
+        <div class="font-semibold text-sm text-on-surface leading-snug">{{ food.name }}</div>
+        <div class="text-xs text-on-secondary-container mt-1 opacity-70">
           {{ food.calories_per_serving|floatformat:0 }} kcal · {{ food.protein_per_serving|floatformat:1 }}g P · {{ food.serving_description }}
         </div>
       </div>
@@ -139,21 +125,24 @@
 
   <!-- Today's log -->
   {% if summary.by_meal %}
-  <div class="card">
-    <div class="card-label">Today's Entries</div>
+  <div class="bg-surface-container-lowest rounded-lg p-5 shadow-[0_4px_20px_rgba(26,28,28,0.04)]">
+    <div class="text-[0.6rem] font-extrabold uppercase tracking-[0.12em] text-on-secondary-container opacity-60 mb-4">Today's Entries</div>
     {% for meal, items in summary.by_meal.items %}
-    <div style="margin-bottom:12px;">
-      <div style="font-size:.8rem;font-weight:700;text-transform:capitalize;opacity:.65;margin-bottom:6px;">{{ meal }}</div>
+    <div class="mb-4 last:mb-0">
+      <div class="text-xs font-bold text-on-secondary-container uppercase tracking-wide mb-2">{{ meal }}</div>
       {% for entry in items %}
-      <div style="display:flex;justify-content:space-between;font-size:.85rem;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.05);">
-        <span>{{ entry.food }}</span>
-        <span style="opacity:.5;">{{ entry.qty_g|floatformat:0 }}g · {{ entry.calories|floatformat:0 }} kcal · {{ entry.protein|floatformat:1 }}g P</span>
+      <div class="flex justify-between items-center py-2 border-b border-outline-variant/15 last:border-0">
+        <span class="text-sm text-on-surface">{{ entry.food }}</span>
+        <span class="text-xs text-on-secondary-container whitespace-nowrap ml-3">
+          {{ entry.qty_g|floatformat:0 }}g · {{ entry.calories|floatformat:0 }} kcal · {{ entry.protein|floatformat:1 }}g P
+        </span>
       </div>
       {% endfor %}
     </div>
     {% endfor %}
   </div>
   {% endif %}
+
 </div>
 
 <script>
@@ -165,10 +154,10 @@ function quickSelect(id, name, cal, pro, carb, fat, servingG, servingDesc) {
   document.getElementById('quantityInput').value = servingG;
   document.getElementById('selectedFoodName').textContent = name + (servingDesc ? ' — ' + servingDesc : '');
   document.getElementById('selectedFoodMacros').innerHTML =
-    `<span class="chip">${cal} kcal/100g</span>
-     <span class="chip">${pro}g protein</span>
-     <span class="chip">${carb}g carbs</span>
-     <span class="chip">${fat}g fat</span>`;
+    `<span class="inline-block bg-primary/10 text-primary text-xs font-semibold px-2.5 py-0.5 rounded-full">${cal} kcal/100g</span>
+     <span class="inline-block bg-primary/10 text-primary text-xs font-semibold px-2.5 py-0.5 rounded-full">${pro}g protein</span>
+     <span class="inline-block bg-primary/10 text-primary text-xs font-semibold px-2.5 py-0.5 rounded-full">${carb}g carbs</span>
+     <span class="inline-block bg-primary/10 text-primary text-xs font-semibold px-2.5 py-0.5 rounded-full">${fat}g fat</span>`;
   document.getElementById('selectedFoodCard').style.display = 'block';
   document.getElementById('logBtn').disabled = false;
   document.getElementById('foodSearch').value = name;

@@ -11,20 +11,25 @@
 
 {% block extra_css %}
 <style>
-  .adherence-bar { height: 5px; border-radius: 5px; background: rgba(255,255,255,.1); overflow: hidden; min-width: 60px; }
-  .adherence-fill { height: 100%; border-radius: 5px; background: linear-gradient(90deg,#667eea,#764ba2); }
-  .pain-icon { color: #ef4444; font-size: .85rem; }
-  .athlete-card { background: #1a1f3a; border-radius: 14px; border: 1px solid rgba(255,255,255,.07);
-    padding: 16px 18px; margin-bottom: 10px; display: flex; align-items: center;
-    gap: 16px; flex-wrap: wrap; transition: border-color .2s; }
-  .athlete-card:hover { border-color: rgba(102,126,234,.3); }
-  .athlete-card.status-red { border-left: 4px solid #ef4444; }
+  .adherence-bar { height: 5px; border-radius: 5px; background: rgba(26,28,28,.1); overflow: hidden; min-width: 60px; }
+  .adherence-fill { height: 100%; border-radius: 5px; background: linear-gradient(90deg,#0c6c3f,#6bbf8a); }
+  .pain-icon { color: #ba1a1a; font-size: .85rem; }
+  .athlete-card {
+    background: #fff; border-radius: 14px; border: 1px solid rgba(26,28,28,.08);
+    padding: 14px 16px; margin-bottom: 8px; display: flex; align-items: center;
+    gap: 14px; flex-wrap: wrap; transition: border-color .15s;
+    box-shadow: 0 1px 4px rgba(26,28,28,.05);
+  }
+  .athlete-card:hover { border-color: rgba(12,108,63,.25); }
+  .athlete-card.status-red    { border-left: 4px solid #ef4444; }
   .athlete-card.status-yellow { border-left: 4px solid #f59e0b; }
-  .athlete-card.status-green { border-left: 4px solid #22c55e; }
-  .athlete-name { font-weight: 700; font-size: .95rem; }
-  .athlete-meta { font-size: .78rem; opacity: .6; }
-  .goal-badge { display: inline-block; padding: 2px 8px; border-radius: 6px;
-    background: rgba(102,126,234,.15); color: #a5b4fc; font-size: .72rem; font-weight: 700; }
+  .athlete-card.status-green  { border-left: 4px solid #22c55e; }
+  .athlete-name { font-weight: 700; font-size: .93rem; color: #1a1c1c; }
+  .athlete-meta { font-size: .76rem; color: #3d4f42; opacity: .7; }
+  .goal-badge {
+    display: inline-block; padding: 2px 8px; border-radius: 6px;
+    background: rgba(12,108,63,.1); color: #0c6c3f; font-size: .72rem; font-weight: 700;
+  }
   .hidden-athlete { display: none !important; }
 </style>
 {% endblock %}
@@ -38,7 +43,7 @@
     <div class="lbl">Total Athletes</div>
   </div>
   <div class="stat-box">
-    <div class="val" style="color:#ef4444;">{{ needs_attention }}</div>
+    <div class="val" style="color:#ba1a1a;">{{ needs_attention }}</div>
     <div class="lbl">Need Attention</div>
   </div>
   <div class="stat-box">
@@ -48,9 +53,9 @@
 </div>
 
 {% if not athletes %}
-<div class="c-card" style="text-align:center;padding:48px;opacity:.5;">
-  <i class="fas fa-users fa-3x" style="margin-bottom:16px;display:block;"></i>
-  <p>No athletes linked yet. <a href="{% url 'coach_add_athlete' %}" style="color:#667eea;">Add your first athlete →</a></p>
+<div class="c-card" style="text-align:center;padding:48px;">
+  <i class="fas fa-users fa-3x" style="margin-bottom:16px;display:block;color:#0c6c3f;opacity:.25;"></i>
+  <p style="color:#3d4f42;font-size:.9rem;">No athletes linked yet. <a href="{% url 'coach_add_athlete' %}" style="color:#0c6c3f;font-weight:700;">Add your first athlete →</a></p>
 </div>
 {% else %}
 
@@ -67,10 +72,8 @@
 <div id="athleteList">
 {% for a in athletes %}
 <div class="athlete-card status-{{ a.status }}" data-status="{{ a.status }}" data-name="{{ a.patient.name|lower }}">
-  <!-- Status dot -->
   <span class="dot dot-{{ a.status }}" style="flex-shrink:0;"></span>
 
-  <!-- Name + meta -->
   <div style="flex:1;min-width:140px;">
     <div class="athlete-name">{{ a.patient.name }}</div>
     <div class="athlete-meta">
@@ -79,14 +82,12 @@
     </div>
   </div>
 
-  <!-- Goal + phase -->
   <div style="min-width:120px;">
     <span class="goal-badge">{{ a.patient.get_goal_type_display }}</span>
     <div class="athlete-meta mt-1">{{ a.current_phase }}</div>
   </div>
 
-  <!-- Last session -->
-  <div style="min-width:100px;font-size:.8rem;">
+  <div style="min-width:100px;font-size:.8rem;color:#1a1c1c;">
     {% if a.last_session_date %}
       <div>{{ a.last_session_date|date:"d M" }}</div>
       <div class="athlete-meta">
@@ -97,25 +98,21 @@
     {% endif %}
   </div>
 
-  <!-- Adherence bar -->
   <div style="min-width:80px;">
-    <div style="font-size:.72rem;opacity:.6;margin-bottom:4px;">{{ a.adherence }}%</div>
+    <div style="font-size:.72rem;color:#3d4f42;opacity:.7;margin-bottom:4px;">{{ a.adherence }}%</div>
     <div class="adherence-bar"><div class="adherence-fill" style="width:{{ a.adherence }}%;"></div></div>
   </div>
 
-  <!-- Traffic light -->
   <div style="text-align:center;min-width:40px;">
     <span class="dot dot-{{ a.traffic_light }}" style="width:12px;height:12px;"></span>
   </div>
 
-  <!-- Pain flag -->
   <div style="min-width:30px;text-align:center;">
     {% if a.has_pain_flag %}
     <i class="fas fa-exclamation-triangle pain-icon" title="Recent pain: {{ a.pain_location }}"></i>
     {% endif %}
   </div>
 
-  <!-- View button -->
   <a href="{% url 'coach_athlete_detail' a.patient.patient_id %}" class="btn-coach btn-outline-c btn-sm-c">
     View →
   </a>

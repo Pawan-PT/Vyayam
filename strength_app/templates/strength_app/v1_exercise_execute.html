@@ -50,7 +50,7 @@
   .form-overlay { position: absolute; top: 12px; right: 12px;
     background: rgba(0,0,0,.6); border-radius: 12px; padding: 8px 14px;
     font-size: 1.1rem; font-weight: 800; }
-  .start-cam-btn { padding: 10px 24px; background: linear-gradient(135deg,#667eea,#764ba2);
+  .start-cam-btn { padding: 10px 24px; background: linear-gradient(135deg,#0c6c3f,#6bbf8a);
     border: none; border-radius: 10px; color: #fff; font-weight: 700; cursor: pointer; font-size: .9rem; }
 
   /* Right panel */
@@ -62,8 +62,8 @@
   /* Tempo visual */
   .tempo-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 6px; }
   .tempo-phase { background: #2a2f4a; border-radius: 10px; padding: 10px 4px; text-align: center; transition: all .3s; }
-  .tempo-phase.active { background: rgba(102,126,234,.3); border: 2px solid #667eea; }
-  .tempo-phase .t-val { font-size: 1.5rem; font-weight: 800; color: #667eea; }
+  .tempo-phase.active { background: rgba(12,108,63,.3); border: 2px solid #0c6c3f; }
+  .tempo-phase .t-val { font-size: 1.5rem; font-weight: 800; color: #0c6c3f; }
   .tempo-phase .t-lbl { font-size: .6rem; opacity: .5; margin-top: 2px; }
 
   /* Set tracker */
@@ -73,7 +73,7 @@
   .set-num { width: 28px; font-weight: 700; font-size: .85rem; opacity: .7; }
   .reps-input { flex: 1; background: #2a2f4a; border: 1px solid rgba(255,255,255,.1);
     border-radius: 8px; padding: 7px 12px; color: #fff; font-size: .9rem; text-align: center; }
-  .reps-input:focus { outline: none; border-color: #667eea; }
+  .reps-input:focus { outline: none; border-color: #0c6c3f; }
   .set-done-btn { padding: 7px 14px; background: rgba(17,153,142,.2); border: 1px solid #11998e;
     border-radius: 8px; color: #6ee7b7; font-weight: 700; font-size: .8rem; cursor: pointer; }
   .set-done-btn.done { background: #11998e; color: #fff; }
@@ -151,7 +151,7 @@
     </div>
     <div style="flex:1;min-width:80px;">
       <div style="height:5px;border-radius:5px;background:rgba(255,255,255,.1);">
-        <div style="height:100%;border-radius:5px;background:linear-gradient(90deg,#667eea,#764ba2);width:{% widthratio exercise_index|add:1 total_exercises 100 %}%;"></div>
+        <div style="height:100%;border-radius:5px;background:linear-gradient(90deg,#0c6c3f,#6bbf8a);width:{% widthratio exercise_index|add:1 total_exercises 100 %}%;"></div>
       </div>
     </div>
   </div>
@@ -236,15 +236,15 @@
           <div id="assessmentMeasuredLabel" style="font-size:.75rem;opacity:.5;">reps</div>
           <div id="assessmentScoreResult" style="display:none;margin-top:12px;">
             <div style="font-size:.7rem;opacity:.5;text-transform:uppercase;">Your Score</div>
-            <div id="assessmentScoreValue" style="font-size:3rem;font-weight:800;color:#667eea;">-</div>
+            <div id="assessmentScoreValue" style="font-size:3rem;font-weight:800;color:#0c6c3f;">-</div>
             <button onclick="saveAssessmentScore()" class="btn w-100 mt-2"
-              style="background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;padding:14px;font-weight:700;border-radius:12px;border:none;">
+              style="background:linear-gradient(135deg,#0c6c3f,#6bbf8a);color:#fff;padding:14px;font-weight:700;border-radius:12px;border:none;">
               Save &amp; Continue
             </button>
           </div>
         </div>
         <div id="alignmentCue" style="text-align:center;font-size:.85rem;padding:8px;border-radius:8px;
-          background:rgba(102,126,234,.1);margin-top:8px;transition:color .3s;">
+          background:rgba(12,108,63,.1);margin-top:8px;transition:color .3s;">
           Start camera to activate ghost guide
         </div>
         <button onclick="ghostState.mode='DEMO';ghostState.currentPhaseIndex=0;ghostState.phaseStartTime=Date.now();ghostState.demoRepsDone=0;VoiceCoach.speak('Watch me first.',true);" class="btn btn-sm btn-outline-primary mt-2 w-100"

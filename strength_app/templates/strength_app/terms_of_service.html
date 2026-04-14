@@ -1,82 +1,112 @@
-{% extends 'strength_app/base.html' %}
+{% extends 'strength_app/base_gamified.html' %}
 {% block title %}Terms of Service — VYAYAM{% endblock %}
+{% block bottom_nav %}{% endblock %}
+
+{% block extra_head %}
+<style>
+  .legal-prose h5  { font-weight: 700; font-size: .92rem; color: #1a1c1c; margin-top: 1.5rem; margin-bottom: .4rem; }
+  .legal-prose p   { font-size: .875rem; color: #3d4f42; line-height: 1.75; margin-bottom: .75rem; }
+  .legal-prose ul  { padding-left: 1.25rem; margin-bottom: .75rem; list-style-type: disc; }
+  .legal-prose li  { font-size: .875rem; color: #3d4f42; line-height: 1.75; margin-bottom: .2rem; }
+  .legal-prose a   { color: #0c6c3f; text-decoration: underline; }
+  .legal-prose strong { color: #1a1c1c; }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="fade-in">
-  <div class="row justify-content-center">
-    <div class="col-lg-8">
-      <div class="card">
-        <div class="card-body p-5">
-          <h2 class="fw-700 mb-1">Terms of Service</h2>
-          <p class="text-muted small mb-4">Last updated: March 2025 &nbsp;|&nbsp; Effective date: March 2025</p>
+<div class="max-w-xl mx-auto px-4 pt-4 pb-8 space-y-4">
 
-          <p>Please read these Terms of Service ("Terms") carefully before using VYAYAM. By registering or using the platform, you agree to be bound by these Terms.</p>
+  <!-- Top bar -->
+  <div class="bg-surface-container-lowest rounded-lg px-5 py-4 shadow-[0_4px_20px_rgba(26,28,28,0.05)] flex items-center justify-between">
+    <div>
+      <div class="text-lg font-extrabold text-on-surface">Terms of Service</div>
+      <div class="text-xs text-on-secondary-container mt-0.5">Last updated: March 2025 &nbsp;·&nbsp; Effective: March 2025</div>
+    </div>
+    <a href="{% url 'home' %}"
+       class="inline-flex items-center gap-1.5 text-sm text-primary font-semibold no-underline">
+      <i class="fas fa-arrow-left text-xs"></i>Home
+    </a>
+  </div>
 
-          <h5 class="fw-700 mt-4">1. Acceptance of Terms</h5>
-          <p>By creating an account and using VYAYAM, you confirm that you are at least 13 years old, have read and understood these Terms and our <a href="{% url 'privacy_policy' %}">Privacy Policy</a>, and agree to comply with them.</p>
+  <!-- Content card -->
+  <div class="bg-surface-container-lowest rounded-lg px-5 py-5 shadow-[0_4px_20px_rgba(26,28,28,0.04)]">
+    <div class="legal-prose">
 
-          <h5 class="fw-700 mt-4">2. Nature of the Service</h5>
-          <p>VYAYAM is an <strong>AI-assisted physiotherapy and strength training platform</strong>. It provides personalised exercise prescriptions, real-time form guidance, and progress tracking. It is <em>not</em> a substitute for professional medical advice, diagnosis, or treatment. See our <a href="{% url 'disclaimer' %}">Medical Disclaimer</a>.</p>
+      <p>Please read these Terms of Service ("Terms") carefully before using VYAYAM. By registering or using the platform, you agree to be bound by these Terms.</p>
 
-          <h5 class="fw-700 mt-4">3. Your Account</h5>
-          <ul>
-            <li>You are responsible for keeping your login credentials confidential.</li>
-            <li>You must provide accurate information during registration.</li>
-            <li>One account per person. Sharing accounts is not permitted.</li>
-            <li>You must notify us immediately of any unauthorised use of your account.</li>
-          </ul>
+      <h5>1. Acceptance of Terms</h5>
+      <p>By creating an account and using VYAYAM, you confirm that you are at least 13 years old, have read and understood these Terms and our <a href="{% url 'privacy_policy' %}">Privacy Policy</a>, and agree to comply with them.</p>
 
-          <h5 class="fw-700 mt-4">4. Health Information and Safety</h5>
-          <ul>
-            <li>You acknowledge that physical exercise carries inherent risk of injury.</li>
-            <li>You agree to complete the health screening (red-flag questionnaire) honestly.</li>
-            <li>You agree to stop exercising and consult a doctor if you experience pain, dizziness, chest pain, or any alarming symptoms.</li>
-            <li>Certain conditions (recent surgery, acute injury, uncontrolled medical conditions) may contraindicate use. If in doubt, consult your physician before starting.</li>
-          </ul>
+      <h5>2. Nature of the Service</h5>
+      <p>VYAYAM is an <strong>AI-assisted physiotherapy and strength training platform</strong>. It provides personalised exercise prescriptions, real-time form guidance, and progress tracking. It is <em>not</em> a substitute for professional medical advice, diagnosis, or treatment. See our <a href="{% url 'disclaimer' %}">Medical Disclaimer</a>.</p>
 
-          <h5 class="fw-700 mt-4">5. Consent to Data Processing</h5>
-          <p>By registering, you give explicit, free, and informed consent for VYAYAM to process your personal and health data as described in our <a href="{% url 'privacy_policy' %}">Privacy Policy</a>. You can withdraw consent at any time by deleting your account.</p>
+      <h5>3. Your Account</h5>
+      <ul>
+        <li>You are responsible for keeping your login credentials confidential.</li>
+        <li>You must provide accurate information during registration.</li>
+        <li>One account per person. Sharing accounts is not permitted.</li>
+        <li>You must notify us immediately of any unauthorised use of your account.</li>
+      </ul>
 
-          <h5 class="fw-700 mt-4">6. Permitted Use</h5>
-          <p>You may use VYAYAM solely for your personal, non-commercial fitness and rehabilitation purposes. You must not:</p>
-          <ul>
-            <li>Attempt to reverse-engineer, scrape, or copy the platform</li>
-            <li>Use the platform to harm yourself or others</li>
-            <li>Upload false health information to manipulate programme generation</li>
-            <li>Share your account with third parties</li>
-          </ul>
+      <h5>4. Health Information and Safety</h5>
+      <ul>
+        <li>You acknowledge that physical exercise carries inherent risk of injury.</li>
+        <li>You agree to complete the health screening (red-flag questionnaire) honestly.</li>
+        <li>You agree to stop exercising and consult a doctor if you experience pain, dizziness, chest pain, or any alarming symptoms.</li>
+        <li>Certain conditions (recent surgery, acute injury, uncontrolled medical conditions) may contraindicate use. If in doubt, consult your physician before starting.</li>
+      </ul>
 
-          <h5 class="fw-700 mt-4">7. Therapist / Coach Access</h5>
-          <p>If you are linked to a coach or physiotherapist on the platform, you consent to them viewing your health data, exercise logs, and progress reports for the purpose of programme management. You can request to be unlinked at any time.</p>
+      <h5>5. Consent to Data Processing</h5>
+      <p>By registering, you give explicit, free, and informed consent for VYAYAM to process your personal and health data as described in our <a href="{% url 'privacy_policy' %}">Privacy Policy</a>. You can withdraw consent at any time by deleting your account.</p>
 
-          <h5 class="fw-700 mt-4">8. Intellectual Property</h5>
-          <p>All content on VYAYAM (exercise databases, algorithms, designs, and software) is owned by VYAYAM and protected by applicable law. You receive a limited, non-exclusive, non-transferable licence to use the platform for personal purposes only.</p>
+      <h5>6. Permitted Use</h5>
+      <p>You may use VYAYAM solely for your personal, non-commercial fitness and rehabilitation purposes. You must not:</p>
+      <ul>
+        <li>Attempt to reverse-engineer, scrape, or copy the platform</li>
+        <li>Use the platform to harm yourself or others</li>
+        <li>Upload false health information to manipulate programme generation</li>
+        <li>Share your account with third parties</li>
+      </ul>
 
-          <h5 class="fw-700 mt-4">9. Limitation of Liability</h5>
-          <p>To the maximum extent permitted by Indian law, VYAYAM shall not be liable for any indirect, incidental, or consequential damages arising from your use of the platform, including injury resulting from exercise. Our liability is limited to the amount paid by you (if any) in the 12 months preceding the claim.</p>
+      <h5>7. Therapist / Coach Access</h5>
+      <p>If you are linked to a coach or physiotherapist on the platform, you consent to them viewing your health data, exercise logs, and progress reports for the purpose of programme management. You can request to be unlinked at any time.</p>
 
-          <h5 class="fw-700 mt-4">10. Termination</h5>
-          <p>You may terminate your account at any time using the <a href="{% url 'delete_account' %}">Delete My Account</a> page. We may suspend or terminate accounts that violate these Terms.</p>
+      <h5>8. Intellectual Property</h5>
+      <p>All content on VYAYAM (exercise databases, algorithms, designs, and software) is owned by VYAYAM and protected by applicable law. You receive a limited, non-exclusive, non-transferable licence to use the platform for personal purposes only.</p>
 
-          <h5 class="fw-700 mt-4">11. Governing Law</h5>
-          <p>These Terms are governed by the laws of India. Any disputes shall be subject to the exclusive jurisdiction of courts in India.</p>
+      <h5>9. Limitation of Liability</h5>
+      <p>To the maximum extent permitted by Indian law, VYAYAM shall not be liable for any indirect, incidental, or consequential damages arising from your use of the platform, including injury resulting from exercise. Our liability is limited to the amount paid by you (if any) in the 12 months preceding the claim.</p>
 
-          <h5 class="fw-700 mt-4">12. Changes</h5>
-          <p>We may update these Terms. Continued use after notice of changes constitutes acceptance. Material changes will be notified at least 15 days in advance.</p>
+      <h5>10. Termination</h5>
+      <p>You may terminate your account at any time using the <a href="{% url 'delete_account' %}">Delete My Account</a> page. We may suspend or terminate accounts that violate these Terms.</p>
 
-          <h5 class="fw-700 mt-4">13. Contact</h5>
-          <p>For questions about these Terms: <strong>legal@vyayam.in</strong></p>
+      <h5>11. Governing Law</h5>
+      <p>These Terms are governed by the laws of India. Any disputes shall be subject to the exclusive jurisdiction of courts in India.</p>
 
-          <div class="mt-5 pt-3 border-top">
-            <a href="{% url 'home' %}" class="btn btn-outline-secondary me-2">
-              <i class="fas fa-arrow-left me-2"></i>Back to Home
-            </a>
-            <a href="{% url 'privacy_policy' %}" class="btn btn-outline-primary me-2">Privacy Policy</a>
-            <a href="{% url 'disclaimer' %}" class="btn btn-outline-primary">Medical Disclaimer</a>
-          </div>
-        </div>
-      </div>
+      <h5>12. Changes</h5>
+      <p>We may update these Terms. Continued use after notice of changes constitutes acceptance. Material changes will be notified at least 15 days in advance.</p>
+
+      <h5>13. Contact</h5>
+      <p>For questions about these Terms: <strong>legal@vyayam.in</strong></p>
+
     </div>
   </div>
+
+  <!-- Footer links -->
+  <div class="flex flex-wrap gap-2 pt-1">
+    <a href="{% url 'home' %}"
+       class="inline-flex items-center gap-1.5 px-4 py-2 border border-outline-variant/40 bg-surface-container text-on-secondary-container text-sm font-medium rounded-lg no-underline">
+      <i class="fas fa-arrow-left text-xs"></i>Back to Home
+    </a>
+    <a href="{% url 'privacy_policy' %}"
+       class="inline-flex items-center gap-1.5 px-4 py-2 border border-primary/30 text-primary text-sm font-medium rounded-lg no-underline">
+      Privacy Policy
+    </a>
+    <a href="{% url 'disclaimer' %}"
+       class="inline-flex items-center gap-1.5 px-4 py-2 border border-primary/30 text-primary text-sm font-medium rounded-lg no-underline">
+      Medical Disclaimer
+    </a>
+  </div>
+
 </div>
 {% endblock %}

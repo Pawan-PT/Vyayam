@@ -1,146 +1,123 @@
-{% extends 'strength_app/base.html' %}
+{% extends 'strength_app/base_gamified.html' %}
 {% block title %}Nutrition Setup — VYAYAM{% endblock %}
+{% block bottom_nav %}{% endblock %}
 
-{% block extra_css %}
+{% block extra_head %}
 <style>
-  body { background: #0a0e27; color: #fff; }
-  .onb-container { max-width: 700px; margin: 0 auto; padding: 30px 20px; }
-  .progress-bar-outer { height: 6px; background: rgba(255,255,255,.1); border-radius: 6px; margin-bottom: 28px; }
-  .progress-bar-inner { height: 100%; background: linear-gradient(90deg,#667eea,#764ba2); border-radius: 6px; }
-  .step-label { font-size: .8rem; opacity: .5; margin-bottom: 6px; }
-  h2 { font-size: 1.6rem; font-weight: 800; margin-bottom: 6px; }
-  .subtitle { font-size: .95rem; opacity: .6; margin-bottom: 28px; }
-  .section-title { font-size: .75rem; text-transform: uppercase; letter-spacing: 1px; opacity: .5; margin-bottom: 10px; }
-  .goal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px; }
-  @media (max-width: 520px) { .goal-grid { grid-template-columns: 1fr; } }
-  .goal-card {
-    background: #1a1f3a; border-radius: 14px; padding: 16px;
-    border: 2px solid transparent; cursor: pointer; transition: all .2s;
-  }
-  .goal-card:hover { border-color: rgba(102,126,234,.4); }
-  .goal-card.selected { border-color: #667eea; background: rgba(102,126,234,.12); }
-  .goal-card input { display: none; }
-  .goal-card .goal-name { font-weight: 700; font-size: 1rem; margin-bottom: 4px; }
-  .goal-card .goal-note { font-size: .78rem; opacity: .6; line-height: 1.4; }
-  .info-card { background: #1a1f3a; border-radius: 14px; padding: 20px; margin-bottom: 18px; }
-  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-  @media (max-width: 520px) { .form-row { grid-template-columns: 1fr; } }
-  label { font-size: .85rem; opacity: .7; margin-bottom: 4px; display: block; }
-  select, input[type=number] {
-    width: 100%; background: #2a2f4a; border: 1px solid rgba(255,255,255,.1);
-    color: #fff; border-radius: 10px; padding: 10px 14px; font-size: .95rem;
-  }
-  .optional-badge {
-    display: inline-block; font-size: .7rem; background: rgba(255,255,255,.1);
-    border-radius: 20px; padding: 2px 10px; margin-left: 8px; vertical-align: middle;
-  }
-  .toggle-row { display: flex; align-items: center; justify-content: space-between; }
-  .toggle-switch { position: relative; width: 48px; height: 26px; }
-  .toggle-switch input { opacity: 0; width: 0; height: 0; }
-  .toggle-slider {
-    position: absolute; inset: 0; background: #2a2f4a;
-    border-radius: 26px; cursor: pointer; transition: .3s;
-  }
-  .toggle-slider:before {
-    content: ''; position: absolute; height: 20px; width: 20px;
-    left: 3px; bottom: 3px; background: #fff; border-radius: 50%; transition: .3s;
-  }
-  .toggle-switch input:checked + .toggle-slider { background: #667eea; }
-  .toggle-switch input:checked + .toggle-slider:before { transform: translateX(22px); }
-  .btn-primary {
-    width: 100%; padding: 14px; font-size: 1rem; font-weight: 700;
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    border: none; border-radius: 12px; color: #fff; cursor: pointer; margin-top: 8px;
-  }
-  .btn-skip {
-    width: 100%; padding: 10px; font-size: .9rem;
-    background: transparent; border: 1px solid rgba(255,255,255,.15);
-    border-radius: 12px; color: rgba(255,255,255,.5); cursor: pointer; margin-top: 10px;
-  }
+  /* JS-toggled goal card selection */
+  .nutr-goal-card { cursor: pointer; border: 2px solid transparent; border-radius: 14px; transition: all .2s; padding: 14px; background: #f4f6f4; }
+  .nutr-goal-card:hover { border-color: #6bbf8a; }
+  .nutr-goal-card.selected { border-color: #0c6c3f; background: rgba(12,108,63,0.08); }
+  .nutr-goal-card input { display: none; }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="onb-container">
-  <div class="step-label">Step {{ step }} of {{ total }}</div>
-  <div class="progress-bar-outer">
-    <div class="progress-bar-inner" style="width:{% widthratio step total 100 %}%;"></div>
+<div class="max-w-xl mx-auto px-4 pt-4 pb-8 space-y-4">
+
+  <!-- Progress -->
+  <div class="bg-surface-container-lowest rounded-lg px-5 py-4 shadow-[0_4px_20px_rgba(26,28,28,0.05)]">
+    <div class="flex justify-between items-center mb-2">
+      <span class="text-xs font-semibold text-on-secondary-container">Step {{ step }} of {{ total }}</span>
+      <span class="text-xs text-on-secondary-container">Nutrition Setup</span>
+    </div>
+    <div class="h-1.5 rounded-full bg-surface-container-high overflow-hidden">
+      <div class="h-full rounded-full bg-gradient-to-r from-primary to-primary-container" style="width:{% widthratio step total 100 %}%"></div>
+    </div>
   </div>
 
-  <h2>Nutrition Setup <span class="optional-badge">Optional</span></h2>
-  <p class="subtitle">Tell us your goal and we'll build a personalised macro plan — completely optional, skip anytime.</p>
+  <!-- Header -->
+  <div class="bg-surface-container-lowest rounded-lg p-5 shadow-[0_4px_20px_rgba(26,28,28,0.04)]">
+    <div class="flex items-center justify-between mb-1">
+      <h4 class="font-bold text-lg text-on-surface">Nutrition Setup</h4>
+      <span class="text-xs font-semibold px-2.5 py-1 bg-surface-container text-on-secondary-container rounded-full">Optional</span>
+    </div>
+    <p class="text-sm text-on-secondary-container">Tell us your goal and we'll build a personalised macro plan — completely optional, skip anytime.</p>
+  </div>
 
-  <form method="post">
+  <form method="post" id="nutritionForm">
     {% csrf_token %}
 
     <!-- Goal selection -->
-    <div class="section-title">What's your nutrition goal?</div>
-    <div class="goal-grid">
-      {% for key, label, note in goal_choices %}
-      <label class="goal-card {% if np.nutrition_goal == key or forloop.first and not np %}selected{% endif %}" id="goalCard_{{ key }}" onclick="selectGoal('{{ key }}')">
-        <input type="radio" name="nutrition_goal" value="{{ key }}" {% if np.nutrition_goal == key %}checked{% elif forloop.first and not np %}checked{% endif %}>
-        <div class="goal-name">{{ label }}</div>
-        <div class="goal-note">{{ note }}</div>
-      </label>
-      {% endfor %}
+    <div class="bg-surface-container-lowest rounded-lg p-5 shadow-[0_4px_20px_rgba(26,28,28,0.04)]">
+      <div class="text-[0.65rem] font-extrabold uppercase tracking-[0.14em] text-on-secondary-container opacity-70 mb-3">What's your nutrition goal?</div>
+      <div class="grid grid-cols-2 gap-2.5">
+        {% for key, label, note in goal_choices %}
+        <label class="nutr-goal-card {% if np.nutrition_goal == key or forloop.first and not np %}selected{% endif %}"
+               id="goalCard_{{ key }}" onclick="selectGoal('{{ key }}')">
+          <input type="radio" name="nutrition_goal" value="{{ key }}"
+            {% if np.nutrition_goal == key %}checked{% elif forloop.first and not np %}checked{% endif %}>
+          <div class="font-bold text-sm text-on-surface mb-0.5">{{ label }}</div>
+          <div class="text-xs text-on-secondary-container leading-relaxed">{{ note }}</div>
+        </label>
+        {% endfor %}
+      </div>
     </div>
 
     <!-- Body stats -->
-    <div class="info-card">
-      <div class="section-title">Body Stats <span class="optional-badge">for accurate targets</span></div>
-      <div class="form-row">
+    <div class="bg-surface-container-lowest rounded-lg p-5 shadow-[0_4px_20px_rgba(26,28,28,0.04)]">
+      <div class="text-[0.65rem] font-extrabold uppercase tracking-[0.14em] text-on-secondary-container opacity-70 mb-3">
+        Body Stats <span class="normal-case font-normal opacity-60">(for accurate targets)</span>
+      </div>
+      <div class="grid grid-cols-2 gap-3 mb-3">
         <div>
-          <label>Weight (kg)</label>
-          <input type="number" name="weight_kg" min="30" max="300" step="0.5" placeholder="e.g. 70" value="{{ np.weight_kg|default:'' }}">
+          <label class="block text-xs font-semibold text-on-surface mb-1">Weight (kg)</label>
+          <input type="number" name="weight_kg" min="30" max="300" step="0.5" placeholder="e.g. 70"
+                 value="{{ np.weight_kg|default:'' }}"
+                 class="w-full bg-surface-container border border-outline-variant/40 rounded-lg px-3 py-2 text-sm text-on-surface focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20">
         </div>
         <div>
-          <label>Height (cm)</label>
-          <input type="number" name="height_cm" min="100" max="250" step="1" placeholder="e.g. 170" value="{{ np.height_cm|default:'' }}">
+          <label class="block text-xs font-semibold text-on-surface mb-1">Height (cm)</label>
+          <input type="number" name="height_cm" min="100" max="250" step="1" placeholder="e.g. 170"
+                 value="{{ np.height_cm|default:'' }}"
+                 class="w-full bg-surface-container border border-outline-variant/40 rounded-lg px-3 py-2 text-sm text-on-surface focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20">
         </div>
       </div>
-      <div class="form-row mt-3">
-        <div>
-          <label>Activity Level</label>
-          <select name="activity_level">
-            <option value="sedentary" {% if np.activity_level == 'sedentary' %}selected{% endif %}>Sedentary</option>
-            <option value="lightly_active" {% if np.activity_level == 'lightly_active' %}selected{% endif %}>Lightly Active</option>
-            <option value="moderately_active" {% if not np or np.activity_level == 'moderately_active' %}selected{% endif %}>Moderately Active</option>
-            <option value="very_active" {% if np.activity_level == 'very_active' %}selected{% endif %}>Very Active</option>
-            <option value="extra_active" {% if np.activity_level == 'extra_active' %}selected{% endif %}>Athlete / Physical Job</option>
-          </select>
-        </div>
-      </div>
-    </div>
-
-    <!-- Mess mode toggle -->
-    <div class="info-card">
-      <div class="toggle-row">
-        <div>
-          <div style="font-weight:700;">Hostel / Mess Mode</div>
-          <div style="font-size:.8rem;opacity:.6;margin-top:4px;">I eat at a hostel mess — help me choose portions from what's served.</div>
-        </div>
-        <label class="toggle-switch" style="flex-shrink:0;margin-left:16px;">
-          <input type="checkbox" name="mess_mode" value="1" {% if np.mess_mode %}checked{% endif %}>
-          <span class="toggle-slider"></span>
-        </label>
+      <div>
+        <label class="block text-xs font-semibold text-on-surface mb-1">Activity Level</label>
+        <select name="activity_level"
+                class="w-full bg-surface-container border border-outline-variant/40 rounded-lg px-3 py-2 text-sm text-on-surface focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20">
+          <option value="sedentary"          {% if np.activity_level == 'sedentary' %}selected{% endif %}>Sedentary</option>
+          <option value="lightly_active"     {% if np.activity_level == 'lightly_active' %}selected{% endif %}>Lightly Active</option>
+          <option value="moderately_active"  {% if not np or np.activity_level == 'moderately_active' %}selected{% endif %}>Moderately Active</option>
+          <option value="very_active"        {% if np.activity_level == 'very_active' %}selected{% endif %}>Very Active</option>
+          <option value="extra_active"       {% if np.activity_level == 'extra_active' %}selected{% endif %}>Athlete / Physical Job</option>
+        </select>
       </div>
     </div>
 
-    <button type="submit" class="btn-primary">
+    <!-- Mess mode -->
+    <div class="bg-surface-container-lowest rounded-lg p-5 shadow-[0_4px_20px_rgba(26,28,28,0.04)]">
+      <label class="flex items-center justify-between cursor-pointer">
+        <div>
+          <div class="font-bold text-sm text-on-surface">Hostel / Mess Mode</div>
+          <div class="text-xs text-on-secondary-container mt-1 leading-relaxed">I eat at a hostel mess — help me choose portions from what's served.</div>
+        </div>
+        <input type="checkbox" name="mess_mode" value="1" {% if np.mess_mode %}checked{% endif %}
+               class="accent-primary w-5 h-5 flex-shrink-0 ml-4">
+      </label>
+    </div>
+
+    <button type="submit"
+            class="w-full py-3 bg-gradient-to-r from-primary to-primary-container text-white font-bold rounded-xl">
       <i class="fas fa-check me-2"></i>Save My Nutrition Plan
     </button>
   </form>
 
+  <!-- Skip form (separate POST) -->
   <form method="post">
     {% csrf_token %}
     <input type="hidden" name="skip_nutrition" value="1">
-    <button type="submit" class="btn-skip">Skip for now</button>
+    <button type="submit"
+            class="w-full py-2.5 border border-outline-variant/40 bg-surface-container text-on-secondary-container text-sm rounded-xl">
+      Skip for now
+    </button>
   </form>
-</div>
 
+</div>
 <script>
   function selectGoal(key) {
-    document.querySelectorAll('.goal-card').forEach(c => c.classList.remove('selected'));
+    document.querySelectorAll('.nutr-goal-card').forEach(c => c.classList.remove('selected'));
     const card = document.getElementById('goalCard_' + key);
     if (card) {
       card.classList.add('selected');

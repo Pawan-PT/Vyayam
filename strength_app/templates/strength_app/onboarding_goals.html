@@ -1,15 +1,17 @@
-{% extends 'strength_app/base.html' %}
+{% extends 'strength_app/base_gamified.html' %}
 {% block title %}Goals — VYAYAM Assessment{% endblock %}
+{% block bottom_nav %}{% endblock %}
 
-{% block extra_css %}
+{% block extra_head %}
 <style>
-  .goal-card { cursor: pointer; border: 2px solid transparent; border-radius: 14px; transition: all .2s; padding: 16px; position: relative; }
-  .goal-card:hover { border-color: #667eea; background: rgba(102,126,234,.04); }
-  .goal-card.selected { border-color: #667eea; background: rgba(102,126,234,.1); }
+  /* JS-toggled goal card selection */
+  .goal-card { cursor: pointer; border: 2px solid transparent; border-radius: 14px; transition: all .2s; padding: 14px; position: relative; background: #f4f6f4; }
+  .goal-card:hover { border-color: #6bbf8a; background: rgba(12,108,63,0.04); }
+  .goal-card.selected { border-color: #0c6c3f; background: rgba(12,108,63,0.08); }
   .goal-badge {
     display: none; position: absolute; top: -8px; right: -8px;
     width: 24px; height: 24px; border-radius: 50%;
-    background: var(--primary-gradient); color: white;
+    background: linear-gradient(135deg,#0c6c3f,#6bbf8a); color: white;
     font-size: .72rem; font-weight: 700;
     align-items: center; justify-content: center;
   }
@@ -18,68 +20,64 @@
 {% endblock %}
 
 {% block content %}
-<div class="fade-in">
-  <div class="row justify-content-center">
-    <div class="col-lg-8">
+<div class="max-w-xl mx-auto px-4 pt-4 pb-8 space-y-4">
 
-      <div class="mb-4">
-        <div class="d-flex justify-content-between align-items-center mb-2">
-          <span class="text-muted small fw-600">Step {{ step }} of {{ total }}</span>
-          <span class="text-muted small">Goals</span>
-        </div>
-        <div class="progress" style="height:6px;border-radius:6px;">
-          <div class="progress-bar" style="width:{% widthratio step total 100 %}%;background:var(--primary-gradient);"></div>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-body p-4">
-          <h4 class="fw-700 mb-1">What Are Your Goals?</h4>
-          <p class="text-muted mb-1">Select up to 3 goals in order of priority. Your first pick is the primary focus.</p>
-          <p id="hintText" class="small mb-4" style="color:#667eea;font-weight:600;">Tap to select — order matters</p>
-
-          <form method="post" id="goalsForm">
-            {% csrf_token %}
-            <input type="hidden" name="goal_type"      id="goalPrimary"   value="{{ initial_goal_type }}">
-            <input type="hidden" name="goal_secondary" id="goalSecondary" value="{{ initial_goal_secondary }}">
-            <input type="hidden" name="goal_tertiary"  id="goalTertiary"  value="">
-
-            <div class="row g-2 mb-4">
-              {% for goal in goals %}
-              <div class="col-md-4 col-6">
-                <div class="goal-card" data-key="{{ goal.key }}" onclick="toggleGoal('{{ goal.key }}', this)">
-                  <span class="goal-badge" id="badge-{{ goal.key }}"></span>
-                  <div class="fw-700 mb-1">{{ goal.label }}</div>
-                  {% if goal.notes %}
-                  <div class="text-muted" style="font-size:.75rem;">{{ goal.notes|truncatechars:60 }}</div>
-                  {% endif %}
-                </div>
-              </div>
-              {% endfor %}
-            </div>
-
-            <div id="athleticExtra" class="mb-3" style="display:none;">
-              <label class="form-label fw-600">Sport / Activity</label>
-              <input type="text" name="sport_type" class="form-control" placeholder="e.g. Football, Cycling, Tennis"
-                     value="{{ patient.sport_type }}">
-            </div>
-
-            <div id="athleticDate" class="mb-3" style="display:none;">
-              <label class="form-label fw-600">Next competition / event date <span class="text-muted">(optional)</span></label>
-              <input type="date" name="competition_date" class="form-control"
-                     value="{{ patient.competition_date|date:'Y-m-d' }}">
-            </div>
-
-            <button type="submit" id="submitBtn" class="btn w-100 py-3 fw-700" disabled
-                    style="background:var(--primary-gradient);color:white;border:none;border-radius:10px;opacity:.5;">
-              Save &amp; Continue <i class="fas fa-arrow-right ms-2"></i>
-            </button>
-          </form>
-        </div>
-      </div>
-
+  <!-- Progress -->
+  <div class="bg-surface-container-lowest rounded-lg px-5 py-4 shadow-[0_4px_20px_rgba(26,28,28,0.05)]">
+    <div class="flex justify-between items-center mb-2">
+      <span class="text-xs font-semibold text-on-secondary-container">Step {{ step }} of {{ total }}</span>
+      <span class="text-xs text-on-secondary-container">Goals</span>
+    </div>
+    <div class="h-1.5 rounded-full bg-surface-container-high overflow-hidden">
+      <div class="h-full rounded-full bg-gradient-to-r from-primary to-primary-container" style="width:{% widthratio step total 100 %}%"></div>
     </div>
   </div>
+
+  <!-- Form card -->
+  <div class="bg-surface-container-lowest rounded-lg p-5 shadow-[0_4px_20px_rgba(26,28,28,0.04)]">
+    <h4 class="font-bold text-lg text-on-surface mb-1">What Are Your Goals?</h4>
+    <p class="text-sm text-on-secondary-container mb-1">Select up to 3 goals in order of priority. Your first pick is the primary focus.</p>
+    <p id="hintText" class="text-sm font-semibold mb-4" style="color:#0c6c3f;">Tap to select — order matters</p>
+
+    <form method="post" id="goalsForm">
+      {% csrf_token %}
+      <input type="hidden" name="goal_type"      id="goalPrimary"   value="{{ initial_goal_type }}">
+      <input type="hidden" name="goal_secondary" id="goalSecondary" value="{{ initial_goal_secondary }}">
+      <input type="hidden" name="goal_tertiary"  id="goalTertiary"  value="">
+
+      <div class="grid grid-cols-2 gap-2.5 mb-4">
+        {% for goal in goals %}
+        <div class="goal-card" data-key="{{ goal.key }}" onclick="toggleGoal('{{ goal.key }}', this)">
+          <span class="goal-badge" id="badge-{{ goal.key }}"></span>
+          <div class="font-bold text-sm text-on-surface mb-0.5">{{ goal.label }}</div>
+          {% if goal.notes %}
+          <div class="text-xs text-on-secondary-container leading-relaxed">{{ goal.notes|truncatechars:60 }}</div>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+
+      <div id="athleticExtra" class="mb-3" style="display:none;">
+        <label class="block text-xs font-semibold text-on-surface mb-1">Sport / Activity</label>
+        <input type="text" name="sport_type" placeholder="e.g. Football, Cycling, Tennis"
+               value="{{ patient.sport_type }}"
+               class="w-full bg-surface-container border border-outline-variant/40 rounded-lg px-3 py-2 text-sm text-on-surface focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20">
+      </div>
+
+      <div id="athleticDate" class="mb-4" style="display:none;">
+        <label class="block text-xs font-semibold text-on-surface mb-1">Next competition / event date <span class="font-normal text-on-secondary-container">(optional)</span></label>
+        <input type="date" name="competition_date"
+               value="{{ patient.competition_date|date:'Y-m-d' }}"
+               class="w-full bg-surface-container border border-outline-variant/40 rounded-lg px-3 py-2 text-sm text-on-surface focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20">
+      </div>
+
+      <button type="submit" id="submitBtn" disabled
+              class="w-full py-3 bg-gradient-to-r from-primary to-primary-container text-white font-bold rounded-xl opacity-50">
+        Save &amp; Continue <i class="fas fa-arrow-right ms-2"></i>
+      </button>
+    </form>
+  </div>
+
 </div>
 <script>
   const MAX_GOALS = 3;
@@ -95,11 +93,9 @@
   function toggleGoal(key, el) {
     const idx = selectedGoals.indexOf(key);
     if (idx !== -1) {
-      // deselect
       selectedGoals.splice(idx, 1);
     } else {
       if (selectedGoals.length >= MAX_GOALS) {
-        // drop the last selected
         const dropped = selectedGoals.pop();
         document.querySelector('[data-key="' + dropped + '"]').classList.remove('selected');
       }
@@ -109,7 +105,6 @@
   }
 
   function refreshUI() {
-    // Update card states and badges
     document.querySelectorAll('.goal-card').forEach(card => {
       const key = card.dataset.key;
       const pos = selectedGoals.indexOf(key);
@@ -122,27 +117,22 @@
       }
     });
 
-    // Update hidden inputs
     document.getElementById('goalPrimary').value   = selectedGoals[0] || '';
     document.getElementById('goalSecondary').value = selectedGoals[1] || '';
     document.getElementById('goalTertiary').value  = selectedGoals[2] || '';
 
-    // Hint text
     document.getElementById('hintText').textContent = HINTS[selectedGoals.length] || HINTS[3];
 
-    // Submit button
     const btn = document.getElementById('submitBtn');
     btn.disabled = selectedGoals.length === 0;
     btn.style.opacity = selectedGoals.length === 0 ? '.5' : '1';
 
-    // Athletic/calisthenics extra fields
     const hasAthletic = selectedGoals.some(k => k === 'athletic' || k === 'calisthenics');
     const hasPureAthletic = selectedGoals.includes('athletic');
     document.getElementById('athleticExtra').style.display = hasAthletic ? 'block' : 'none';
     document.getElementById('athleticDate').style.display  = hasPureAthletic ? 'block' : 'none';
   }
 
-  // Init: restore previously saved goals (empty on first visit)
   document.addEventListener('DOMContentLoaded', function() {
     var existing = ['{{ initial_goal_type }}', '{{ initial_goal_secondary }}'].filter(function(g) { return g; });
     existing.forEach(function(key) {

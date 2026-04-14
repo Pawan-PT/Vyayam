@@ -1,316 +1,156 @@
-{% extends 'strength_app/base.html' %}
-
-{% block title %}Dashboard - VYAYAM{% endblock %}
+{% extends 'strength_app/base_gamified.html' %}
+{% block title %}Dashboard — VYAYAM{% endblock %}
 
 {% block content %}
-<div class="fade-in">
-    <!-- Welcome Header -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card" style="background: var(--primary-gradient); color: white;">
-                <div class="card-body p-4">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h2 class="mb-1">Welcome back, {{ patient.name }}! 👋</h2>
-                            <p class="mb-0 opacity-75">
-                                <i class="fas fa-id-card me-2"></i>{{ patient.patient_id }} • 
-                                <i class="fas fa-calendar ms-2 me-2"></i>Week {{ patient.current_week|default:"1" }}
-                            </p>
-                        </div>
-                        <div class="text-end">
-                            <span class="badge" style="background: rgba(255,255,255,0.3); font-size: 1rem; padding: 0.75rem 1.25rem;">
-                                {% if patient.prescription_mode == 'ai_auto' %}
-                                    🤖 AI Auto Mode
-                                {% else %}
-                                    👨‍⚕️ Therapist Mode
-                                {% endif %}
-                            </span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- V1 Assessment Banner (shown if StrengthProfile not yet completed) -->
-    {% if show_assessment_banner %}
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card border-0" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
-                <div class="card-body p-4 d-flex align-items-center justify-content-between flex-wrap gap-3">
-                    <div>
-                        <h5 class="fw-700 mb-1"><i class="fas fa-clipboard-check me-2"></i>Complete Your Clinical Assessment</h5>
-                        <p class="mb-0 opacity-90">Run the 7-movement test battery to get your personalised programme. Takes 15–20 minutes.</p>
-                    </div>
-                    <a href="{% url 'onboarding_start' %}" class="btn fw-700 px-4 py-2"
-                       style="background:white;color:#667eea;border:none;border-radius:10px;white-space:nowrap;">
-                        <i class="fas fa-play me-2"></i>Start Assessment
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
-    {% endif %}
+<div class="max-w-3xl mx-auto px-4 pt-5 pb-12 space-y-5">
 
-    <!-- Stats Overview -->
-    <div class="row mb-4">
-        <div class="col-md-3 mb-3">
-            <div class="stat-card primary">
-                <div class="d-flex justify-content-between align-items-start">
-                    <div>
-                        <p class="text-muted mb-1">Age</p>
-                        <h3 class="mb-0">{{ patient.age }}</h3>
-                        <small class="text-muted">years</small>
-                    </div>
-                    <div class="text-primary" style="font-size: 2rem; opacity: 0.3;">
-                        <i class="fas fa-birthday-cake"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-md-3 mb-3">
-            <div class="stat-card success">
-                <div class="d-flex justify-content-between align-items-start">
-                    <div>
-                        <p class="text-muted mb-1">Status</p>
-                        <h5 class="mb-0">{{ patient.get_status_display }}</h5>
-                        <small class="text-success">✓ Active</small>
-                    </div>
-                    <div class="text-success" style="font-size: 2rem; opacity: 0.3;">
-                        <i class="fas fa-check-circle"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-md-3 mb-3">
-            <div class="stat-card">
-                <div class="d-flex justify-content-between align-items-start">
-                    <div>
-                        <p class="text-muted mb-1">Lifestyle</p>
-                        <h6 class="mb-0">{{ patient.get_lifestyle_display }}</h6>
-                        <small class="text-muted">Activity level</small>
-                    </div>
-                    <div style="font-size: 2rem; opacity: 0.3; color: #667eea;">
-                        <i class="fas fa-running"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-md-3 mb-3">
-            <div class="stat-card danger">
-                <div class="d-flex justify-content-between align-items-start">
-                    <div>
-                        <p class="text-muted mb-1">Current Week</p>
-                        <h3 class="mb-0">Week {{ patient.current_week|default:"1" }}</h3>
-                        <small class="text-muted">Training period</small>
-                    </div>
-                    <div class="text-danger" style="font-size: 2rem; opacity: 0.3;">
-                        <i class="fas fa-calendar-week"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
+  <!-- Welcome hero -->
+  <div class="rounded-2xl px-5 py-5 text-white" style="background:linear-gradient(135deg,#0c6c3f 0%,#6bbf8a 100%);box-shadow:0 8px 28px rgba(12,108,63,0.28);">
+    <div class="flex items-center justify-between gap-3 flex-wrap">
+      <div>
+        <h2 class="text-xl font-extrabold mb-1">Welcome back, {{ patient.name }}! 👋</h2>
+        <p class="text-sm" style="opacity:.8;">
+          <i class="fas fa-id-card me-2"></i>{{ patient.patient_id }} &nbsp;·&nbsp;
+          <i class="fas fa-calendar me-2"></i>Week {{ patient.current_week|default:"1" }}
+        </p>
+      </div>
+      <span class="bg-white/20 text-white text-sm font-bold px-4 py-2 rounded-full">
+        {% if patient.prescription_mode == 'ai_auto' %}🤖 AI Auto Mode{% else %}👨‍⚕️ Therapist Mode{% endif %}
+      </span>
     </div>
-    
-    <!-- Journey Progress -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0 text-white">
-                        <i class="fas fa-rocket me-2"></i>Your Fitness Journey
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <!-- Step 1: Gate Testing -->
-                        <div class="col-md-4 mb-3">
-                            <div class="card h-100 {% if gate_test_complete %}border-success{% else %}border-warning{% endif %}" 
-                                 style="border-width: 2px;">
-                                <div class="card-body text-center p-4">
-                                    <div class="mb-3" style="font-size: 3rem;">
-                                        {% if gate_test_complete %}
-                                            <i class="fas fa-check-circle text-success"></i>
-                                        {% else %}
-                                            <i class="fas fa-hourglass-half text-warning"></i>
-                                        {% endif %}
-                                    </div>
-                                    <h5>Step 1: Gate Testing</h5>
-                                    <p class="text-muted small">
-                                        {% if gate_test_complete %}
-                                            ✓ Assessment Complete
-                                        {% else %}
-                                            Start your capability assessment
-                                        {% endif %}
-                                    </p>
-                                    {% if not gate_test_complete %}
-                                        <a href="{% url 'gate_testing' %}" class="btn btn-primary w-100">
-                                            <i class="fas fa-play me-2"></i>Start Now
-                                        </a>
-                                    {% else %}
-                                        <a href="{% url 'gate_test_results' %}" class="btn btn-outline-success w-100">
-                                            <i class="fas fa-eye me-2"></i>View Results
-                                        </a>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Step 2: Prescription -->
-                        <div class="col-md-4 mb-3">
-                            <div class="card h-100 {% if prescription_generated %}border-success{% else %}border-warning{% endif %}" 
-                                 style="border-width: 2px;">
-                                <div class="card-body text-center p-4">
-                                    <div class="mb-3" style="font-size: 3rem;">
-                                        {% if prescription_generated %}
-                                            <i class="fas fa-check-circle text-success"></i>
-                                        {% else %}
-                                            <i class="fas fa-hourglass-half text-warning"></i>
-                                        {% endif %}
-                                    </div>
-                                    <h5>Step 2: Prescription</h5>
-                                    <p class="text-muted small">
-                                        {% if prescription_generated %}
-                                            ✓ Program Generated
-                                        {% else %}
-                                            Get your personalized plan
-                                        {% endif %}
-                                    </p>
-                                    {% if gate_test_complete and not prescription_generated %}
-                                        <a href="{% url 'prescription' %}" class="btn btn-primary w-100">
-                                            <i class="fas fa-magic me-2"></i>Generate
-                                        </a>
-                                    {% elif not gate_test_complete %}
-                                        <button class="btn btn-secondary w-100" disabled>
-                                            Complete Step 1 First
-                                        </button>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Step 3: Workouts -->
-                        <div class="col-md-4 mb-3">
-                            <div class="card h-100 {% if latest_session %}border-success{% else %}border-warning{% endif %}" 
-                                 style="border-width: 2px;">
-                                <div class="card-body text-center p-4">
-                                    <div class="mb-3" style="font-size: 3rem;">
-                                        {% if latest_session %}
-                                            <i class="fas fa-fire text-danger"></i>
-                                        {% else %}
-                                            <i class="fas fa-dumbbell text-warning"></i>
-                                        {% endif %}
-                                    </div>
-                                    <h5>Step 3: Train</h5>
-                                    <p class="text-muted small">
-                                        {% if latest_session %}
-                                            🔥 Keep the momentum going!
-                                        {% else %}
-                                            Start your first workout
-                                        {% endif %}
-                                    </p>
-                                    {% if prescription_generated %}
-                                        <a href="{% url 'daily_workout' %}" class="btn btn-success w-100">
-                                            <i class="fas fa-play me-2"></i>Start Workout
-                                        </a>
-                                    {% else %}
-                                        <button class="btn btn-secondary w-100" disabled>
-                                            Complete Step 2 First
-                                        </button>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+  </div>
+
+  <!-- Assessment banner -->
+  {% if show_assessment_banner %}
+  <div class="bg-primary/8 border border-primary/20 rounded-xl px-5 py-4 flex flex-col sm:flex-row sm:items-center gap-3">
+    <div class="flex-1">
+      <div class="font-bold text-sm text-primary mb-0.5"><i class="fas fa-clipboard-check me-2"></i>Complete Your Clinical Assessment</div>
+      <p class="text-xs text-on-secondary-container mb-0">Run the 7-movement test battery to get your personalised programme. Takes 15–20 minutes.</p>
     </div>
-    
-    <!-- Latest Session -->
-    {% if latest_session %}
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card" style="border-left: 4px solid #11998e;">
-                <div class="card-body">
-                    <h5 class="mb-3">
-                        <i class="fas fa-history me-2"></i>Latest Workout Session
-                    </h5>
-                    <div class="row">
-                        <div class="col-md-3 text-center mb-3">
-                            <div class="p-3 rounded" style="background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);">
-                                <p class="text-muted mb-1 small">Date</p>
-                                <h6 class="mb-0">{{ latest_session.session_date|date:"M d, Y" }}</h6>
-                            </div>
-                        </div>
-                        <div class="col-md-3 text-center mb-3">
-                            <div class="p-3 rounded" style="background: linear-gradient(135deg, rgba(17, 153, 142, 0.1) 0%, rgba(56, 239, 125, 0.1) 100%);">
-                                <p class="text-muted mb-1 small">Duration</p>
-                                <h6 class="mb-0">{{ latest_session.total_duration_minutes }} min</h6>
-                            </div>
-                        </div>
-                        <div class="col-md-3 text-center mb-3">
-                            <div class="p-3 rounded" style="background: linear-gradient(135deg, rgba(17, 153, 142, 0.1) 0%, rgba(56, 239, 125, 0.1) 100%);">
-                                <p class="text-muted mb-1 small">Green Reps</p>
-                                <h6 class="mb-0 text-success">{{ latest_session.total_green_reps_all }}</h6>
-                            </div>
-                        </div>
-                        <div class="col-md-3 text-center mb-3">
-                            <div class="p-3 rounded" style="background: linear-gradient(135deg, rgba(240, 147, 251, 0.1) 0%, rgba(245, 87, 108, 0.1) 100%);">
-                                <p class="text-muted mb-1 small">Form Score</p>
-                                <h6 class="mb-0">{{ latest_session.overall_session_form_score|floatformat:0 }}%</h6>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+    <a href="{% url 'onboarding_start' %}"
+       class="flex-shrink-0 inline-flex items-center gap-2 px-4 py-2.5 bg-primary text-white font-bold text-sm rounded-xl no-underline">
+      <i class="fas fa-play text-xs"></i>Start Assessment
+    </a>
+  </div>
+  {% endif %}
+
+  <!-- Stat chips -->
+  <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+    <div class="bg-surface-container-lowest rounded-xl p-4 shadow-[0_2px_8px_rgba(26,28,28,0.06)]">
+      <div class="text-xs text-on-secondary-container/60 mb-0.5">Age</div>
+      <div class="text-2xl font-extrabold text-on-surface">{{ patient.age }}</div>
+      <div class="text-xs text-on-secondary-container">years</div>
     </div>
-    {% endif %}
-    
-    <!-- Quick Actions -->
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="mb-3">
-                        <i class="fas fa-bolt me-2"></i>Quick Actions
-                    </h5>
-                    <div class="d-flex flex-wrap gap-2">
-                        {% if not gate_test_complete %}
-                            <a href="{% url 'gate_testing' %}" class="btn btn-primary">
-                                <i class="fas fa-clipboard-check me-2"></i>Start Gate Testing
-                            </a>
-                        {% elif not prescription_generated %}
-                            <a href="{% url 'prescription' %}" class="btn btn-primary">
-                                <i class="fas fa-prescription me-2"></i>Generate Prescription
-                            </a>
-                        {% else %}
-                            <a href="{% url 'daily_workout' %}" class="btn btn-success">
-                                <i class="fas fa-dumbbell me-2"></i>Start Workout
-                            </a>
-                        {% endif %}
-                        
-                        <a href="{% url 'progress_reports' %}" class="btn btn-outline-primary">
-                            <i class="fas fa-chart-line me-2"></i>View Progress
-                        </a>
-                        
-                        <a href="{% url 'exercise_library' %}" class="btn btn-outline-primary">
-                            <i class="fas fa-book me-2"></i>Exercise Library
-                        </a>
-                        
-                        {% if gate_test_complete %}
-                            <a href="{% url 'gate_test_results' %}" class="btn btn-outline-secondary">
-                                <i class="fas fa-list me-2"></i>Test Results
-                            </a>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-        </div>
+    <div class="bg-surface-container-lowest rounded-xl p-4 shadow-[0_2px_8px_rgba(26,28,28,0.06)]">
+      <div class="text-xs text-on-secondary-container/60 mb-0.5">Status</div>
+      <div class="text-sm font-bold text-on-surface">{{ patient.get_status_display }}</div>
+      <div class="text-xs text-primary">✓ Active</div>
     </div>
+    <div class="bg-surface-container-lowest rounded-xl p-4 shadow-[0_2px_8px_rgba(26,28,28,0.06)]">
+      <div class="text-xs text-on-secondary-container/60 mb-0.5">Lifestyle</div>
+      <div class="text-sm font-bold text-on-surface">{{ patient.get_lifestyle_display }}</div>
+      <div class="text-xs text-on-secondary-container">Activity level</div>
+    </div>
+    <div class="bg-surface-container-lowest rounded-xl p-4 shadow-[0_2px_8px_rgba(26,28,28,0.06)]">
+      <div class="text-xs text-on-secondary-container/60 mb-0.5">Current Week</div>
+      <div class="text-2xl font-extrabold text-on-surface">{{ patient.current_week|default:"1" }}</div>
+      <div class="text-xs text-on-secondary-container">Training period</div>
+    </div>
+  </div>
+
+  <!-- Journey steps -->
+  <div class="bg-surface-container-lowest rounded-xl shadow-[0_4px_20px_rgba(26,28,28,0.06)]">
+    <div class="px-5 py-3 border-b border-outline-variant/15 font-bold text-sm text-on-surface">
+      <i class="fas fa-rocket me-2 text-primary/70"></i>Your Fitness Journey
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-outline-variant/15">
+      <!-- Step 1 -->
+      <div class="p-5 text-center">
+        <div class="text-4xl mb-3">{% if gate_test_complete %}<i class="fas fa-check-circle text-primary"></i>{% else %}<i class="fas fa-hourglass-half" style="color:#b08800;"></i>{% endif %}</div>
+        <h5 class="font-bold text-sm text-on-surface mb-1">Step 1: Gate Testing</h5>
+        <p class="text-xs text-on-secondary-container mb-3">{% if gate_test_complete %}✓ Assessment Complete{% else %}Start your capability assessment{% endif %}</p>
+        {% if not gate_test_complete %}
+        <a href="{% url 'gate_testing' %}" class="block py-2 bg-primary text-white font-bold text-xs rounded-lg no-underline">
+          <i class="fas fa-play me-1"></i>Start Now
+        </a>
+        {% else %}
+        <a href="{% url 'gate_test_results' %}" class="block py-2 border border-primary/30 text-primary font-bold text-xs rounded-lg no-underline">
+          <i class="fas fa-eye me-1"></i>View Results
+        </a>
+        {% endif %}
+      </div>
+      <!-- Step 2 -->
+      <div class="p-5 text-center">
+        <div class="text-4xl mb-3">{% if prescription_generated %}<i class="fas fa-check-circle text-primary"></i>{% else %}<i class="fas fa-hourglass-half" style="color:#b08800;"></i>{% endif %}</div>
+        <h5 class="font-bold text-sm text-on-surface mb-1">Step 2: Prescription</h5>
+        <p class="text-xs text-on-secondary-container mb-3">{% if prescription_generated %}✓ Program Generated{% else %}Get your personalized plan{% endif %}</p>
+        {% if gate_test_complete and not prescription_generated %}
+        <a href="{% url 'prescription' %}" class="block py-2 bg-primary text-white font-bold text-xs rounded-lg no-underline">
+          <i class="fas fa-magic me-1"></i>Generate
+        </a>
+        {% elif not gate_test_complete %}
+        <button class="w-full py-2 bg-surface-container text-on-secondary-container/50 font-bold text-xs rounded-lg" disabled>Complete Step 1 First</button>
+        {% endif %}
+      </div>
+      <!-- Step 3 -->
+      <div class="p-5 text-center">
+        <div class="text-4xl mb-3">{% if latest_session %}<i class="fas fa-fire text-error"></i>{% else %}<i class="fas fa-dumbbell" style="color:#b08800;"></i>{% endif %}</div>
+        <h5 class="font-bold text-sm text-on-surface mb-1">Step 3: Train</h5>
+        <p class="text-xs text-on-secondary-container mb-3">{% if latest_session %}🔥 Keep the momentum going!{% else %}Start your first workout{% endif %}</p>
+        {% if prescription_generated %}
+        <a href="{% url 'daily_workout' %}" class="block py-2 bg-primary text-white font-bold text-xs rounded-lg no-underline">
+          <i class="fas fa-play me-1"></i>Start Workout
+        </a>
+        {% else %}
+        <button class="w-full py-2 bg-surface-container text-on-secondary-container/50 font-bold text-xs rounded-lg" disabled>Complete Step 2 First</button>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Latest session -->
+  {% if latest_session %}
+  <div class="bg-surface-container-lowest rounded-xl px-5 py-5 shadow-[0_4px_20px_rgba(26,28,28,0.06)] border-l-4 border-primary">
+    <h5 class="font-bold text-sm text-on-surface mb-3"><i class="fas fa-history me-2 text-primary/70"></i>Latest Workout Session</h5>
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+      <div class="bg-primary/8 rounded-lg p-3">
+        <div class="text-xs text-on-secondary-container/60 mb-0.5">Date</div>
+        <div class="font-bold text-sm text-on-surface">{{ latest_session.session_date|date:"M d, Y" }}</div>
+      </div>
+      <div class="bg-primary/8 rounded-lg p-3">
+        <div class="text-xs text-on-secondary-container/60 mb-0.5">Duration</div>
+        <div class="font-bold text-sm text-on-surface">{{ latest_session.total_duration_minutes }} min</div>
+      </div>
+      <div class="bg-primary/8 rounded-lg p-3">
+        <div class="text-xs text-on-secondary-container/60 mb-0.5">Green Reps</div>
+        <div class="font-bold text-sm text-primary">{{ latest_session.total_green_reps_all }}</div>
+      </div>
+      <div class="bg-primary/8 rounded-lg p-3">
+        <div class="text-xs text-on-secondary-container/60 mb-0.5">Form Score</div>
+        <div class="font-bold text-sm text-on-surface">{{ latest_session.overall_session_form_score|floatformat:0 }}%</div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Quick actions -->
+  <div class="bg-surface-container-lowest rounded-xl px-5 py-5 shadow-[0_4px_20px_rgba(26,28,28,0.06)]">
+    <h5 class="font-bold text-sm text-on-surface mb-3"><i class="fas fa-bolt me-2 text-primary/70"></i>Quick Actions</h5>
+    <div class="flex flex-wrap gap-2">
+      {% if not gate_test_complete %}
+      <a href="{% url 'gate_testing' %}" class="inline-flex items-center gap-1.5 px-4 py-2 bg-primary text-white font-bold text-sm rounded-xl no-underline"><i class="fas fa-clipboard-check text-xs"></i>Start Gate Testing</a>
+      {% elif not prescription_generated %}
+      <a href="{% url 'prescription' %}" class="inline-flex items-center gap-1.5 px-4 py-2 bg-primary text-white font-bold text-sm rounded-xl no-underline"><i class="fas fa-prescription text-xs"></i>Generate Prescription</a>
+      {% else %}
+      <a href="{% url 'daily_workout' %}" class="inline-flex items-center gap-1.5 px-4 py-2 bg-primary text-white font-bold text-sm rounded-xl no-underline"><i class="fas fa-dumbbell text-xs"></i>Start Workout</a>
+      {% endif %}
+      <a href="{% url 'progress_reports' %}" class="inline-flex items-center gap-1.5 px-4 py-2 border border-primary/30 text-primary font-semibold text-sm rounded-xl no-underline"><i class="fas fa-chart-line text-xs"></i>View Progress</a>
+      <a href="{% url 'exercise_library' %}" class="inline-flex items-center gap-1.5 px-4 py-2 border border-primary/30 text-primary font-semibold text-sm rounded-xl no-underline"><i class="fas fa-book text-xs"></i>Exercise Library</a>
+      {% if gate_test_complete %}
+      <a href="{% url 'gate_test_results' %}" class="inline-flex items-center gap-1.5 px-4 py-2 border border-outline-variant/40 text-on-secondary-container font-semibold text-sm rounded-xl no-underline"><i class="fas fa-list text-xs"></i>Test Results</a>
+      {% endif %}
+    </div>
+  </div>
+
 </div>
 {% endblock %}

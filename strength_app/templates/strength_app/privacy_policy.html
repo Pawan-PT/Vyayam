@@ -1,98 +1,131 @@
-{% extends 'strength_app/base.html' %}
+{% extends 'strength_app/base_gamified.html' %}
 {% block title %}Privacy Policy — VYAYAM{% endblock %}
+{% block bottom_nav %}{% endblock %}
+
+{% block extra_head %}
+<style>
+  .legal-prose h5  { font-weight: 700; font-size: .92rem; color: #1a1c1c; margin-top: 1.5rem; margin-bottom: .4rem; }
+  .legal-prose p   { font-size: .875rem; color: #3d4f42; line-height: 1.75; margin-bottom: .75rem; }
+  .legal-prose ul  { padding-left: 1.25rem; margin-bottom: .75rem; list-style-type: disc; }
+  .legal-prose li  { font-size: .875rem; color: #3d4f42; line-height: 1.75; margin-bottom: .2rem; }
+  .legal-prose a   { color: #0c6c3f; text-decoration: underline; }
+  .legal-prose strong { color: #1a1c1c; }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="fade-in">
-  <div class="row justify-content-center">
-    <div class="col-lg-8">
-      <div class="card">
-        <div class="card-body p-5">
-          <h2 class="fw-700 mb-1">Privacy Policy</h2>
-          <p class="text-muted small mb-4">Last updated: March 2025 &nbsp;|&nbsp; Effective date: March 2025</p>
+<div class="max-w-xl mx-auto px-4 pt-4 pb-8 space-y-4">
 
-          <div class="alert alert-info mb-4" style="border-radius:10px;">
-            <i class="fas fa-shield-alt me-2"></i>
-            <strong>VYAYAM</strong> is committed to protecting your personal and health data in accordance with the
-            <strong>Digital Personal Data Protection Act, 2023 (DPDPA)</strong> of India.
-          </div>
+  <!-- Top bar -->
+  <div class="bg-surface-container-lowest rounded-lg px-5 py-4 shadow-[0_4px_20px_rgba(26,28,28,0.05)] flex items-center justify-between">
+    <div>
+      <div class="text-lg font-extrabold text-on-surface">Privacy Policy</div>
+      <div class="text-xs text-on-secondary-container mt-0.5">Last updated: March 2025 &nbsp;·&nbsp; Effective: March 2025</div>
+    </div>
+    <a href="{% url 'home' %}"
+       class="inline-flex items-center gap-1.5 text-sm text-primary font-semibold no-underline">
+      <i class="fas fa-arrow-left text-xs"></i>Home
+    </a>
+  </div>
 
-          <h5 class="fw-700 mt-4">1. Data Controller</h5>
-          <p>VYAYAM ("we", "us", "our") operates this platform. For any data-related queries, contact us at
-          <strong>privacy@vyayam.in</strong>.</p>
-
-          <h5 class="fw-700 mt-4">2. Data We Collect</h5>
-          <p>We collect the following categories of personal data when you register and use VYAYAM:</p>
-          <ul>
-            <li><strong>Identity data:</strong> name, age, biological sex (optional)</li>
-            <li><strong>Contact data:</strong> phone number, email address (optional)</li>
-            <li><strong>Health data:</strong> height, weight, training history, injury/pain history, fitness assessments, exercise results, hormonal cycle information (optional), and nutrition data (optional)</li>
-            <li><strong>Usage data:</strong> session logs, exercise performance, form scores, and progress metrics</li>
-            <li><strong>Device data:</strong> camera frames processed locally on your device for real-time form analysis (frames are <em>not</em> transmitted to or stored on our servers)</li>
-          </ul>
-
-          <h5 class="fw-700 mt-4">3. Purpose and Legal Basis</h5>
-          <p>We process your data for the following purposes:</p>
-          <ul>
-            <li>Delivering personalised physiotherapy and strength training programmes (<em>contractual necessity</em>)</li>
-            <li>Tracking progress and adjusting prescriptions over time (<em>legitimate interest / consent</em>)</li>
-            <li>Enabling therapist review and override of your programme (<em>consent</em>)</li>
-            <li>Nutrition tracking and meal planning (<em>consent</em>)</li>
-            <li>Safety and medical screening to prevent harm (<em>vital interest</em>)</li>
-          </ul>
-          <p>Health data is <strong>sensitive personal data</strong> under DPDPA. We process it only on the basis of your explicit, informed consent given at registration.</p>
-
-          <h5 class="fw-700 mt-4">4. Data Sharing</h5>
-          <p>We do <strong>not</strong> sell your personal data. We may share data with:</p>
-          <ul>
-            <li><strong>Your assigned physiotherapist / coach</strong> — to review and adjust your programme</li>
-            <li><strong>Cloud infrastructure providers</strong> — for secure hosting (data remains within India where feasible)</li>
-            <li><strong>Legal authorities</strong> — if required by law or court order</li>
-          </ul>
-
-          <h5 class="fw-700 mt-4">5. Data Retention</h5>
-          <p>We retain your personal data for as long as your account is active, plus 3 years thereafter for audit and safety purposes, unless you request deletion earlier. Health data is deleted within 30 days of a verified deletion request.</p>
-
-          <h5 class="fw-700 mt-4">6. Your Rights (DPDPA 2023)</h5>
-          <p>You have the following rights regarding your personal data:</p>
-          <ul>
-            <li><strong>Right to access</strong> — obtain a copy of the data we hold about you</li>
-            <li><strong>Right to correction</strong> — correct inaccurate or incomplete data</li>
-            <li><strong>Right to erasure</strong> — request deletion of your account and data</li>
-            <li><strong>Right to grievance redressal</strong> — raise a complaint through our grievance mechanism</li>
-            <li><strong>Right to nominate</strong> — nominate a person to exercise rights on your behalf in case of incapacity</li>
-          </ul>
-          <p>To exercise any right, email <strong>privacy@vyayam.in</strong> or use the
-          <a href="{% url 'delete_account' %}">Delete My Account</a> feature in the app.</p>
-
-          <h5 class="fw-700 mt-4">7. Security</h5>
-          <p>We use industry-standard security measures including encrypted data storage, hashed passwords, HTTPS-only access, and rate-limited authentication endpoints. Camera data for pose analysis is processed entirely on your device and never leaves it.</p>
-
-          <h5 class="fw-700 mt-4">8. Cookies</h5>
-          <p>We use session cookies (essential, not tracking) to keep you logged in. We do not use third-party advertising cookies.</p>
-
-          <h5 class="fw-700 mt-4">9. Children</h5>
-          <p>VYAYAM is not intended for users under 13. We do not knowingly collect data from children. If you believe a child has registered, contact us immediately.</p>
-
-          <h5 class="fw-700 mt-4">10. Changes to This Policy</h5>
-          <p>We may update this policy. Material changes will be notified by in-app notice at least 15 days in advance.</p>
-
-          <h5 class="fw-700 mt-4">11. Contact / Grievance Officer</h5>
-          <p>
-            Grievance Officer: VYAYAM Privacy Team<br>
-            Email: <strong>privacy@vyayam.in</strong><br>
-            Response time: within 72 hours of receipt
-          </p>
-
-          <div class="mt-5 pt-3 border-top">
-            <a href="{% url 'home' %}" class="btn btn-outline-secondary me-2">
-              <i class="fas fa-arrow-left me-2"></i>Back to Home
-            </a>
-            <a href="{% url 'terms_of_service' %}" class="btn btn-outline-primary me-2">Terms of Service</a>
-            <a href="{% url 'disclaimer' %}" class="btn btn-outline-primary">Medical Disclaimer</a>
-          </div>
-        </div>
-      </div>
+  <!-- DPDPA banner -->
+  <div class="bg-primary/8 border border-primary/20 rounded-lg px-4 py-3 flex items-start gap-2">
+    <i class="fas fa-shield-alt text-primary mt-0.5 flex-shrink-0"></i>
+    <div class="text-sm text-on-surface">
+      <strong>VYAYAM</strong> is committed to protecting your personal and health data in accordance with the
+      <strong>Digital Personal Data Protection Act, 2023 (DPDPA)</strong> of India.
     </div>
   </div>
+
+  <!-- Content card -->
+  <div class="bg-surface-container-lowest rounded-lg px-5 py-5 shadow-[0_4px_20px_rgba(26,28,28,0.04)]">
+    <div class="legal-prose">
+
+      <h5>1. Data Controller</h5>
+      <p>VYAYAM ("we", "us", "our") operates this platform. For any data-related queries, contact us at
+      <strong>privacy@vyayam.in</strong>.</p>
+
+      <h5>2. Data We Collect</h5>
+      <p>We collect the following categories of personal data when you register and use VYAYAM:</p>
+      <ul>
+        <li><strong>Identity data:</strong> name, age, biological sex (optional)</li>
+        <li><strong>Contact data:</strong> phone number, email address (optional)</li>
+        <li><strong>Health data:</strong> height, weight, training history, injury/pain history, fitness assessments, exercise results, hormonal cycle information (optional), and nutrition data (optional)</li>
+        <li><strong>Usage data:</strong> session logs, exercise performance, form scores, and progress metrics</li>
+        <li><strong>Device data:</strong> camera frames processed locally on your device for real-time form analysis (frames are <em>not</em> transmitted to or stored on our servers)</li>
+      </ul>
+
+      <h5>3. Purpose and Legal Basis</h5>
+      <p>We process your data for the following purposes:</p>
+      <ul>
+        <li>Delivering personalised physiotherapy and strength training programmes (<em>contractual necessity</em>)</li>
+        <li>Tracking progress and adjusting prescriptions over time (<em>legitimate interest / consent</em>)</li>
+        <li>Enabling therapist review and override of your programme (<em>consent</em>)</li>
+        <li>Nutrition tracking and meal planning (<em>consent</em>)</li>
+        <li>Safety and medical screening to prevent harm (<em>vital interest</em>)</li>
+      </ul>
+      <p>Health data is <strong>sensitive personal data</strong> under DPDPA. We process it only on the basis of your explicit, informed consent given at registration.</p>
+
+      <h5>4. Data Sharing</h5>
+      <p>We do <strong>not</strong> sell your personal data. We may share data with:</p>
+      <ul>
+        <li><strong>Your assigned physiotherapist / coach</strong> — to review and adjust your programme</li>
+        <li><strong>Cloud infrastructure providers</strong> — for secure hosting (data remains within India where feasible)</li>
+        <li><strong>Legal authorities</strong> — if required by law or court order</li>
+      </ul>
+
+      <h5>5. Data Retention</h5>
+      <p>We retain your personal data for as long as your account is active, plus 3 years thereafter for audit and safety purposes, unless you request deletion earlier. Health data is deleted within 30 days of a verified deletion request.</p>
+
+      <h5>6. Your Rights (DPDPA 2023)</h5>
+      <p>You have the following rights regarding your personal data:</p>
+      <ul>
+        <li><strong>Right to access</strong> — obtain a copy of the data we hold about you</li>
+        <li><strong>Right to correction</strong> — correct inaccurate or incomplete data</li>
+        <li><strong>Right to erasure</strong> — request deletion of your account and data</li>
+        <li><strong>Right to grievance redressal</strong> — raise a complaint through our grievance mechanism</li>
+        <li><strong>Right to nominate</strong> — nominate a person to exercise rights on your behalf in case of incapacity</li>
+      </ul>
+      <p>To exercise any right, email <strong>privacy@vyayam.in</strong> or use the
+      <a href="{% url 'delete_account' %}">Delete My Account</a> feature in the app.</p>
+
+      <h5>7. Security</h5>
+      <p>We use industry-standard security measures including encrypted data storage, hashed passwords, HTTPS-only access, and rate-limited authentication endpoints. Camera data for pose analysis is processed entirely on your device and never leaves it.</p>
+
+      <h5>8. Cookies</h5>
+      <p>We use session cookies (essential, not tracking) to keep you logged in. We do not use third-party advertising cookies.</p>
+
+      <h5>9. Children</h5>
+      <p>VYAYAM is not intended for users under 13. We do not knowingly collect data from children. If you believe a child has registered, contact us immediately.</p>
+
+      <h5>10. Changes to This Policy</h5>
+      <p>We may update this policy. Material changes will be notified by in-app notice at least 15 days in advance.</p>
+
+      <h5>11. Contact / Grievance Officer</h5>
+      <p>
+        Grievance Officer: VYAYAM Privacy Team<br>
+        Email: <strong>privacy@vyayam.in</strong><br>
+        Response time: within 72 hours of receipt
+      </p>
+
+    </div>
+  </div>
+
+  <!-- Footer links -->
+  <div class="flex flex-wrap gap-2 pt-1">
+    <a href="{% url 'home' %}"
+       class="inline-flex items-center gap-1.5 px-4 py-2 border border-outline-variant/40 bg-surface-container text-on-secondary-container text-sm font-medium rounded-lg no-underline">
+      <i class="fas fa-arrow-left text-xs"></i>Back to Home
+    </a>
+    <a href="{% url 'terms_of_service' %}"
+       class="inline-flex items-center gap-1.5 px-4 py-2 border border-primary/30 text-primary text-sm font-medium rounded-lg no-underline">
+      Terms of Service
+    </a>
+    <a href="{% url 'disclaimer' %}"
+       class="inline-flex items-center gap-1.5 px-4 py-2 border border-primary/30 text-primary text-sm font-medium rounded-lg no-underline">
+      Medical Disclaimer
+    </a>
+  </div>
+
 </div>
 {% endblock %}

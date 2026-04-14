@@ -1,58 +1,51 @@
-{% extends 'strength_app/base.html' %}
+{% extends 'strength_app/base_gamified.html' %}
 {% block title %}Session Check-In — VYAYAM{% endblock %}
 
-{% block extra_css %}
+{% block extra_head %}
 <style>
-  body { background: #0a0e27; color: #fff; }
-  .fb-wrap { max-width: 640px; margin: 0 auto; padding: 24px 16px; }
-  .top-bar { background: #1a1f3a; border-radius: 14px; padding: 16px 20px;
-    margin-bottom: 24px; }
-  .q-card { background: #1a1f3a; border-radius: 16px; padding: 22px; margin-bottom: 16px; }
-  .q-label { font-weight: 700; font-size: .95rem; margin-bottom: 14px; }
-  .q-sub { font-size: .8rem; opacity: .6; margin-top: 4px; }
-  .opt-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
-  .opt-btn { background: #2a2f4a; border: 2px solid transparent; border-radius: 12px;
-    padding: 12px 14px; text-align: left; cursor: pointer; transition: all .2s;
-    font-size: .88rem; font-weight: 600; color: #fff; }
-  .opt-btn:hover, .opt-btn.sel { border-color: #667eea; background: rgba(102,126,234,.15); }
-  .opt-btn input[type=radio] { display: none; }
-  .pain-fields { display: none; background: rgba(239,68,68,.08);
-    border: 1px solid rgba(239,68,68,.3); border-radius: 12px; padding: 18px; margin-top: 12px; }
-  .pain-fields.show { display: block; }
-  .form-label-sm { font-size: .82rem; font-weight: 600; opacity: .8; margin-bottom: 6px; display: block; }
-  .form-ctrl { width: 100%; background: #2a2f4a; border: 1px solid rgba(255,255,255,.1);
-    border-radius: 10px; padding: 10px 14px; color: #fff; font-size: .9rem; }
-  .form-ctrl:focus { outline: none; border-color: #667eea; }
-  .range-row { display: flex; align-items: center; gap: 12px; }
-  .range-input { flex: 1; }
-  .submit-btn { width: 100%; padding: 16px; font-size: 1rem; font-weight: 700;
-    background: linear-gradient(135deg, #11998e, #38ef7d);
-    border: none; border-radius: 14px; color: white; cursor: pointer; margin-top: 8px; }
-  .submit-btn:disabled { opacity: .5; cursor: not-allowed; }
-  @media(max-width:480px){
-    .q-label { font-size: 1rem; }
-    .q-sub { font-size: .85rem; }
-    .opt-btn { font-size: .95rem; padding: 12px 14px; }
-    .form-label-sm { font-size: .9rem; }
-    .form-ctrl { font-size: .95rem; }
+  /* JS-toggled selection state — cannot be expressed as static Tailwind utility classes */
+  .opt-btn {
+    background: #eeeeee;
+    border: 2px solid transparent;
+    border-radius: 12px;
+    padding: 12px 14px;
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #1a1c1c;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    width: 100%;
   }
+  .opt-btn:hover { border-color: #6bbf8a; background: rgba(12, 108, 63, 0.08); }
+  .opt-btn.sel   { border-color: #0c6c3f; background: rgba(12, 108, 63, 0.10); color: #0c6c3f; }
+  .opt-btn input[type=radio] { display: none; }
+
+  /* JS-toggled pain fields */
+  .pain-fields      { display: none; }
+  .pain-fields.show { display: block; }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="fb-wrap">
-  <div class="top-bar">
-    <div style="font-size:1.1rem;font-weight:800;">Post-Session Check-In</div>
-    <div style="font-size:.8rem;opacity:.6;margin-top:4px;">How did today go, {{ patient.name }}?</div>
+<div class="max-w-xl mx-auto px-4 pt-4 pb-8 space-y-4">
+
+  <!-- Top bar -->
+  <div class="bg-surface-container-lowest rounded-lg px-5 py-4 shadow-[0_4px_20px_rgba(26,28,28,0.05)]">
+    <div class="text-lg font-extrabold text-on-surface">Post-Session Check-In</div>
+    <div class="text-xs text-on-secondary-container font-medium mt-0.5">
+      How did today go, {{ patient.name }}?
+    </div>
   </div>
 
-  <form method="post">
+  <form method="post" class="space-y-4">
     {% csrf_token %}
 
     <!-- Q1: Difficulty -->
-    <div class="q-card">
-      <div class="q-label">1. How was today's session intensity?</div>
-      <div class="opt-grid">
+    <div class="bg-surface-container-lowest rounded-lg p-5 shadow-[0_4px_20px_rgba(26,28,28,0.04)]">
+      <div class="font-bold text-sm text-on-surface mb-3">1. How was today's session intensity?</div>
+      <div class="grid grid-cols-2 gap-2.5">
         {% for val, label in difficulty_choices %}
         <label class="opt-btn" id="diff_{{ val }}">
           <input type="radio" name="perceived_difficulty" value="{{ val }}" onchange="sel('diff','{{ val }}')">
@@ -68,9 +61,9 @@
     </div>
 
     <!-- Q2: Sleep -->
-    <div class="q-card">
-      <div class="q-label">2. How did you sleep last night?</div>
-      <div class="opt-grid">
+    <div class="bg-surface-container-lowest rounded-lg p-5 shadow-[0_4px_20px_rgba(26,28,28,0.04)]">
+      <div class="font-bold text-sm text-on-surface mb-3">2. How did you sleep last night?</div>
+      <div class="grid grid-cols-2 gap-2.5">
         <label class="opt-btn" id="sleep_under_5"><input type="radio" name="sleep_last_night" value="under_5" onchange="sel('sleep','under_5')">😔 Under 5 hrs</label>
         <label class="opt-btn" id="sleep_5_to_6"><input type="radio" name="sleep_last_night" value="5_to_6" onchange="sel('sleep','5_to_6')">😐 5–6 hrs</label>
         <label class="opt-btn" id="sleep_7_to_8"><input type="radio" name="sleep_last_night" value="7_to_8" onchange="sel('sleep','7_to_8')">😊 7–8 hrs</label>
@@ -79,42 +72,54 @@
     </div>
 
     <!-- Q3: Pain -->
-    <div class="q-card">
-      <div class="q-label">3. Did you experience any pain or discomfort?
-        <div class="q-sub">Sharp, unexpected, or joint pain — not normal muscle burn</div>
-      </div>
-      <div class="opt-grid">
+    <div class="bg-surface-container-lowest rounded-lg p-5 shadow-[0_4px_20px_rgba(26,28,28,0.04)]">
+      <div class="font-bold text-sm text-on-surface mb-1">3. Did you experience any pain or discomfort?</div>
+      <div class="text-xs text-on-secondary-container mb-3">Sharp, unexpected, or joint pain — not normal muscle burn</div>
+      <div class="grid grid-cols-2 gap-2.5">
         <label class="opt-btn" id="pain_none"><input type="radio" name="pain_reported" value="none" onchange="sel('pain','none');hidePain()">✅ None</label>
         <label class="opt-btn" id="pain_mild"><input type="radio" name="pain_reported" value="mild" onchange="sel('pain','mild');showPain()">😐 Mild</label>
         <label class="opt-btn" id="pain_moderate"><input type="radio" name="pain_reported" value="moderate" onchange="sel('pain','moderate');showPain()">😟 Moderate</label>
         <label class="opt-btn" id="pain_severe"><input type="radio" name="pain_reported" value="severe" onchange="sel('pain','severe');showPain()">🔴 Severe</label>
       </div>
-      <div class="pain-fields" id="painFields">
-        <label class="form-label-sm">Which area?</label>
-        <input type="text" name="pain_location" class="form-ctrl mb-3" placeholder="e.g. left knee, lower back">
-        <label class="form-label-sm">During which exercise?</label>
-        <select name="pain_exercise" class="form-ctrl mb-3">
-          <option value="">— select —</option>
-          {% for ex in working_sets %}
-          <option value="{{ ex.exercise_id }}">{{ ex.exercise_name }}</option>
-          {% endfor %}
-        </select>
-        <label class="form-label-sm">Severity (1–10)</label>
-        <div class="range-row">
-          <input type="range" name="pain_severity" class="range-input" min="1" max="10" value="3" oninput="document.getElementById('painVal').textContent=this.value">
-          <span id="painVal" style="font-weight:800;color:#ef4444;">3</span>
+      <!-- Pain detail fields (hidden until pain selected) -->
+      <div class="pain-fields bg-error-container/30 border border-error/20 rounded-lg p-4 mt-3 space-y-3" id="painFields">
+        <div>
+          <label class="block text-xs font-semibold text-on-surface mb-1">Which area?</label>
+          <input type="text" name="pain_location"
+                 class="w-full bg-surface-container border border-outline-variant/40 rounded-lg px-3 py-2 text-sm text-on-surface focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                 placeholder="e.g. left knee, lower back">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-on-surface mb-1">During which exercise?</label>
+          <select name="pain_exercise"
+                  class="w-full bg-surface-container border border-outline-variant/40 rounded-lg px-3 py-2 text-sm text-on-surface focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20">
+            <option value="">— select —</option>
+            {% for ex in working_sets %}
+            <option value="{{ ex.exercise_id }}">{{ ex.exercise_name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-on-surface mb-2">Severity (1–10)</label>
+          <div class="flex items-center gap-3">
+            <input type="range" name="pain_severity" min="1" max="10" value="3"
+                   class="flex-1" style="accent-color:#ba1a1a;"
+                   oninput="document.getElementById('painVal').textContent=this.value">
+            <span id="painVal" class="text-lg font-extrabold text-error w-6 text-center">3</span>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- Q4: Energy (+ hormonal conditional) -->
-    <div class="q-card">
-      <div class="q-label">4. Overall energy level today?
-        {% if show_hormonal %}
-        <div class="q-sub" style="color:#f093fb;">Tracking this during your {{ hormonal_phase|title }} phase</div>
-        {% endif %}
-      </div>
-      <div class="opt-grid">
+    <!-- Q4: Energy -->
+    <div class="bg-surface-container-lowest rounded-lg p-5 shadow-[0_4px_20px_rgba(26,28,28,0.04)]">
+      <div class="font-bold text-sm text-on-surface mb-1">4. Overall energy level today?</div>
+      {% if show_hormonal %}
+      <div class="text-xs mb-3" style="color:#7c3aed;">Tracking this during your {{ hormonal_phase|title }} phase</div>
+      {% else %}
+      <div class="mb-3"></div>
+      {% endif %}
+      <div class="grid grid-cols-2 gap-2.5">
         <label class="opt-btn" id="energy_low"><input type="radio" name="energy_level" value="low" onchange="sel('energy','low')">😴 Low</label>
         <label class="opt-btn" id="energy_moderate"><input type="radio" name="energy_level" value="moderate" onchange="sel('energy','moderate')">😐 Moderate</label>
         <label class="opt-btn" id="energy_good"><input type="radio" name="energy_level" value="good" onchange="sel('energy','good')">😊 Good</label>
@@ -122,22 +127,28 @@
       </div>
     </div>
 
-    <!-- Session RPE for ACWR (P31) -->
-    <div class="fb-card">
-      <div class="q-label">How hard was this session overall?</div>
-      <div style="display:flex;align-items:center;gap:10px;margin-top:8px;">
-        <span style="font-size:.8rem;color:#888;">Easy</span>
+    <!-- Session RPE -->
+    <div class="bg-surface-container-lowest rounded-lg p-5 shadow-[0_4px_20px_rgba(26,28,28,0.04)]">
+      <div class="font-bold text-sm text-on-surface mb-3">How hard was this session overall?</div>
+      <div class="flex items-center gap-3">
+        <span class="text-xs text-on-secondary-container">Easy</span>
         <input type="range" name="session_rpe" id="session_rpe" min="1" max="10" value="5"
-               style="flex:1;accent-color:#667eea;" oninput="document.getElementById('rpe_display').textContent=this.value">
-        <span style="font-size:.8rem;color:#888;">Max</span>
+               class="flex-1" style="accent-color:#0c6c3f;"
+               oninput="document.getElementById('rpe_display').textContent=this.value">
+        <span class="text-xs text-on-secondary-container">Max</span>
       </div>
-      <div style="text-align:center;margin-top:6px;">
-        <span style="display:inline-block;background:#667eea;color:white;padding:4px 14px;border-radius:20px;font-weight:700;font-size:1.1rem;" id="rpe_display">5</span>
-        <span style="font-size:.8rem;color:#888;"> / 10</span>
+      <div class="flex items-center justify-center gap-1 mt-3">
+        <span class="inline-block bg-primary text-white px-4 py-1 rounded-full font-extrabold text-lg" id="rpe_display">5</span>
+        <span class="text-xs text-on-secondary-container">/ 10</span>
       </div>
     </div>
 
-    <button type="submit" class="submit-btn"><i class="fas fa-check me-2"></i>Submit &amp; See Results</button>
+    <!-- Submit -->
+    <button type="submit"
+            class="w-full py-4 bg-gradient-to-r from-primary to-primary-container text-white font-bold text-base rounded-xl">
+      <i class="fas fa-check me-2"></i>Submit &amp; See Results
+    </button>
+
   </form>
 </div>
 

@@ -1,25 +1,27 @@
 {% extends 'strength_app/coach_base.html' %}
 {% block title %}Override Prescription — {{ patient.name }}{% endblock %}
 {% block page_title %}
-  <a href="{% url 'coach_athlete_detail' patient.patient_id %}" style="color:rgba(255,255,255,.5);text-decoration:none;font-size:.85rem;">← {{ patient.name }}</a>
+  <a href="{% url 'coach_athlete_detail' patient.patient_id %}" style="color:rgba(26,28,28,.4);text-decoration:none;font-size:.85rem;">← {{ patient.name }}</a>
   &nbsp;/&nbsp; Override Prescription
 {% endblock %}
 
 {% block extra_css %}
 <style>
-  .ex-row { display: flex; align-items: center; gap: 12px; padding: 12px;
-    background: #0d1117; border-radius: 10px; margin-bottom: 8px; }
-  .ex-row label { flex: 1; font-size: .88rem; cursor: pointer; }
-  .ex-check { width: 18px; height: 18px; accent-color: #667eea; flex-shrink: 0; }
-  .remove-row { border-left: 3px solid #ef4444; }
-  .keep-row   { border-left: 3px solid #22c55e; }
-  .notes-area { width: 100%; background: #0d1117; border: 1px solid rgba(255,255,255,.1);
-    border-radius: 10px; padding: 10px 14px; color: #fff; font-size: .85rem;
-    min-height: 80px; resize: vertical; }
+  .ex-row { display: flex; align-items: center; gap: 12px; padding: 11px 13px;
+    background: #f4f7f5; border-radius: 10px; margin-bottom: 7px; }
+  .ex-row label { flex: 1; font-size: .87rem; cursor: pointer; color: #1a1c1c; }
+  .ex-check { width: 18px; height: 18px; accent-color: #0c6c3f; flex-shrink: 0; }
+  .remove-row { border-left: 3px solid #ba1a1a; }
+  .keep-row   { border-left: 3px solid #0c6c3f; }
+  .notes-area { width: 100%; background: #f4f7f5; border: 1px solid rgba(26,28,28,.14);
+    border-radius: 10px; padding: 10px 14px; color: #1a1c1c; font-size: .85rem;
+    min-height: 80px; resize: vertical; font-family: inherit; }
+  .notes-area:focus { outline: none; border-color: #0c6c3f; }
   .field-row { margin-bottom: 14px; }
-  .field-label { font-size: .78rem; font-weight: 600; opacity: .65; margin-bottom: 6px; display: block; }
-  .field-input { background: #0d1117; border: 1px solid rgba(255,255,255,.1); border-radius: 8px;
-    padding: 9px 14px; color: #fff; font-size: .85rem; width: 100%; }
+  .field-label { font-size: .78rem; font-weight: 600; color: #3d4f42; opacity: .75; margin-bottom: 6px; display: block; }
+  .field-input { background: #f4f7f5; border: 1px solid rgba(26,28,28,.14); border-radius: 8px;
+    padding: 9px 14px; color: #1a1c1c; font-size: .85rem; width: 100%; font-family: inherit; }
+  .field-input:focus { outline: none; border-color: #0c6c3f; background: #fff; }
 </style>
 {% endblock %}
 
@@ -32,7 +34,7 @@
 
     <!-- AI prescription (checkboxes to exclude) -->
     <div class="c-card">
-      <div class="c-card-title">AI-Generated Exercises <span style="font-weight:400;opacity:.5;">(uncheck to remove)</span></div>
+      <div class="c-card-title">AI-Generated Exercises <span style="font-weight:400;opacity:.6;">(uncheck to remove)</span></div>
       {% if ai_session and ai_session.working_sets %}
         {% for ex in ai_session.working_sets %}
         <div class="ex-row keep-row" id="row_ai_{{ forloop.counter }}">
@@ -41,12 +43,12 @@
             checked onchange="updateRow(this)">
           <label for="ai_{{ forloop.counter }}">
             <strong>{{ ex.exercise_name|default:ex.exercise_id }}</strong>
-            <span style="opacity:.6;font-size:.78rem;"> — {{ ex.sets }}×{{ ex.reps }} · {{ ex.movement_pattern }}</span>
+            <span style="opacity:.55;font-size:.78rem;"> — {{ ex.sets }}×{{ ex.reps }} · {{ ex.movement_pattern }}</span>
           </label>
         </div>
         {% endfor %}
       {% else %}
-        <div style="opacity:.45;font-size:.85rem;">No AI session available for this patient.</div>
+        <div style="color:#3d4f42;opacity:.5;font-size:.85rem;">No AI session available for this patient.</div>
       {% endif %}
     </div>
 
@@ -58,7 +60,7 @@
           <label class="field-label">Exercise ID (from library)</label>
           <input type="text" id="addExId" class="field-input" placeholder="e.g. full_squats">
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;">
           <div><label class="field-label">Sets</label><input type="number" id="addSets" class="field-input" value="3" min="1" max="10"></div>
           <div><label class="field-label">Reps</label><input type="number" id="addReps" class="field-input" value="10" min="1" max="50"></div>
           <div><label class="field-label">Rest (s)</label><input type="number" id="addRest" class="field-input" value="75" min="15" max="300"></div>
@@ -122,21 +124,19 @@ function addCustomExercise() {
   const list = document.getElementById('customExList');
   const div = document.createElement('div');
   div.className = 'ex-row keep-row';
-  div.innerHTML = `<span style="flex:1;font-size:.85rem;">+ ${id} · ${ex.sets}×${ex.reps}</span>
-    <button type="button" style="background:none;border:none;color:#ef4444;cursor:pointer;" onclick="this.parentElement.remove();customExercises=customExercises.filter(e=>e.exercise_id!=='${id}')">✕</button>`;
+  div.innerHTML = `<span style="flex:1;font-size:.85rem;color:#1a1c1c;">+ ${id} · ${ex.sets}×${ex.reps}</span>
+    <button type="button" style="background:none;border:none;color:#ba1a1a;cursor:pointer;font-size:.9rem;" onclick="this.parentElement.remove();customExercises=customExercises.filter(e=>e.exercise_id!=='${id}')">✕</button>`;
   list.appendChild(div);
   document.getElementById('addExId').value = '';
 }
 
 function buildExercisesJson() {
   const exercises = [];
-  // AI exercises — checked = keep, unchecked = remove
   document.querySelectorAll('.ai-ex').forEach(cb => {
     const data = JSON.parse(cb.dataset.ex);
     data.action = cb.checked ? 'keep' : 'remove';
     exercises.push(data);
   });
-  // Custom adds
   customExercises.forEach(ex => exercises.push(ex));
   document.getElementById('exercisesJson').value = JSON.stringify(exercises);
 }

@@ -7,33 +7,33 @@
 <div style="max-width: 480px;">
   <div class="c-card">
     <div class="c-card-title">Link Athlete to Your Squad</div>
-    <p style="font-size:.85rem;opacity:.7;margin-bottom:20px;">
+    <p style="font-size:.85rem;color:#3d4f42;margin-bottom:20px;line-height:1.6;">
       Enter the athlete's phone number they registered with.
       Once linked, their progress will appear in your squad view.
     </p>
 
     {% if error %}
-    <div style="background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.25);border-radius:10px;padding:12px 16px;font-size:.84rem;color:#fca5a5;margin-bottom:16px;">
+    <div style="background:rgba(186,26,26,.08);border:1px solid rgba(186,26,26,.22);border-radius:10px;padding:12px 16px;font-size:.84rem;color:#ba1a1a;margin-bottom:16px;">
       <i class="fas fa-exclamation-circle me-2"></i>{{ error }}
     </div>
     {% endif %}
 
     <form method="POST">
       {% csrf_token %}
-      <label class="form-label fw-600">Athlete's Phone Number</label>
-      <input type="tel" name="phone" class="form-control"
-        style="width:100%;background:#0d1117;border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:11px 16px;color:#fff;font-size:.9rem;margin-bottom:6px;"
+      <label style="display:block;font-size:.82rem;font-weight:600;color:#3d4f42;margin-bottom:6px;">Athlete's Phone Number</label>
+      <input type="tel" name="phone"
+        style="width:100%;background:#f4f7f5;border:1px solid rgba(26,28,28,.14);border-radius:10px;padding:11px 16px;color:#1a1c1c;font-size:.9rem;margin-bottom:6px;font-family:inherit;"
         placeholder="10-digit phone number" required autofocus>
-      <small class="text-muted" style="display:block;margin-bottom:16px;">Enter the phone number the athlete registered with.</small>
+      <small style="display:block;margin-bottom:16px;font-size:.78rem;color:#3d4f42;opacity:.7;">Enter the phone number the athlete registered with.</small>
       <button type="submit" class="btn-coach btn-primary-c" style="width:100%;justify-content:center;padding:12px;">
         <i class="fas fa-link me-2"></i> Link Athlete
       </button>
     </form>
   </div>
 
-  <div class="c-card" style="opacity:.7;">
+  <div class="c-card" style="opacity:.75;">
     <div class="c-card-title">How to find an athlete</div>
-    <ul style="font-size:.82rem;line-height:2;padding-left:1.2rem;">
+    <ul style="font-size:.82rem;color:#3d4f42;line-height:2.2;padding-left:1.2rem;">
       <li>Use the 10-digit phone number the athlete registered with</li>
       <li>Ask the athlete to confirm their registered phone number if unsure</li>
     </ul>

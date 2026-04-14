@@ -1,8 +1,9 @@
-{% extends 'strength_app/base.html' %}
+{% extends 'strength_app/base_gamified.html' %}
 {% load static %}
 {% block title %}{{ test.name }} — VYAYAM Assessment{% endblock %}
+{% block bottom_nav %}{% endblock %}
 
-{% block extra_css %}
+{% block extra_head %}
 <style>
   body { background: #0a0e27; color: #fff; }
   .test-container { max-width: 1100px; margin: 0 auto; padding: 20px; }
@@ -33,7 +34,7 @@
   }
   .countdown-svg { transform: rotate(-90deg); }
   .countdown-bg { fill: none; stroke: rgba(255,255,255,.1); stroke-width: 8; }
-  .countdown-fg { fill: none; stroke: #667eea; stroke-width: 8; stroke-linecap: round;
+  .countdown-fg { fill: none; stroke: #0c6c3f; stroke-width: 8; stroke-linecap: round;
     stroke-dasharray: 283; stroke-dashoffset: 283; transition: stroke-dashoffset .5s linear; }
   .countdown-text {
     position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
@@ -46,19 +47,19 @@
     cursor: pointer; transition: all .2s; min-height: 48px;
   }
   .score-btn:hover, .score-btn.selected {
-    border-color: #667eea; background: rgba(102,126,234,.15);
+    border-color: #0c6c3f; background: rgba(12,108,63,.15);
   }
-  .score-btn .score-num { font-size: 1.5rem; font-weight: 800; color: #667eea; flex-shrink: 0; min-width: 28px; }
+  .score-btn .score-num { font-size: 1.5rem; font-weight: 800; color: #0c6c3f; flex-shrink: 0; min-width: 28px; }
   .score-desc { font-size: .85rem; color: rgba(255,255,255,.7); line-height: 1.5; word-wrap: break-word; overflow-wrap: break-word; }
   .variant-picker { display: flex; flex-direction: column; gap: 12px; }
   .variant-btn {
-    background: #2a2f4a; border: 2px solid rgba(102,126,234,.3); border-radius: 12px;
+    background: #2a2f4a; border: 2px solid rgba(12,108,63,.3); border-radius: 12px;
     padding: 16px 18px; color: #fff; text-align: left; cursor: pointer;
     font-size: .95rem; font-weight: 600; transition: all .2s; text-decoration: none;
     display: block;
   }
-  .variant-btn:hover { border-color: #667eea; background: rgba(102,126,234,.18); color: #fff; }
-  .variant-btn i { margin-right: 10px; color: #667eea; }
+  .variant-btn:hover { border-color: #0c6c3f; background: rgba(12,108,63,.18); color: #fff; }
+  .variant-btn i { margin-right: 10px; color: #0c6c3f; }
   .side-badge {
     display: inline-block; padding: 4px 14px; border-radius: 20px;
     font-size: .8rem; font-weight: 700; text-transform: uppercase;
@@ -67,7 +68,7 @@
   .side-right { background: #b45309; }
   .start-btn {
     width: 100%; padding: 14px; font-size: 1rem; font-weight: 700;
-    background: linear-gradient(135deg, #667eea, #764ba2);
+    background: linear-gradient(135deg, #0c6c3f, #6bbf8a);
     border: none; border-radius: 12px; color: white; cursor: pointer;
     transition: opacity .2s;
   }
@@ -79,7 +80,7 @@
     display: none;
   }
 </style>
-{% endblock %}
+{% endblock extra_head %}
 
 {% block content %}
 <div class="test-container">
@@ -96,7 +97,7 @@
     {% endif %}
     <div style="flex:1;min-width:100px;">
       <div class="progress" style="height:6px;border-radius:6px;background:rgba(255,255,255,.1);">
-        <div class="progress-bar" style="width:{{ progress_pct }}%;background:linear-gradient(90deg,#667eea,#764ba2);"></div>
+        <div class="progress-bar" style="width:{{ progress_pct }}%;background:linear-gradient(90deg,#0c6c3f,#6bbf8a);"></div>
       </div>
     </div>
   </div>

@@ -1,189 +1,109 @@
-{% extends 'strength_app/base.html' %}
+{% extends 'strength_app/base_gamified.html' %}
 
 {% block title %}Stretching Complete — VYAYAM{% endblock %}
+{% block bottom_nav %}{% endblock %}
 
-{% block extra_css %}
+{% block extra_head %}
 <style>
-    .complete-hero {
-        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-        border-radius: 20px;
-        padding: 2.5rem;
-        color: white;
-        text-align: center;
-        margin-bottom: 2rem;
-        box-shadow: 0 8px 32px rgba(17, 153, 142, 0.3);
-    }
-
-    .complete-icon {
-        font-size: 4rem;
-        margin-bottom: 1rem;
-    }
-
-    .stat-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-        gap: 1rem;
-        margin-bottom: 2rem;
-    }
-
-    .stat-item {
-        background: white;
-        border-radius: 16px;
-        padding: 1.5rem 1rem;
-        text-align: center;
-        box-shadow: 0 2px 12px rgba(0,0,0,0.06);
-    }
-
-    .stat-num {
-        font-size: 2.2rem;
-        font-weight: 800;
-        background: linear-gradient(135deg, #667eea, #764ba2);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-    }
-
-    .stat-lbl {
-        font-size: 0.8rem;
-        color: #64748b;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        margin-top: 4px;
-    }
-
-    .result-row {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 10px 0;
-        border-bottom: 1px solid #f1f5f9;
-    }
-
-    .result-row:last-child { border-bottom: none; }
-
-    .result-icon {
-        width: 32px;
-        height: 32px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 0.9rem;
-        flex-shrink: 0;
-    }
-
-    .result-icon.done    { background: #dcfce7; color: #16a34a; }
-    .result-icon.skipped { background: #fee2e2; color: #dc2626; }
-
-    .result-name { font-weight: 600; color: #1e293b; font-size: 0.95rem; }
-    .result-meta { font-size: 0.8rem; color: #64748b; }
-
-    .result-duration {
-        margin-left: auto;
-        font-size: 0.85rem;
-        color: #475569;
-        white-space: nowrap;
-    }
-
-    .side-pill {
-        font-size: 0.7rem;
-        font-weight: 700;
-        padding: 2px 8px;
-        border-radius: 12px;
-    }
-    .side-left  { background: #dbeafe; color: #1d4ed8; }
-    .side-right { background: #fef3c7; color: #b45309; }
-    .side-both  { background: #dcfce7; color: #15803d; }
+  .stat-num {
+    font-size: 2rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, #0c6c3f, #6bbf8a);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="fade-in">
+<div class="max-w-2xl mx-auto px-4 pt-6 pb-12 space-y-5">
 
-    <!-- Hero -->
-    <div class="complete-hero">
-        <div class="complete-icon">🎉</div>
-        <h1 class="fw-bold mb-2">Stretching Complete!</h1>
-        <p class="mb-0" style="opacity:0.9; font-size:1.1rem;">
-            Great work, {{ patient.name }}. Your body is ready to perform.
-        </p>
+  <!-- Hero -->
+  <div class="rounded-2xl p-6 text-white text-center" style="background:linear-gradient(135deg,#11998e 0%,#38ef7d 100%);box-shadow:0 8px 32px rgba(17,153,142,0.28);">
+    <div class="text-5xl mb-3">🎉</div>
+    <h1 class="text-2xl font-extrabold mb-1">Stretching Complete!</h1>
+    <p class="text-sm" style="opacity:0.9;">Great work, {{ patient.name }}. Your body is ready to perform.</p>
+  </div>
+
+  <!-- Stats grid -->
+  <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+    <div class="bg-surface-container-lowest rounded-xl p-4 text-center shadow-[0_2px_12px_rgba(26,28,28,0.06)]">
+      <div class="stat-num">{{ stretches_completed }}/{{ total_stretches }}</div>
+      <div class="text-xs font-semibold text-on-secondary-container uppercase tracking-wide mt-1">Completed</div>
     </div>
+    <div class="bg-surface-container-lowest rounded-xl p-4 text-center shadow-[0_2px_12px_rgba(26,28,28,0.06)]">
+      <div class="stat-num">{{ total_duration }}s</div>
+      <div class="text-xs font-semibold text-on-secondary-container uppercase tracking-wide mt-1">Duration</div>
+    </div>
+    <div class="bg-surface-container-lowest rounded-xl p-4 text-center shadow-[0_2px_12px_rgba(26,28,28,0.06)]">
+      {% if total_stretches %}
+      <div class="stat-num">{% widthratio stretches_completed total_stretches 100 %}%</div>
+      {% else %}
+      <div class="stat-num">0%</div>
+      {% endif %}
+      <div class="text-xs font-semibold text-on-secondary-container uppercase tracking-wide mt-1">Completion</div>
+    </div>
+    <div class="bg-surface-container-lowest rounded-xl p-4 text-center shadow-[0_2px_12px_rgba(26,28,28,0.06)]">
+      <div class="stat-num">{% if camera_used %}📷{% else %}—{% endif %}</div>
+      <div class="text-xs font-semibold text-on-secondary-container uppercase tracking-wide mt-1">Camera</div>
+    </div>
+  </div>
 
-    <!-- Stats -->
-    <div class="stat-grid">
-        <div class="stat-item">
-            <div class="stat-num">{{ stretches_completed }}/{{ total_stretches }}</div>
-            <div class="stat-lbl">Completed</div>
+  <!-- Per-stretch results -->
+  <div class="bg-surface-container-lowest rounded-xl shadow-[0_4px_20px_rgba(26,28,28,0.06)]">
+    <div class="px-5 py-3 border-b border-outline-variant/15 font-bold text-sm text-on-surface">
+      <i class="fas fa-list-check me-2 text-primary/70"></i>Stretch Results
+    </div>
+    <div class="divide-y divide-outline-variant/10 px-5">
+      {% for r in results %}
+      <div class="flex items-center gap-3 py-3">
+        <!-- Icon -->
+        <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-sm
+          {% if r.completed %}bg-primary/10 text-primary{% else %}bg-error-container/30 text-error{% endif %}">
+          {% if r.completed %}<i class="fas fa-check"></i>{% else %}<i class="fas fa-times"></i>{% endif %}
         </div>
-        {% with mins=total_duration|divisibleby:60 %}
-        <div class="stat-item">
-            <div class="stat-num">{{ total_duration }}s</div>
-            <div class="stat-lbl">Total Duration</div>
-        </div>
-        {% endwith %}
-        <div class="stat-item">
-            {% if total_stretches %}
-            <div class="stat-num">{% widthratio stretches_completed total_stretches 100 %}%</div>
+        <!-- Name + meta -->
+        <div class="flex-1 min-w-0">
+          <div class="font-semibold text-sm text-on-surface flex flex-wrap items-center gap-1.5">
+            {{ r.name }}
+            {% if r.side == 'left' %}
+            <span class="text-xs font-bold px-2 py-0.5 rounded-full" style="background:#dbeafe;color:#1d4ed8;">Left</span>
+            {% elif r.side == 'right' %}
+            <span class="text-xs font-bold px-2 py-0.5 rounded-full" style="background:#fef3c7;color:#b45309;">Right</span>
             {% else %}
-            <div class="stat-num">0%</div>
+            <span class="text-xs font-bold px-2 py-0.5 rounded-full" style="background:#dcfce7;color:#15803d;">Both</span>
             {% endif %}
-            <div class="stat-lbl">Completion Rate</div>
+          </div>
+          <div class="text-xs text-on-secondary-container/70 mt-0.5">{{ r.muscle_group }}</div>
         </div>
-        <div class="stat-item">
-            <div class="stat-num">{% if camera_used %}📷{% else %}—{% endif %}</div>
-            <div class="stat-lbl">Camera Used</div>
+        <!-- Duration -->
+        <div class="text-xs text-on-secondary-container whitespace-nowrap">
+          {% if r.completed %}{{ r.actual_duration }}s / {{ r.prescribed_duration }}s
+          {% else %}<span class="text-on-secondary-container/50">Skipped</span>{% endif %}
         </div>
+      </div>
+      {% empty %}
+      <p class="py-4 text-sm text-on-secondary-container/60">No stretch data recorded.</p>
+      {% endfor %}
     </div>
+  </div>
 
-    <!-- Per-stretch results -->
-    <div class="card mb-4">
-        <div class="card-header">
-            <i class="fas fa-list-check me-2"></i> Stretch Results
-        </div>
-        <div class="card-body">
-            {% for r in results %}
-            <div class="result-row">
-                <div class="result-icon {% if r.completed %}done{% else %}skipped{% endif %}">
-                    {% if r.completed %}
-                    <i class="fas fa-check"></i>
-                    {% else %}
-                    <i class="fas fa-times"></i>
-                    {% endif %}
-                </div>
-                <div>
-                    <div class="result-name">
-                        {{ r.name }}
-                        <span class="side-pill side-{{ r.side }} ms-1">{{ r.side }}</span>
-                    </div>
-                    <div class="result-meta">{{ r.muscle_group }}</div>
-                </div>
-                <div class="result-duration">
-                    {% if r.completed %}
-                    {{ r.actual_duration }}s / {{ r.prescribed_duration }}s
-                    {% else %}
-                    <span class="text-muted">Skipped</span>
-                    {% endif %}
-                </div>
-            </div>
-            {% empty %}
-            <p class="text-muted mb-0">No stretch data recorded.</p>
-            {% endfor %}
-        </div>
-    </div>
-
-    <!-- Action buttons -->
-    <div class="d-flex gap-3 flex-wrap">
-        <a href="{% url 'stretch_download_pdf' session.id %}" class="btn btn-primary btn-lg">
-            <i class="fas fa-file-pdf me-2"></i> Download PDF Report
-        </a>
-        <a href="{% url 'dashboard' %}" class="btn btn-outline-primary btn-lg">
-            <i class="fas fa-tachometer-alt me-2"></i> Back to Dashboard
-        </a>
-        <a href="{% url 'stretch_protocol' %}" class="btn btn-outline-secondary btn-lg">
-            <i class="fas fa-redo me-2"></i> Stretch Again
-        </a>
-    </div>
+  <!-- Action buttons -->
+  <div class="flex flex-col sm:flex-row gap-3">
+    <a href="{% url 'stretch_download_pdf' session.id %}"
+       class="flex-1 py-3.5 bg-primary text-white font-bold text-sm rounded-xl text-center no-underline flex items-center justify-center gap-2 shadow-[0_4px_16px_rgba(12,108,63,0.25)]">
+      <i class="fas fa-file-pdf"></i>Download PDF Report
+    </a>
+    <a href="{% url 'dashboard' %}"
+       class="flex-1 py-3.5 border border-primary/30 text-primary font-semibold text-sm rounded-xl text-center no-underline flex items-center justify-center gap-2">
+      <i class="fas fa-tachometer-alt text-xs"></i>Back to Dashboard
+    </a>
+    <a href="{% url 'stretch_protocol' %}"
+       class="flex-1 py-3.5 border border-outline-variant/40 text-on-secondary-container font-semibold text-sm rounded-xl text-center no-underline flex items-center justify-center gap-2">
+      <i class="fas fa-redo text-xs"></i>Stretch Again
+    </a>
+  </div>
 
 </div>
 {% endblock %}

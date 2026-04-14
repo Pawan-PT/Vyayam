@@ -1,134 +1,133 @@
-{% extends 'strength_app/base.html' %}
+{% extends 'strength_app/base_gamified.html' %}
 {% block title %}Cool-Down — VYAYAM{% endblock %}
 
-{% block extra_css %}
+{% block extra_head %}
 <style>
-  body { background: #0a0e27; color: #fff; }
-  .cd-wrap { max-width: 700px; margin: 0 auto; padding: 24px 16px; }
-  .top-bar { background: #1a1f3a; border-radius: 14px; padding: 16px 20px;
-    display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
-  .phase-card { background: #1a1f3a; border-radius: 16px; margin-bottom: 16px; overflow: hidden; }
-  .phase-header { padding: 14px 20px; display: flex; align-items: center; gap: 10px;
-    font-weight: 700; font-size: 1rem; }
-  .phase-num { display: inline-flex; width: 28px; height: 28px; border-radius: 50%;
-    background: rgba(17,153,142,.2); border: 2px solid #11998e;
-    align-items: center; justify-content: center; font-size: .8rem; font-weight: 800; }
-  .phase-body { padding: 0 20px 16px; }
-  .ex-row { display: flex; align-items: center; justify-content: space-between;
-    padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,.06); }
-  .ex-row:last-child { border-bottom: none; }
-  .ex-name { font-weight: 600; font-size: .9rem; }
-  .ex-detail { font-size: .8rem; opacity: .6; margin-top: 2px; }
-  .ex-badge { background: rgba(17,153,142,.2); color: #6ee7b7; border-radius: 8px;
-    padding: 4px 10px; font-size: .75rem; font-weight: 700; white-space: nowrap; }
-
-  /* Breathing animation */
-  .breath-section { text-align: center; padding: 24px 20px; }
-  .breath-ring { width: 120px; height: 120px; margin: 0 auto 16px; position: relative; }
-  .breath-circle { width: 120px; height: 120px; border-radius: 50%;
-    background: radial-gradient(circle, rgba(102,126,234,.4) 0%, rgba(118,75,162,.1) 70%);
-    border: 2px solid rgba(102,126,234,.4);
-    animation: breathe 8s ease-in-out infinite; }
-  @keyframes breathe {
-    0%, 100% { transform: scale(0.8); opacity: .6; }
-    50% { transform: scale(1.2); opacity: 1; }
+  /* Breathing animation — kept exactly, colors updated to sage green */
+  .breath-circle {
+    width: 120px; height: 120px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(107, 191, 138, 0.35) 0%, rgba(12, 108, 63, 0.08) 70%);
+    border: 2px solid rgba(12, 108, 63, 0.3);
+    animation: breathe 8s ease-in-out infinite;
   }
-  .breath-label { font-size: .85rem; opacity: .7; }
-  #breathText { font-size: 1rem; font-weight: 700; color: #a5b4fc; margin-top: 8px; }
-
-  .cta-btn { display: block; width: 100%; padding: 16px; font-size: 1rem; font-weight: 700;
-    background: linear-gradient(135deg, #11998e, #38ef7d);
-    border: none; border-radius: 14px; color: white; cursor: pointer;
-    text-align: center; text-decoration: none; margin-top: 24px; }
-  .empty-note { padding: 12px; opacity: .5; font-size: .85rem; font-style: italic; }
+  @keyframes breathe {
+    0%, 100% { transform: scale(0.8); opacity: 0.6; }
+    50%       { transform: scale(1.2); opacity: 1; }
+  }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="cd-wrap">
-  <div class="top-bar">
+<div class="max-w-xl mx-auto px-4 pt-4 pb-8 space-y-4">
+
+  <!-- Top bar -->
+  <div class="bg-surface-container-lowest rounded-lg px-5 py-4 shadow-[0_4px_20px_rgba(26,28,28,0.05)] flex items-center justify-between">
     <div>
-      <div style="font-size:1.1rem;font-weight:800;">Cool-Down</div>
-      <div style="font-size:.8rem;opacity:.6;">3 phases · ~8 min</div>
+      <div class="text-lg font-extrabold text-on-surface">Cool-Down</div>
+      <div class="text-xs text-on-secondary-container font-medium mt-0.5">3 phases · ~8 min</div>
     </div>
-    <div style="font-size:.85rem;opacity:.6;"><i class="fas fa-user me-1"></i>{{ patient.name }}</div>
+    <div class="text-sm text-on-secondary-container">
+      <i class="fas fa-user me-1 opacity-50"></i>{{ patient.name }}
+    </div>
   </div>
 
   <!-- Phase 1: Light Movement -->
-  <div class="phase-card">
-    <div class="phase-header">
-      <span class="phase-num">1</span>
-      <span>🚶 Light Movement</span>
+  <div class="bg-surface-container-lowest rounded-lg shadow-[0_4px_20px_rgba(26,28,28,0.04)] overflow-hidden">
+    <div class="px-5 py-4 flex items-center gap-3 border-b border-outline-variant/15">
+      <span class="inline-flex w-7 h-7 rounded-full bg-primary/10 border-2 border-primary items-center justify-center text-primary text-xs font-extrabold flex-shrink-0">1</span>
+      <span class="font-bold text-on-surface">🚶 Light Movement</span>
     </div>
-    <div class="phase-body">
+    <div class="divide-y divide-outline-variant/15 px-5 pb-4">
       {% if light_movement %}
         {% for ex in light_movement %}
-        <div class="ex-row">
+        <div class="flex items-center justify-between py-3">
           <div>
-            <div class="ex-name">{{ ex.name }}</div>
-            <div class="ex-detail">{{ ex.duration|default:"60 sec" }}{% if ex.notes %} · {{ ex.notes }}{% endif %}</div>
+            <div class="text-sm font-semibold text-on-surface">{{ ex.name }}</div>
+            <div class="text-xs text-on-secondary-container mt-0.5">
+              {{ ex.duration|default:"60 sec" }}{% if ex.notes %} · {{ ex.notes }}{% endif %}
+            </div>
           </div>
-          <span class="ex-badge">{{ ex.duration|default:"60s" }}</span>
+          <span class="bg-primary/10 text-primary px-2.5 py-1 rounded-full text-xs font-bold whitespace-nowrap ml-3">
+            {{ ex.duration|default:"60s" }}
+          </span>
         </div>
         {% endfor %}
       {% else %}
-        <div class="empty-note">Easy walking or gentle movement for 3–5 minutes.</div>
+        <div class="py-3 text-sm text-on-secondary-container italic opacity-70">
+          Easy walking or gentle movement for 3–5 minutes.
+        </div>
       {% endif %}
     </div>
   </div>
 
-  <!-- Phase 2: Static Stretching -->
-  <div class="phase-card">
-    <div class="phase-header">
-      <span class="phase-num">2</span>
-      <span>🧘 Static Stretches</span>
+  <!-- Phase 2: Static Stretches -->
+  <div class="bg-surface-container-lowest rounded-lg shadow-[0_4px_20px_rgba(26,28,28,0.04)] overflow-hidden">
+    <div class="px-5 py-4 flex items-center gap-3 border-b border-outline-variant/15">
+      <span class="inline-flex w-7 h-7 rounded-full bg-primary/10 border-2 border-primary items-center justify-center text-primary text-xs font-extrabold flex-shrink-0">2</span>
+      <span class="font-bold text-on-surface">🧘 Static Stretches</span>
     </div>
-    <div class="phase-body">
+    <div class="divide-y divide-outline-variant/15 px-5 pb-4">
       {% if static_stretch %}
         {% for ex in static_stretch %}
-        <div class="ex-row">
+        <div class="flex items-center justify-between py-3">
           <div>
-            <div class="ex-name">{{ ex.name }}</div>
-            <div class="ex-detail">Hold {{ ex.hold|default:"30" }}s{% if ex.sides %} each side{% endif %}{% if ex.notes %} · {{ ex.notes }}{% endif %}</div>
+            <div class="text-sm font-semibold text-on-surface">{{ ex.name }}</div>
+            <div class="text-xs text-on-secondary-container mt-0.5">
+              Hold {{ ex.hold|default:"30" }}s{% if ex.sides %} each side{% endif %}{% if ex.notes %} · {{ ex.notes }}{% endif %}
+            </div>
           </div>
-          <span class="ex-badge">{{ ex.hold|default:"30" }}s hold</span>
+          <span class="bg-primary/10 text-primary px-2.5 py-1 rounded-full text-xs font-bold whitespace-nowrap ml-3">
+            {{ ex.hold|default:"30" }}s hold
+          </span>
         </div>
         {% endfor %}
       {% else %}
-        <div class="empty-note">Hip flexor, hamstring, and thoracic stretch — 30s each hold.</div>
+        <div class="py-3 text-sm text-on-secondary-container italic opacity-70">
+          Hip flexor, hamstring, and thoracic stretch — 30s each hold.
+        </div>
       {% endif %}
     </div>
   </div>
 
   <!-- Phase 3: Breathing -->
-  <div class="phase-card">
-    <div class="phase-header">
-      <span class="phase-num">3</span>
-      <span>💨 Breathing &amp; Nervous System Reset</span>
+  <div class="bg-surface-container-lowest rounded-lg shadow-[0_4px_20px_rgba(26,28,28,0.04)] overflow-hidden">
+    <div class="px-5 py-4 flex items-center gap-3 border-b border-outline-variant/15">
+      <span class="inline-flex w-7 h-7 rounded-full bg-primary/10 border-2 border-primary items-center justify-center text-primary text-xs font-extrabold flex-shrink-0">3</span>
+      <span class="font-bold text-on-surface">💨 Breathing &amp; Nervous System Reset</span>
     </div>
-    <div class="breath-section">
-      <div class="breath-ring"><div class="breath-circle"></div></div>
-      <div class="breath-label">Follow the rhythm</div>
-      <div id="breathText">Inhale...</div>
+    <!-- Breathing animation -->
+    <div class="flex flex-col items-center py-8 px-5">
+      <div class="w-[120px] h-[120px] mb-4">
+        <div class="breath-circle"></div>
+      </div>
+      <div class="text-xs text-on-secondary-container mb-1">Follow the rhythm</div>
+      <div class="text-base font-bold text-primary mt-1" id="breathText">Inhale...</div>
       {% if breathing %}
-        <div style="margin-top:16px;text-align:left;">
-          {% for ex in breathing %}
-          <div class="ex-row">
-            <div>
-              <div class="ex-name">{{ ex.name }}</div>
-              <div class="ex-detail">{{ ex.pattern|default:"4-4-4-4" }} · {{ ex.rounds|default:5 }} rounds{% if ex.notes %} · {{ ex.notes }}{% endif %}</div>
+      <div class="w-full mt-5 divide-y divide-outline-variant/15">
+        {% for ex in breathing %}
+        <div class="flex items-center justify-between py-3">
+          <div>
+            <div class="text-sm font-semibold text-on-surface">{{ ex.name }}</div>
+            <div class="text-xs text-on-secondary-container mt-0.5">
+              {{ ex.pattern|default:"4-4-4-4" }} · {{ ex.rounds|default:5 }} rounds{% if ex.notes %} · {{ ex.notes }}{% endif %}
             </div>
-            <span class="ex-badge">{{ ex.rounds|default:5 }} rounds</span>
           </div>
-          {% endfor %}
+          <span class="bg-primary/10 text-primary px-2.5 py-1 rounded-full text-xs font-bold whitespace-nowrap ml-3">
+            {{ ex.rounds|default:5 }} rounds
+          </span>
         </div>
+        {% endfor %}
+      </div>
       {% endif %}
     </div>
   </div>
 
-  <a href="{% url 'v1_post_session_feedback' %}" class="cta-btn">
-    <i class="fas fa-check me-2"></i>Complete Cool-Down &amp; Check In
+  <!-- CTA -->
+  <a href="{% url 'v1_post_session_feedback' %}"
+     class="block w-full py-4 bg-gradient-to-r from-primary to-primary-container text-white font-bold text-base rounded-xl text-center no-underline flex items-center justify-center gap-2">
+    <i class="fas fa-check"></i>Complete Cool-Down &amp; Check In
   </a>
+
 </div>
 
 <script>

@@ -1,270 +1,198 @@
-{% extends 'strength_app/base.html' %}
+{% extends 'strength_app/base_gamified.html' %}
+{% block title %}VYAYAM — AI-Powered Physiotherapy & Strength Training{% endblock %}
+{% block bottom_nav %}{% endblock %}
 
-{% block title %}VYAYAM - Professional AI-Powered Strength Training{% endblock %}
+{% block header %}
+<header class="flex items-center justify-center w-full px-6 py-4 bg-surface/90 backdrop-blur-md sticky top-0 z-50 border-b border-outline-variant/10">
+  <span class="text-xl font-extrabold tracking-tight text-primary" style="font-family:'Plus Jakarta Sans',sans-serif;">VYAYAM</span>
+</header>
+{% endblock %}
 
 {% block content %}
-<div class="fade-in">
-    <!-- Hero Section -->
-    <div class="row justify-content-center mb-5">
-        <div class="col-lg-10">
-            <div class="text-center py-5">
-                <div class="mb-4" style="font-size: 5rem;">
-                    <i class="fas fa-dumbbell gradient-text"></i>
-                </div>
-                <h1 class="display-3 fw-bold mb-3" style="letter-spacing: -1px;">
-                    Welcome to <span class="gradient-text">VYAYAM</span>
-                </h1>
-                <p class="lead mb-4 text-muted" style="font-size: 1.3rem;">
-                    AI-Powered Professional Physiotherapy & Strength Training Platform
-                </p>
-                <p class="mb-5" style="max-width: 700px; margin: 0 auto; font-size: 1.1rem; color: #64748b;">
-                    Real-time form tracking with computer vision, personalized progression algorithms, 
-                    and professional progress reports - all powered by cutting-edge AI technology
-                </p>
-                
-                <div class="d-flex justify-content-center gap-3 flex-wrap">
-                    <a href="{% url 'patient_register' %}" class="btn btn-primary btn-lg">
-                        <i class="fas fa-rocket me-2"></i>Get Started Free
-                    </a>
-                    <a href="{% url 'patient_login' %}" class="btn btn-outline-primary btn-lg">
-                        <i class="fas fa-sign-in-alt me-2"></i>Login
-                    </a>
-                </div>
-            </div>
-        </div>
+<div class="max-w-xl mx-auto px-4 pt-6 pb-12 space-y-6">
+
+  <!-- Hero -->
+  <div class="text-center py-6">
+    <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary to-primary-container flex items-center justify-center mx-auto mb-5 shadow-[0_8px_32px_rgba(12,108,63,0.30)]">
+      <i class="fas fa-dumbbell text-white text-3xl"></i>
     </div>
-    
-    <!-- Feature Cards -->
-    <div class="row g-4 mb-5">
-        <div class="col-md-4">
-            <div class="card h-100 text-center">
-                <div class="card-body p-4">
-                    <div class="mb-4" style="font-size: 3.5rem;">
-                        <i class="fas fa-robot gradient-text"></i>
-                    </div>
-                    <h4 class="mb-3">AI-Powered Prescription</h4>
-                    <p class="text-muted">
-                        Intelligent exercise programming based on gate test results and 8 clusteral health dimensions. 
-                        Your personal AI physiotherapist that learns and adapts.
-                    </p>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-md-4">
-            <div class="card h-100 text-center">
-                <div class="card-body p-4">
-                    <div class="mb-4" style="font-size: 3.5rem;">
-                        <i class="fas fa-camera gradient-text"></i>
-                    </div>
-                    <h4 class="mb-3">Real-Time Form Analysis</h4>
-                    <p class="text-muted">
-                        Computer vision tracks every rep with MediaPipe technology. 
-                        Green ✓, Yellow -, and Red ✗ classification ensures perfect form every time.
-                    </p>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-md-4">
-            <div class="card h-100 text-center">
-                <div class="card-body p-4">
-                    <div class="mb-4" style="font-size: 3.5rem;">
-                        <i class="fas fa-chart-line gradient-text"></i>
-                    </div>
-                    <h4 class="mb-3">Professional Reports</h4>
-                    <p class="text-muted">
-                        Detailed weekly progress reports with metrics, progressions, and recommendations. 
-                        Track your journey with precision analytics.
-                    </p>
-                </div>
-            </div>
-        </div>
+    <h1 class="text-3xl font-extrabold text-on-surface tracking-tight mb-3">
+      Welcome to <span class="text-primary">VYAYAM</span>
+    </h1>
+    <p class="text-base text-on-secondary-container leading-relaxed mb-2">
+      AI-Powered Professional Physiotherapy &amp; Strength Training
+    </p>
+    <p class="text-sm text-on-secondary-container/70 leading-relaxed mb-7 max-w-sm mx-auto">
+      Real-time form tracking, personalised progression algorithms, and professional progress reports — powered by AI.
+    </p>
+    <div class="flex gap-3 justify-center flex-wrap">
+      <a href="{% url 'patient_register' %}"
+         class="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-primary to-primary-container text-white font-bold rounded-xl no-underline shadow-[0_4px_16px_rgba(12,108,63,0.25)]">
+        <i class="fas fa-rocket text-sm"></i>Get Started Free
+      </a>
+      <a href="{% url 'patient_login' %}"
+         class="inline-flex items-center gap-2 px-6 py-3 border-2 border-primary text-primary font-bold rounded-xl no-underline">
+        <i class="fas fa-sign-in-alt text-sm"></i>Login
+      </a>
     </div>
-    
-    <!-- How It Works -->
-    <div class="row mb-5">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="mb-0 text-white">
-                        <i class="fas fa-route me-2"></i>How It Works
-                    </h3>
-                </div>
-                <div class="card-body p-5">
-                    <div class="row">
-                        <div class="col-md-3 text-center mb-4">
-                            <div class="rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center"
-                                 style="width: 80px; height: 80px; background: var(--primary-gradient);">
-                                <h2 class="mb-0 text-white">1</h2>
-                            </div>
-                            <h5 class="mb-2">Register</h5>
-                            <p class="text-muted small">
-                                Create your account in 2 minutes. Tell us about your fitness level and goals.
-                            </p>
-                        </div>
-                        
-                        <div class="col-md-3 text-center mb-4">
-                            <div class="rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center"
-                                 style="width: 80px; height: 80px; background: var(--success-gradient);">
-                                <h2 class="mb-0 text-white">2</h2>
-                            </div>
-                            <h5 class="mb-2">Gate Testing</h5>
-                            <p class="text-muted small">
-                                Complete 4 quick assessments to determine your starting capability levels.
-                            </p>
-                        </div>
-                        
-                        <div class="col-md-3 text-center mb-4">
-                            <div class="rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center"
-                                 style="width: 80px; height: 80px; background: var(--warning-gradient);">
-                                <h2 class="mb-0 text-white">3</h2>
-                            </div>
-                            <h5 class="mb-2">Train Smart</h5>
-                            <p class="text-muted small">
-                                Follow your AI-generated program with real-time form feedback and rep counting.
-                            </p>
-                        </div>
-                        
-                        <div class="col-md-3 text-center mb-4">
-                            <div class="rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center"
-                                 style="width: 80px; height: 80px; background: var(--info-gradient);">
-                                <h2 class="mb-0 text-white">4</h2>
-                            </div>
-                            <h5 class="mb-2">Track Progress</h5>
-                            <p class="text-muted small">
-                                Review professional reports showing your improvements and adaptations weekly.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Features Grid -->
-    <div class="row mb-5">
-        <div class="col-12 mb-4 text-center">
-            <h2 class="gradient-text mb-2">Platform Features</h2>
-            <p class="text-muted">Everything you need for professional strength training</p>
-        </div>
-        
-        <div class="col-md-6 mb-3">
-            <div class="card h-100" style="border-left: 4px solid #667eea;">
-                <div class="card-body">
-                    <h5>
-                        <i class="fas fa-check-circle text-success me-2"></i>
-                        8 Clusteral Health Dimensions
-                    </h5>
-                    <p class="text-muted mb-0">
-                        Comprehensive assessment across multiple health and fitness parameters
-                    </p>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-md-6 mb-3">
-            <div class="card h-100" style="border-left: 4px solid #11998e;">
-                <div class="card-body">
-                    <h5>
-                        <i class="fas fa-check-circle text-success me-2"></i>
-                        Automatic Progression/Regression
-                    </h5>
-                    <p class="text-muted mb-0">
-                        Smart algorithms adjust your program based on daily feedback
-                    </p>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-md-6 mb-3">
-            <div class="card h-100" style="border-left: 4px solid #f093fb;">
-                <div class="card-body">
-                    <h5>
-                        <i class="fas fa-check-circle text-success me-2"></i>
-                        Real-Time Form Analysis
-                    </h5>
-                    <p class="text-muted mb-0">
-                        MediaPipe-powered computer vision tracks every movement
-                    </p>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-md-6 mb-3">
-            <div class="card h-100" style="border-left: 4px solid #4facfe;">
-                <div class="card-body">
-                    <h5>
-                        <i class="fas fa-check-circle text-success me-2"></i>
-                        Daily Feedback Loop
-                    </h5>
-                    <p class="text-muted mb-0">
-                        Continuous adaptation based on how you feel after each session
-                    </p>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-md-6 mb-3">
-            <div class="card h-100" style="border-left: 4px solid #eb3349;">
-                <div class="card-body">
-                    <h5>
-                        <i class="fas fa-check-circle text-success me-2"></i>
-                        Professional Reports
-                    </h5>
-                    <p class="text-muted mb-0">
-                        Weekly progress tracking with detailed metrics and recommendations
-                    </p>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-md-6 mb-3">
-            <div class="card h-100" style="border-left: 4px solid #764ba2;">
-                <div class="card-body">
-                    <h5>
-                        <i class="fas fa-check-circle text-success me-2"></i>
-                        Therapist Override Option
-                    </h5>
-                    <p class="text-muted mb-0">
-                        Switch between AI-Auto and manual therapist-supervised modes
-                    </p>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- CTA Section -->
-    <div class="row mb-5">
-        <div class="col-12">
-            <div class="card" style="background: var(--primary-gradient);">
-                <div class="card-body text-center p-5">
-                    <h2 class="text-white mb-3">Ready to Transform Your Fitness?</h2>
-                    <p class="text-white mb-4 opacity-75" style="font-size: 1.1rem;">
-                        Join thousands of users training smarter with VYAYAM
-                    </p>
-                    <a href="{% url 'patient_register' %}" class="btn btn-light btn-lg">
-                        <i class="fas fa-rocket me-2"></i>
-                        Start Your Free Journey
-                    </a>
-                </div>
-            </div>
-        </div>
+  </div>
+
+  <!-- 3 feature cards -->
+  <div class="grid grid-cols-1 gap-3">
+
+    <div class="bg-surface-container-lowest rounded-xl p-5 shadow-[0_4px_20px_rgba(26,28,28,0.04)] flex items-start gap-4">
+      <div class="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+        <i class="fas fa-robot text-primary text-lg"></i>
+      </div>
+      <div>
+        <div class="font-bold text-sm text-on-surface mb-1">AI-Powered Prescription</div>
+        <div class="text-xs text-on-secondary-container leading-relaxed">Intelligent exercise programming based on movement test results and 8 health dimensions. Adapts every session.</div>
+      </div>
     </div>
 
-    <!-- Legal Links -->
-    <div class="row mb-4">
-        <div class="col-12 text-center">
-            <p class="text-muted small">
-                <a href="{% url 'privacy_policy' %}" class="text-muted me-3">Privacy Policy</a>
-                <a href="{% url 'terms_of_service' %}" class="text-muted me-3">Terms of Service</a>
-                <a href="{% url 'disclaimer' %}" class="text-muted">Medical Disclaimer</a>
-            </p>
-            <p class="text-muted" style="font-size:.75rem;">
-                VYAYAM processes health data under the Digital Personal Data Protection Act, 2023 (India).
-                Your data is never sold or shared with advertisers.
-            </p>
-        </div>
+    <div class="bg-surface-container-lowest rounded-xl p-5 shadow-[0_4px_20px_rgba(26,28,28,0.04)] flex items-start gap-4">
+      <div class="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+        <i class="fas fa-camera text-primary text-lg"></i>
+      </div>
+      <div>
+        <div class="font-bold text-sm text-on-surface mb-1">Real-Time Form Analysis</div>
+        <div class="text-xs text-on-secondary-container leading-relaxed">MediaPipe computer vision tracks every rep. Green ✓, Yellow -, Red ✗ — ensuring perfect form every time.</div>
+      </div>
     </div>
+
+    <div class="bg-surface-container-lowest rounded-xl p-5 shadow-[0_4px_20px_rgba(26,28,28,0.04)] flex items-start gap-4">
+      <div class="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+        <i class="fas fa-chart-line text-primary text-lg"></i>
+      </div>
+      <div>
+        <div class="font-bold text-sm text-on-surface mb-1">Professional Reports</div>
+        <div class="text-xs text-on-secondary-container leading-relaxed">Detailed weekly progress with metrics, progressions, and recommendations. Track your journey with precision.</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- How it works -->
+  <div class="bg-surface-container-lowest rounded-xl shadow-[0_4px_20px_rgba(26,28,28,0.04)] overflow-hidden">
+    <div class="bg-gradient-to-r from-primary to-primary-container px-5 py-4">
+      <div class="font-bold text-white">
+        <i class="fas fa-route me-2"></i>How It Works
+      </div>
+    </div>
+    <div class="grid grid-cols-2 gap-0 divide-x divide-y divide-outline-variant/15">
+
+      <div class="p-5 text-center">
+        <div class="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-primary-container flex items-center justify-center mx-auto mb-3">
+          <span class="text-white font-extrabold text-lg">1</span>
+        </div>
+        <div class="font-bold text-sm text-on-surface mb-1">Register</div>
+        <div class="text-xs text-on-secondary-container leading-relaxed">Create your account in 2 minutes. Tell us about your fitness level and goals.</div>
+      </div>
+
+      <div class="p-5 text-center">
+        <div class="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-3 border-2 border-primary">
+          <span class="text-primary font-extrabold text-lg">2</span>
+        </div>
+        <div class="font-bold text-sm text-on-surface mb-1">Movement Tests</div>
+        <div class="text-xs text-on-secondary-container leading-relaxed">Complete 7 quick assessments to determine your starting capability levels.</div>
+      </div>
+
+      <div class="p-5 text-center">
+        <div class="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-3 border-2 border-primary">
+          <span class="text-primary font-extrabold text-lg">3</span>
+        </div>
+        <div class="font-bold text-sm text-on-surface mb-1">Train Smart</div>
+        <div class="text-xs text-on-secondary-container leading-relaxed">Follow your AI-generated programme with real-time form feedback and rep counting.</div>
+      </div>
+
+      <div class="p-5 text-center">
+        <div class="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-3 border-2 border-primary">
+          <span class="text-primary font-extrabold text-lg">4</span>
+        </div>
+        <div class="font-bold text-sm text-on-surface mb-1">Track Progress</div>
+        <div class="text-xs text-on-secondary-container leading-relaxed">Review professional reports showing your improvements and adaptations weekly.</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Features grid -->
+  <div>
+    <div class="text-center mb-4">
+      <div class="text-lg font-extrabold text-primary">Platform Features</div>
+      <div class="text-xs text-on-secondary-container mt-1">Everything you need for professional strength training</div>
+    </div>
+    <div class="grid grid-cols-1 gap-3">
+      {% for feature in features_list %}
+      <div class="bg-surface-container-lowest rounded-xl p-4 shadow-[0_4px_20px_rgba(26,28,28,0.04)] border-l-4 border-primary flex items-start gap-3">
+        <i class="fas fa-check-circle text-primary mt-0.5 flex-shrink-0"></i>
+        <div>
+          <div class="font-bold text-sm text-on-surface">{{ feature.title }}</div>
+          <div class="text-xs text-on-secondary-container mt-0.5">{{ feature.desc }}</div>
+        </div>
+      </div>
+      {% empty %}
+      {% for title, desc in features %}
+      <div class="bg-surface-container-lowest rounded-xl p-4 shadow-[0_4px_20px_rgba(26,28,28,0.04)] border-l-4 border-primary flex items-start gap-3">
+        <i class="fas fa-check-circle text-primary mt-0.5 flex-shrink-0"></i>
+        <div>
+          <div class="font-bold text-sm text-on-surface">{{ title }}</div>
+          <div class="text-xs text-on-secondary-container mt-0.5">{{ desc }}</div>
+        </div>
+      </div>
+      {% empty %}
+      {% for item in "123456" %}{% endfor %}
+      <div class="bg-surface-container-lowest rounded-xl p-4 shadow-[0_4px_20px_rgba(26,28,28,0.04)] border-l-4 border-primary flex items-start gap-3">
+        <i class="fas fa-check-circle text-primary mt-0.5 flex-shrink-0"></i>
+        <div><div class="font-bold text-sm text-on-surface">7 Movement Pattern Assessment</div><div class="text-xs text-on-secondary-container mt-0.5">Comprehensive scoring across squat, hinge, push, pull, lunge, core, and carry</div></div>
+      </div>
+      <div class="bg-surface-container-lowest rounded-xl p-4 shadow-[0_4px_20px_rgba(26,28,28,0.04)] border-l-4 border-primary flex items-start gap-3">
+        <i class="fas fa-check-circle text-primary mt-0.5 flex-shrink-0"></i>
+        <div><div class="font-bold text-sm text-on-surface">Automatic Progression &amp; Regression</div><div class="text-xs text-on-secondary-container mt-0.5">Smart algorithms adjust your programme based on daily feedback</div></div>
+      </div>
+      <div class="bg-surface-container-lowest rounded-xl p-4 shadow-[0_4px_20px_rgba(26,28,28,0.04)] border-l-4 border-primary flex items-start gap-3">
+        <i class="fas fa-check-circle text-primary mt-0.5 flex-shrink-0"></i>
+        <div><div class="font-bold text-sm text-on-surface">Real-Time Form Analysis</div><div class="text-xs text-on-secondary-container mt-0.5">MediaPipe-powered computer vision tracks every movement</div></div>
+      </div>
+      <div class="bg-surface-container-lowest rounded-xl p-4 shadow-[0_4px_20px_rgba(26,28,28,0.04)] border-l-4 border-primary flex items-start gap-3">
+        <i class="fas fa-check-circle text-primary mt-0.5 flex-shrink-0"></i>
+        <div><div class="font-bold text-sm text-on-surface">Cycle-Aware Training</div><div class="text-xs text-on-secondary-container mt-0.5">Optional hormonal phase tracking adjusts load automatically each week</div></div>
+      </div>
+      <div class="bg-surface-container-lowest rounded-xl p-4 shadow-[0_4px_20px_rgba(26,28,28,0.04)] border-l-4 border-primary flex items-start gap-3">
+        <i class="fas fa-check-circle text-primary mt-0.5 flex-shrink-0"></i>
+        <div><div class="font-bold text-sm text-on-surface">Professional Progress Reports</div><div class="text-xs text-on-secondary-container mt-0.5">Weekly tracking with detailed metrics and recommendations</div></div>
+      </div>
+      <div class="bg-surface-container-lowest rounded-xl p-4 shadow-[0_4px_20px_rgba(26,28,28,0.04)] border-l-4 border-primary flex items-start gap-3">
+        <i class="fas fa-check-circle text-primary mt-0.5 flex-shrink-0"></i>
+        <div><div class="font-bold text-sm text-on-surface">Therapist Override Option</div><div class="text-xs text-on-secondary-container mt-0.5">Switch between AI-Auto and manual therapist-supervised modes</div></div>
+      </div>
+      {% endempty %}
+      {% endempty %}
+    </div>
+  </div>
+
+  <!-- CTA banner -->
+  <div class="bg-gradient-to-br from-primary to-primary-container rounded-xl p-8 text-center shadow-[0_8px_32px_rgba(12,108,63,0.25)]">
+    <h2 class="text-xl font-extrabold text-white mb-2">Ready to Transform Your Fitness?</h2>
+    <p class="text-white/75 text-sm mb-5">Join thousands of users training smarter with VYAYAM</p>
+    <a href="{% url 'patient_register' %}"
+       class="inline-flex items-center gap-2 px-6 py-3 bg-white text-primary font-bold rounded-xl no-underline shadow-sm">
+      <i class="fas fa-rocket"></i>Start Your Free Journey
+    </a>
+  </div>
+
+  <!-- Legal footer -->
+  <div class="text-center space-y-2 pt-2">
+    <div class="flex justify-center gap-5 text-xs text-on-secondary-container opacity-70">
+      <a href="{% url 'privacy_policy' %}" class="no-underline hover:underline text-on-secondary-container">Privacy Policy</a>
+      <a href="{% url 'terms_of_service' %}" class="no-underline hover:underline text-on-secondary-container">Terms of Service</a>
+      <a href="{% url 'disclaimer' %}" class="no-underline hover:underline text-on-secondary-container">Medical Disclaimer</a>
+    </div>
+    <p class="text-[0.65rem] text-on-secondary-container opacity-50 leading-relaxed">
+      VYAYAM processes health data under the Digital Personal Data Protection Act, 2023 (India).<br>
+      Your data is never sold or shared with advertisers.
+    </p>
+  </div>
+
 </div>
 {% endblock %}

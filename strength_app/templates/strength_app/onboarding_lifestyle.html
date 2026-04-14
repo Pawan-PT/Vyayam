@@ -1,119 +1,146 @@
-{% extends 'strength_app/base.html' %}
+{% extends 'strength_app/base_gamified.html' %}
 {% block title %}Lifestyle — VYAYAM Assessment{% endblock %}
+{% block bottom_nav %}{% endblock %}
+
+{% block extra_head %}
+<style>
+  /* JS-toggled lifestyle radio selection */
+  .lifestyle-opt { border: 2px solid transparent; transition: all .2s; }
+  .lifestyle-opt.active { border-color: #0c6c3f; background: rgba(12,108,63,0.06); }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="fade-in">
-  <div class="row justify-content-center">
-    <div class="col-lg-6">
+<div class="max-w-xl mx-auto px-4 pt-4 pb-8 space-y-4">
 
-      <div class="mb-4">
-        <div class="d-flex justify-content-between align-items-center mb-2">
-          <span class="text-muted small fw-600">Step {{ step }} of {{ total }}</span>
-          <span class="text-muted small">Lifestyle Factors</span>
-        </div>
-        <div class="progress" style="height:6px;border-radius:6px;">
-          <div class="progress-bar" style="width:{% widthratio step total 100 %}%;background:var(--primary-gradient);"></div>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-body p-4">
-          <h4 class="fw-700 mb-1">Lifestyle &amp; Recovery</h4>
-          <p class="text-muted mb-4">Sleep, stress, and nutrition directly affect your training load. We use these to automatically adjust session intensity.</p>
-
-          <form method="post">
-            {% csrf_token %}
-
-            <div class="mb-3">
-              <label class="form-label fw-600">Overall activity level</label>
-              <p class="text-muted small mb-2">Be honest — this affects how hard your sessions are. Pick the one closest to your typical week.</p>
-              <div style="display:flex;flex-direction:column;gap:8px;">
-
-                <label class="d-flex align-items-start gap-3 p-3 rounded-3 mb-0" style="background:var(--color-background-secondary,#1a1f3a);border:2px solid transparent;cursor:pointer;transition:all .2s;" onclick="this.querySelector('input').checked=true;document.querySelectorAll('[name=lifestyle]').forEach(r=>{r.closest('label').style.borderColor='transparent'});this.style.borderColor='#667eea';">
-                  <input type="radio" name="lifestyle" value="sedentary" {% if patient.lifestyle == 'sedentary' or not patient.lifestyle %}checked{% endif %} style="margin-top:3px;accent-color:#667eea;">
-                  <div>
-                    <div class="fw-700" style="font-size:.95rem;">Sedentary</div>
-                    <div class="text-muted" style="font-size:.8rem;line-height:1.4;">Desk job or studying most of the day. Less than 30 minutes of walking. No regular exercise. Example: office worker, student who auto-rickshaws to college.</div>
-                  </div>
-                </label>
-
-                <label class="d-flex align-items-start gap-3 p-3 rounded-3 mb-0" style="background:var(--color-background-secondary,#1a1f3a);border:2px solid transparent;cursor:pointer;transition:all .2s;" onclick="this.querySelector('input').checked=true;document.querySelectorAll('[name=lifestyle]').forEach(r=>{r.closest('label').style.borderColor='transparent'});this.style.borderColor='#667eea';">
-                  <input type="radio" name="lifestyle" value="moderately_active" {% if patient.lifestyle == 'moderately_active' %}checked{% endif %} style="margin-top:3px;accent-color:#667eea;">
-                  <div>
-                    <div class="fw-700" style="font-size:.95rem;">Moderately active</div>
-                    <div class="text-muted" style="font-size:.8rem;line-height:1.4;">Walk 30 to 60 minutes daily or light exercise 2 to 3 times per week. Example: walk to work, take stairs sometimes, play weekend cricket, do yoga twice a week.</div>
-                  </div>
-                </label>
-
-                <label class="d-flex align-items-start gap-3 p-3 rounded-3 mb-0" style="background:var(--color-background-secondary,#1a1f3a);border:2px solid transparent;cursor:pointer;transition:all .2s;" onclick="this.querySelector('input').checked=true;document.querySelectorAll('[name=lifestyle]').forEach(r=>{r.closest('label').style.borderColor='transparent'});this.style.borderColor='#667eea';">
-                  <input type="radio" name="lifestyle" value="active" {% if patient.lifestyle == 'active' %}checked{% endif %} style="margin-top:3px;accent-color:#667eea;">
-                  <div>
-                    <div class="fw-700" style="font-size:.95rem;">Active</div>
-                    <div class="text-muted" style="font-size:.8rem;line-height:1.4;">Structured exercise 4 to 5 times per week for 30 to 60 minutes. Or a physically demanding job. Example: gym 4 days a week, daily running, construction work, delivery rider cycling all day.</div>
-                  </div>
-                </label>
-
-                <label class="d-flex align-items-start gap-3 p-3 rounded-3 mb-0" style="background:var(--color-background-secondary,#1a1f3a);border:2px solid transparent;cursor:pointer;transition:all .2s;" onclick="this.querySelector('input').checked=true;document.querySelectorAll('[name=lifestyle]').forEach(r=>{r.closest('label').style.borderColor='transparent'});this.style.borderColor='#667eea';">
-                  <input type="radio" name="lifestyle" value="very_active" {% if patient.lifestyle == 'very_active' %}checked{% endif %} style="margin-top:3px;accent-color:#667eea;">
-                  <div>
-                    <div class="fw-700" style="font-size:.95rem;">Very active</div>
-                    <div class="text-muted" style="font-size:.8rem;line-height:1.4;">Hard training 6 to 7 days per week or twice daily. Example: competitive athlete in training, football practice every day, professional sportsperson, military physical training.</div>
-                  </div>
-                </label>
-
-              </div>
-            </div>
-
-            <div class="mb-3">
-              <label class="form-label fw-600">Typical sleep quality</label>
-              <select name="sleep_quality" class="form-select">
-                <option value="poor"     {% if patient.sleep_quality == 'poor'     %}selected{% endif %}>Poor (under 5 hours or disrupted)</option>
-                <option value="moderate" {% if patient.sleep_quality == 'moderate' %}selected{% endif %}>Moderate (5–6 hours)</option>
-                <option value="good"     {% if patient.sleep_quality == 'good' or not patient.sleep_quality %}selected{% endif %}>Good (7–8 hours)</option>
-                <option value="variable" {% if patient.sleep_quality == 'variable' %}selected{% endif %}>Variable (changes week to week)</option>
-              </select>
-            </div>
-
-            <div class="mb-3">
-              <label class="form-label fw-600">Typical stress level</label>
-              <select name="stress_level" class="form-select">
-                <option value="low"       {% if patient.stress_level == 'low'      %}selected{% endif %}>Low — generally relaxed</option>
-                <option value="moderate"  {% if patient.stress_level == 'moderate' or not patient.stress_level %}selected{% endif %}>Moderate — manageable daily stress</option>
-                <option value="high"      {% if patient.stress_level == 'high'     %}selected{% endif %}>High — regularly stressed</option>
-                <option value="very_high" {% if patient.stress_level == 'very_high'%}selected{% endif %}>Very high — frequently overwhelmed</option>
-              </select>
-            </div>
-
-            <div class="mb-3">
-              <label class="form-label fw-600">Nutrition quality</label>
-              <select name="nutrition_quality" class="form-select">
-                <option value="skip_meals" {% if patient.nutrition_quality == 'skip_meals' %}selected{% endif %}>Often skip meals</option>
-                <option value="regular"    {% if patient.nutrition_quality == 'regular' or not patient.nutrition_quality %}selected{% endif %}>Regular meals — average quality</option>
-                <option value="good"       {% if patient.nutrition_quality == 'good'      %}selected{% endif %}>Good — protein at every meal, vegetables daily</option>
-                <option value="managed"    {% if patient.nutrition_quality == 'managed'   %}selected{% endif %}>Managed — I track intake deliberately</option>
-              </select>
-            </div>
-
-            <div class="mb-4">
-              <label class="form-label fw-600">Hours sitting per day: <span id="sitLabel">{{ patient.daily_sitting_hours|default:6 }}</span> hours</label>
-              <input type="range" name="daily_sitting_hours" id="sitSlider"
-                     min="0" max="16" step="1"
-                     value="{{ patient.daily_sitting_hours|default:6 }}"
-                     class="form-range"
-                     oninput="document.getElementById('sitLabel').textContent = this.value">
-              <div class="d-flex justify-content-between text-muted small">
-                <span>0h</span><span>8h</span><span>16h</span>
-              </div>
-            </div>
-
-            <button type="submit" class="btn w-100 py-3 fw-700" style="background:var(--primary-gradient);color:white;border:none;border-radius:10px;">
-              Save &amp; Continue <i class="fas fa-arrow-right ms-2"></i>
-            </button>
-          </form>
-        </div>
-      </div>
-
+  <!-- Progress -->
+  <div class="bg-surface-container-lowest rounded-lg px-5 py-4 shadow-[0_4px_20px_rgba(26,28,28,0.05)]">
+    <div class="flex justify-between items-center mb-2">
+      <span class="text-xs font-semibold text-on-secondary-container">Step {{ step }} of {{ total }}</span>
+      <span class="text-xs text-on-secondary-container">Lifestyle Factors</span>
+    </div>
+    <div class="h-1.5 rounded-full bg-surface-container-high overflow-hidden">
+      <div class="h-full rounded-full bg-gradient-to-r from-primary to-primary-container" style="width:{% widthratio step total 100 %}%"></div>
     </div>
   </div>
+
+  <!-- Form card -->
+  <div class="bg-surface-container-lowest rounded-lg p-5 shadow-[0_4px_20px_rgba(26,28,28,0.04)]">
+    <h4 class="font-bold text-lg text-on-surface mb-1">Lifestyle &amp; Recovery</h4>
+    <p class="text-sm text-on-secondary-container mb-5">Sleep, stress, and nutrition directly affect your training load. We use these to automatically adjust session intensity.</p>
+
+    <form method="post" class="space-y-4">
+      {% csrf_token %}
+
+      <div>
+        <label class="block text-xs font-semibold text-on-surface mb-1">Overall activity level</label>
+        <p class="text-xs text-on-secondary-container mb-2">Be honest — this affects how hard your sessions are. Pick the one closest to your typical week.</p>
+        <div class="flex flex-col gap-2">
+
+          <label class="lifestyle-opt flex items-start gap-3 p-3 rounded-lg bg-surface-container cursor-pointer {% if patient.lifestyle == 'sedentary' or not patient.lifestyle %}active{% endif %}"
+                 onclick="pickLifestyle(this, 'sedentary')">
+            <input type="radio" name="lifestyle" value="sedentary" class="mt-0.5 accent-primary flex-shrink-0"
+              {% if patient.lifestyle == 'sedentary' or not patient.lifestyle %}checked{% endif %}>
+            <div>
+              <div class="font-bold text-sm text-on-surface">Sedentary</div>
+              <div class="text-xs text-on-secondary-container mt-0.5 leading-relaxed">Desk job or studying most of the day. Less than 30 minutes of walking. No regular exercise. Example: office worker, student who auto-rickshaws to college.</div>
+            </div>
+          </label>
+
+          <label class="lifestyle-opt flex items-start gap-3 p-3 rounded-lg bg-surface-container cursor-pointer {% if patient.lifestyle == 'moderately_active' %}active{% endif %}"
+                 onclick="pickLifestyle(this, 'moderately_active')">
+            <input type="radio" name="lifestyle" value="moderately_active" class="mt-0.5 accent-primary flex-shrink-0"
+              {% if patient.lifestyle == 'moderately_active' %}checked{% endif %}>
+            <div>
+              <div class="font-bold text-sm text-on-surface">Moderately active</div>
+              <div class="text-xs text-on-secondary-container mt-0.5 leading-relaxed">Walk 30 to 60 minutes daily or light exercise 2 to 3 times per week. Example: walk to work, take stairs sometimes, play weekend cricket, do yoga twice a week.</div>
+            </div>
+          </label>
+
+          <label class="lifestyle-opt flex items-start gap-3 p-3 rounded-lg bg-surface-container cursor-pointer {% if patient.lifestyle == 'active' %}active{% endif %}"
+                 onclick="pickLifestyle(this, 'active')">
+            <input type="radio" name="lifestyle" value="active" class="mt-0.5 accent-primary flex-shrink-0"
+              {% if patient.lifestyle == 'active' %}checked{% endif %}>
+            <div>
+              <div class="font-bold text-sm text-on-surface">Active</div>
+              <div class="text-xs text-on-secondary-container mt-0.5 leading-relaxed">Structured exercise 4 to 5 times per week for 30 to 60 minutes. Or a physically demanding job. Example: gym 4 days a week, daily running, construction work, delivery rider cycling all day.</div>
+            </div>
+          </label>
+
+          <label class="lifestyle-opt flex items-start gap-3 p-3 rounded-lg bg-surface-container cursor-pointer {% if patient.lifestyle == 'very_active' %}active{% endif %}"
+                 onclick="pickLifestyle(this, 'very_active')">
+            <input type="radio" name="lifestyle" value="very_active" class="mt-0.5 accent-primary flex-shrink-0"
+              {% if patient.lifestyle == 'very_active' %}checked{% endif %}>
+            <div>
+              <div class="font-bold text-sm text-on-surface">Very active</div>
+              <div class="text-xs text-on-secondary-container mt-0.5 leading-relaxed">Hard training 6 to 7 days per week or twice daily. Example: competitive athlete in training, football practice every day, professional sportsperson, military physical training.</div>
+            </div>
+          </label>
+
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-on-surface mb-1">Typical sleep quality</label>
+        <select name="sleep_quality"
+                class="w-full bg-surface-container border border-outline-variant/40 rounded-lg px-3 py-2 text-sm text-on-surface focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20">
+          <option value="poor"     {% if patient.sleep_quality == 'poor'     %}selected{% endif %}>Poor (under 5 hours or disrupted)</option>
+          <option value="moderate" {% if patient.sleep_quality == 'moderate' %}selected{% endif %}>Moderate (5–6 hours)</option>
+          <option value="good"     {% if patient.sleep_quality == 'good' or not patient.sleep_quality %}selected{% endif %}>Good (7–8 hours)</option>
+          <option value="variable" {% if patient.sleep_quality == 'variable' %}selected{% endif %}>Variable (changes week to week)</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-on-surface mb-1">Typical stress level</label>
+        <select name="stress_level"
+                class="w-full bg-surface-container border border-outline-variant/40 rounded-lg px-3 py-2 text-sm text-on-surface focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20">
+          <option value="low"       {% if patient.stress_level == 'low'      %}selected{% endif %}>Low — generally relaxed</option>
+          <option value="moderate"  {% if patient.stress_level == 'moderate' or not patient.stress_level %}selected{% endif %}>Moderate — manageable daily stress</option>
+          <option value="high"      {% if patient.stress_level == 'high'     %}selected{% endif %}>High — regularly stressed</option>
+          <option value="very_high" {% if patient.stress_level == 'very_high'%}selected{% endif %}>Very high — frequently overwhelmed</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-on-surface mb-1">Nutrition quality</label>
+        <select name="nutrition_quality"
+                class="w-full bg-surface-container border border-outline-variant/40 rounded-lg px-3 py-2 text-sm text-on-surface focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20">
+          <option value="skip_meals" {% if patient.nutrition_quality == 'skip_meals' %}selected{% endif %}>Often skip meals</option>
+          <option value="regular"    {% if patient.nutrition_quality == 'regular' or not patient.nutrition_quality %}selected{% endif %}>Regular meals — average quality</option>
+          <option value="good"       {% if patient.nutrition_quality == 'good'      %}selected{% endif %}>Good — protein at every meal, vegetables daily</option>
+          <option value="managed"    {% if patient.nutrition_quality == 'managed'   %}selected{% endif %}>Managed — I track intake deliberately</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-on-surface mb-2">
+          Hours sitting per day: <span id="sitLabel" class="text-primary">{{ patient.daily_sitting_hours|default:6 }}</span> hours
+        </label>
+        <input type="range" name="daily_sitting_hours" id="sitSlider"
+               min="0" max="16" step="1" value="{{ patient.daily_sitting_hours|default:6 }}"
+               class="w-full" style="accent-color:#0c6c3f;"
+               oninput="document.getElementById('sitLabel').textContent = this.value">
+        <div class="flex justify-between text-xs text-on-secondary-container mt-1">
+          <span>0h</span><span>8h</span><span>16h</span>
+        </div>
+      </div>
+
+      <button type="submit"
+              class="w-full py-3 bg-gradient-to-r from-primary to-primary-container text-white font-bold rounded-xl">
+        Save &amp; Continue <i class="fas fa-arrow-right ms-2"></i>
+      </button>
+    </form>
+  </div>
+
 </div>
+<script>
+function pickLifestyle(el, val) {
+  document.querySelectorAll('.lifestyle-opt').forEach(function(opt) {
+    opt.classList.remove('active');
+  });
+  el.classList.add('active');
+  el.querySelector('input[type=radio]').checked = true;
+}
+</script>
 {% endblock %}

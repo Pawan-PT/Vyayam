@@ -1,104 +1,186 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="en">
+<html class="light" lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#667eea">
+    <meta name="theme-color" content="#0c6c3f">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="VYAYAM">
     <link rel="manifest" href="{% static 'strength_app/manifest.json' %}">
     <link rel="apple-touch-icon" href="{% static 'strength_app/images/icon-192.png' %}">
     <title>{% block title %}VYAYAM - Professional Strength Training{% endblock %}</title>
-    
-    <!-- Bootstrap 5 CSS -->
+
+    <!-- Bootstrap 5 CSS (kept — child templates depend on Bootstrap classes) -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
-    
-    <!-- Font Awesome -->
+
+    <!-- Tailwind CSS (alongside Bootstrap) -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script>
+      tailwind.config = {
+        darkMode: "class",
+        corePlugins: { preflight: false }, /* prevent Tailwind reset from breaking Bootstrap */
+        theme: {
+          extend: {
+            colors: {
+              "primary":                  "#0c6c3f",
+              "primary-container":        "#6bbf8a",
+              "primary-fixed":            "#9ff5bc",
+              "primary-fixed-dim":        "#83d8a1",
+              "on-primary":               "#ffffff",
+              "on-primary-container":     "#004c2a",
+              "on-primary-fixed":         "#00210f",
+              "on-primary-fixed-variant": "#00522e",
+              "secondary":                "#5f5e5e",
+              "secondary-fixed":          "#e4e2e1",
+              "on-secondary-container":   "#656464",
+              "on-secondary-fixed":       "#1b1c1c",
+              "tertiary":                 "#765b00",
+              "tertiary-container":       "#d4a825",
+              "tertiary-fixed":           "#ffdf94",
+              "tertiary-fixed-dim":       "#efc13e",
+              "on-tertiary-fixed":        "#241a00",
+              "surface":                  "#f9f9f9",
+              "surface-bright":           "#f9f9f9",
+              "surface-container-lowest": "#ffffff",
+              "surface-container-low":    "#f3f3f3",
+              "surface-container":        "#eeeeee",
+              "surface-container-high":   "#e8e8e8",
+              "surface-dim":              "#dadada",
+              "on-surface":               "#1a1c1c",
+              "on-surface-variant":       "#3f4941",
+              "outline":                  "#6f7a70",
+              "outline-variant":          "#bec9be",
+              "error":                    "#ba1a1a",
+              "error-container":          "#ffdad6",
+              "on-error-container":       "#93000a",
+              "background":               "#f9f9f9",
+              "on-background":            "#1a1c1c",
+              "inverse-surface":          "#2f3131",
+              "inverse-primary":          "#83d8a1",
+            },
+            borderRadius: {
+              DEFAULT: "1rem",
+              lg:      "2rem",
+              xl:      "3rem",
+              full:    "9999px",
+            },
+            fontFamily: {
+              headline: ["Plus Jakarta Sans"],
+              body:     ["Plus Jakarta Sans"],
+            }
+          }
+        }
+      }
+    </script>
+
+    <!-- Font Awesome (kept — child templates use .fas icons) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
-    
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    
+
+    <!-- Plus Jakarta Sans (replaces Inter) + Material Symbols Outlined -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+
     <style>
+        /* ── VYAYAM Design Tokens — Sage Green Palette ─────────────────────── */
         :root {
-            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            --success-gradient: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-            --danger-gradient: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
-            --warning-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            --info-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-            
-            --primary-color: #667eea;
-            --secondary-color: #11998e;
-            --accent-color: #f093fb;
-            --dark-bg: #0f172a;
-            --card-bg: #ffffff;
-            --border-radius: 16px;
-            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
-            --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
-            --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.12);
+            --primary-gradient:  linear-gradient(135deg, #0c6c3f 0%, #6bbf8a 100%);
+            --success-gradient:  linear-gradient(135deg, #0c6c3f 0%, #6bbf8a 100%);
+            --danger-gradient:   linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+            --warning-gradient:  linear-gradient(135deg, #d4a825 0%, #efc13e 100%);
+            --info-gradient:     linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+
+            --primary-color:     #0c6c3f;
+            --secondary-color:   #6bbf8a;
+            --accent-color:      #d4a825;
+            --card-bg:           #ffffff;
+            --border-radius:     16px;
+            --shadow-sm:         0 2px 8px rgba(26, 28, 28, 0.04);
+            --shadow-md:         0 4px 16px rgba(26, 28, 28, 0.08);
+            --shadow-lg:         0 8px 32px rgba(26, 28, 28, 0.12);
         }
-        
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%);
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #f9f9f9;
             min-height: 100vh;
-            color: #1e293b;
+            color: #1a1c1c;
             line-height: 1.6;
         }
-        
-        /* Navbar Styles */
-        .navbar {
-            background: var(--dark-bg) !important;
-            padding: 1rem 0;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-            backdrop-filter: blur(10px);
+
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
         }
-        
-        .navbar-brand {
+
+        /* ── Site Header (replaces dark navbar) ────────────────────────────── */
+        .site-header {
+            background: rgba(249, 249, 249, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            position: sticky;
+            top: 0;
+            z-index: 1040;
+            border-bottom: 1px solid rgba(190, 201, 190, 0.25);
+        }
+        .site-header .header-inner {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.875rem 1.5rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .site-header .header-spacer { width: 2.5rem; }
+        .site-header .brand {
+            font-size: 1.5rem;
             font-weight: 800;
-            font-size: 1.75rem;
-            background: var(--primary-gradient);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            letter-spacing: -0.5px;
+            letter-spacing: -0.04em;
+            color: #064e3b; /* emerald-800 */
+            text-decoration: none;
         }
-        
-        .navbar-brand i {
-            background: var(--primary-gradient);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+        .site-header .brand:hover { color: #064e3b; text-decoration: none; }
+        .site-header .header-avatar {
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: 9999px;
+            background: #047857; /* emerald-700 */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            text-decoration: none;
         }
-        
-        .nav-link {
-            color: #cbd5e1 !important;
-            font-weight: 500;
-            padding: 0.5rem 1rem !important;
-            border-radius: 8px;
-            transition: all 0.3s ease;
-            font-size: 0.95rem;
+        .site-header .header-avatar span {
+            color: #ffffff;
+            font-weight: 700;
+            font-size: 0.9rem;
+            line-height: 1;
         }
-        
-        .nav-link:hover {
-            color: #ffffff !important;
-            background: rgba(102, 126, 234, 0.1);
-            transform: translateY(-2px);
+        .site-header .header-login {
+            color: #0c6c3f;
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-decoration: none;
         }
-        
-        .nav-link i {
-            margin-right: 0.5rem;
+        .site-header .header-login:hover { color: #064e3b; }
+
+        /* Assessment banner (moved below header) */
+        .assessment-banner {
+            background: linear-gradient(135deg, rgba(212, 168, 37, 0.12) 0%, rgba(239, 193, 62, 0.12) 100%);
+            border-bottom: 2px solid rgba(212, 168, 37, 0.4);
+            padding: 0.6rem 1.5rem;
+            text-align: center;
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: #594400;
+            letter-spacing: 0.01em;
         }
-        
-        /* Card Styles */
+        .assessment-banner a { color: #594400; text-decoration: underline; }
+
+        /* ── Card Styles ────────────────────────────────────────────────────── */
         .card {
             border: none;
             border-radius: var(--border-radius);
@@ -107,12 +189,7 @@
             overflow: hidden;
             transition: all 0.3s ease;
         }
-        
-        .card:hover {
-            transform: translateY(-4px);
-            box-shadow: var(--shadow-lg);
-        }
-        
+        .card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); }
         .card-header {
             background: var(--primary-gradient);
             color: white;
@@ -120,254 +197,135 @@
             padding: 1.25rem 1.5rem;
             font-weight: 600;
         }
-        
-        .card-header.bg-success {
-            background: var(--success-gradient) !important;
-        }
-        
-        .card-header.bg-danger {
-            background: var(--danger-gradient) !important;
-        }
-        
-        .card-header.bg-warning {
-            background: var(--warning-gradient) !important;
-        }
-        
-        .card-header.bg-info {
-            background: var(--info-gradient) !important;
-        }
-        
-        .card-body {
-            padding: 1.5rem;
-        }
-        
-        /* Button Styles */
+        .card-header.bg-success { background: var(--success-gradient) !important; }
+        .card-header.bg-danger  { background: var(--danger-gradient)  !important; }
+        .card-header.bg-warning { background: var(--warning-gradient) !important; }
+        .card-header.bg-info    { background: var(--info-gradient)    !important; }
+        .card-body { padding: 1.5rem; }
+
+        /* ── Button Styles ──────────────────────────────────────────────────── */
         .btn {
             border-radius: 12px;
             padding: 0.75rem 1.5rem;
             font-weight: 600;
             border: none;
             transition: all 0.3s ease;
-            text-transform: none;
             letter-spacing: 0.3px;
         }
-        
         .btn-primary {
             background: var(--primary-gradient);
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+            color: #ffffff;
+            box-shadow: 0 4px 12px rgba(12, 108, 63, 0.3);
         }
-        
-        .btn-primary:hover {
+        .btn-primary:hover, .btn-primary:focus {
+            color: #ffffff;
             transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 6px 16px rgba(12, 108, 63, 0.4);
         }
-        
         .btn-success {
             background: var(--success-gradient);
-            box-shadow: 0 4px 12px rgba(17, 153, 142, 0.3);
+            color: #ffffff;
+            box-shadow: 0 4px 12px rgba(12, 108, 63, 0.3);
         }
-        
-        .btn-success:hover {
+        .btn-success:hover, .btn-success:focus {
+            color: #ffffff;
             transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(17, 153, 142, 0.4);
+            box-shadow: 0 6px 16px rgba(12, 108, 63, 0.4);
         }
-        
-        .btn-danger {
-            background: var(--danger-gradient);
-        }
-        
-        .btn-warning {
-            background: var(--warning-gradient);
-            color: white;
-        }
-        
+        .btn-danger  { background: var(--danger-gradient);  color: #ffffff; }
+        .btn-warning { background: var(--warning-gradient); color: #241a00; }
         .btn-outline-primary {
-            border: 2px solid #667eea;
-            color: #667eea;
+            border: 2px solid #0c6c3f;
+            color: #0c6c3f;
             background: transparent;
         }
-        
         .btn-outline-primary:hover {
             background: var(--primary-gradient);
             color: white;
             border-color: transparent;
         }
-        
-        .btn-lg {
-            padding: 1rem 2rem;
-            font-size: 1.1rem;
-        }
-        
-        /* Badge Styles */
-        .badge {
-            padding: 0.5rem 1rem;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 0.85rem;
-        }
-        
-        .badge-green, .bg-success {
-            background: var(--success-gradient) !important;
-        }
-        
-        .badge-yellow, .bg-warning {
-            background: var(--warning-gradient) !important;
-            color: white;
-        }
-        
-        .badge-red, .bg-danger {
-            background: var(--danger-gradient) !important;
-        }
-        
-        .bg-primary {
-            background: var(--primary-gradient) !important;
-        }
-        
-        .bg-info {
-            background: var(--info-gradient) !important;
-        }
-        
-        /* Form Styles */
+        .btn-lg { padding: 1rem 2rem; font-size: 1.1rem; }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        /* ── Badge / bg utility overrides ──────────────────────────────────── */
+        .badge { padding: 0.5rem 1rem; border-radius: 8px; font-weight: 600; font-size: 0.85rem; }
+        .bg-primary  { background: var(--primary-gradient) !important; }
+        .bg-success  { background: var(--success-gradient) !important; }
+        .bg-warning  { background: var(--warning-gradient) !important; color: #241a00 !important; }
+        .bg-danger   { background: var(--danger-gradient)  !important; }
+        .bg-info     { background: var(--info-gradient)    !important; }
+
+        /* ── Form Styles ────────────────────────────────────────────────────── */
         .form-control, .form-select {
             border-radius: 12px;
             border: 2px solid #e2e8f0;
             padding: 0.875rem 1.25rem;
             font-size: 1rem;
             transition: all 0.3s ease;
+            font-family: 'Plus Jakarta Sans', sans-serif;
         }
-        
         .form-control:focus, .form-select:focus {
-            border-color: #667eea;
-            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+            border-color: #0c6c3f;
+            box-shadow: 0 0 0 4px rgba(12, 108, 63, 0.12);
         }
-        
-        .form-label {
-            font-weight: 600;
-            color: #475569;
-            margin-bottom: 0.5rem;
-        }
-        
-        /* Alert Styles */
-        .alert {
-            border: none;
-            border-radius: var(--border-radius);
-            padding: 1.25rem;
-            margin-bottom: 1.5rem;
-        }
-        
+        .form-label { font-weight: 600; color: #475569; margin-bottom: 0.5rem; }
+
+        /* ── Alert Styles ───────────────────────────────────────────────────── */
+        .alert { border: none; border-radius: var(--border-radius); padding: 1.25rem; margin-bottom: 1.5rem; }
         .alert-success {
-            background: linear-gradient(135deg, rgba(17, 153, 142, 0.1) 0%, rgba(56, 239, 125, 0.1) 100%);
-            border-left: 4px solid #11998e;
+            background: rgba(12, 108, 63, 0.08);
+            border-left: 4px solid #0c6c3f;
+            color: #003d1f;
         }
-        
         .alert-info {
-            background: linear-gradient(135deg, rgba(79, 172, 254, 0.1) 0%, rgba(0, 242, 254, 0.1) 100%);
+            background: rgba(79, 172, 254, 0.1);
             border-left: 4px solid #4facfe;
         }
-        
         .alert-warning {
-            background: linear-gradient(135deg, rgba(240, 147, 251, 0.1) 0%, rgba(245, 87, 108, 0.1) 100%);
-            border-left: 4px solid #f093fb;
+            background: rgba(212, 168, 37, 0.12);
+            border-left: 4px solid #d4a825;
+            color: #3d2c00;
         }
-        
         .alert-danger {
-            background: linear-gradient(135deg, rgba(235, 51, 73, 0.1) 0%, rgba(244, 92, 67, 0.1) 100%);
+            background: rgba(235, 51, 73, 0.08);
             border-left: 4px solid #eb3349;
         }
-        
-        /* Main Content */
+
+        /* ── Main Content ───────────────────────────────────────────────────── */
         .main-content {
             min-height: calc(100vh - 180px);
             padding: 2.5rem 0;
         }
-        
-        /* Footer */
+
+        /* ── Footer (minimal legal links only) ─────────────────────────────── */
         footer {
-            background: var(--dark-bg);
-            color: #cbd5e1;
-            padding: 2rem 0;
-            margin-top: 4rem;
-            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.2);
+            background: #f9f9f9;
+            border-top: 1px solid rgba(190, 201, 190, 0.35);
+            padding: 1.5rem 0;
+            margin-top: 3rem;
         }
-        
-        footer p {
-            margin: 0;
-        }
-        
-        /* Page Headers */
-        h1, h2, h3, h4, h5, h6 {
-            font-weight: 700;
-            color: #1e293b;
-        }
-        
-        h2 {
-            font-size: 2rem;
-            margin-bottom: 1.5rem;
-        }
-        
-        .lead {
-            font-size: 1.15rem;
-            color: #64748b;
-        }
-        
-        /* Table Styles */
-        .table {
-            border-radius: var(--border-radius);
-            overflow: hidden;
-        }
-        
-        .table thead {
-            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-        }
-        
-        .table thead th {
-            font-weight: 600;
-            color: #475569;
-            border: none;
-            padding: 1rem;
-        }
-        
-        .table tbody td {
-            padding: 1rem;
-            vertical-align: middle;
-        }
-        
-        /* Animations */
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        
-        .fade-in {
-            animation: fadeIn 0.6s ease;
-        }
-        
-        /* Gradient Text */
-        .gradient-text {
-            background: var(--primary-gradient);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-        
-        /* Progress Bar */
-        .progress {
-            height: 12px;
-            border-radius: 10px;
-            background: #e2e8f0;
-        }
-        
-        .progress-bar {
-            background: var(--primary-gradient);
-        }
-        
-        /* Stat Cards */
+        footer .legal-links { font-size: 0.78rem; color: #656464; text-align: center; }
+        footer .legal-links a { color: #656464; text-decoration: underline; }
+        footer .legal-links a:hover { color: #1a1c1c; }
+        footer .legal-links .danger-link { color: #ba1a1a; }
+        footer .legal-links .danger-link:hover { color: #7f1d1d; }
+
+        /* ── Page Typography ────────────────────────────────────────────────── */
+        h1, h2, h3, h4, h5, h6 { font-weight: 700; color: #1a1c1c; }
+        h2 { font-size: 2rem; margin-bottom: 1.5rem; }
+        .lead { font-size: 1.15rem; color: #656464; }
+
+        /* ── Table Styles ───────────────────────────────────────────────────── */
+        .table { border-radius: var(--border-radius); overflow: hidden; }
+        .table thead { background: #f3f3f3; }
+        .table thead th { font-weight: 600; color: #475569; border: none; padding: 1rem; }
+        .table tbody td { padding: 1rem; vertical-align: middle; }
+
+        /* ── Progress Bar ───────────────────────────────────────────────────── */
+        .progress { height: 12px; border-radius: 10px; background: #e8e8e8; }
+        .progress-bar { background: var(--primary-gradient); }
+
+        /* ── Stat Cards ─────────────────────────────────────────────────────── */
         .stat-card {
             background: white;
             border-radius: var(--border-radius);
@@ -376,256 +334,214 @@
             transition: all 0.3s ease;
             border-left: 4px solid transparent;
         }
-        
-        .stat-card:hover {
-            box-shadow: var(--shadow-md);
-            transform: translateY(-2px);
+        .stat-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+        .stat-card.primary { border-left-color: #0c6c3f; }
+        .stat-card.success { border-left-color: #6bbf8a; }
+        .stat-card.danger  { border-left-color: #eb3349; }
+
+        /* ── Gradient Text ──────────────────────────────────────────────────── */
+        .gradient-text {
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
-        
-        .stat-card.primary {
-            border-left-color: #667eea;
+
+        /* ── Animations ─────────────────────────────────────────────────────── */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to   { opacity: 1; transform: translateY(0); }
         }
-        
-        .stat-card.success {
-            border-left-color: #11998e;
+        .fade-in { animation: fadeIn 0.6s ease; }
+
+        /* ── Bottom Nav — Gamified 3-tab with glassmorphism ─────────────────── */
+        .gamified-bottom-nav {
+            display: none; /* shown only at mobile breakpoint below */
+            position: fixed;
+            bottom: 0; left: 0;
+            width: 100%;
+            z-index: 1050;
+            justify-content: space-around;
+            align-items: center;
+            padding: 0.875rem 1.5rem calc(0.875rem + env(safe-area-inset-bottom, 0px));
+            background: rgba(255, 255, 255, 0.80);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 2rem 2rem 0 0;
+            box-shadow: 0 -12px 40px rgba(26, 28, 28, 0.04);
         }
-        
-        .stat-card.danger {
-            border-left-color: #eb3349;
+        .gnav-tab {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            color: #71717a; /* zinc-500 */
+            font-size: 0.68rem;
+            font-weight: 600;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            padding: 0.5rem;
+            border-radius: 9999px;
+            transition: all 0.3s ease;
+            min-width: 4rem;
         }
-        
-        /* Loading States */
-        .btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
+        .gnav-tab .gnav-icon {
+            font-size: 1.4rem;
+            margin-bottom: 0.2rem;
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
         }
-        
-        /* Responsive */
+        .gnav-tab.gnav-active {
+            background: rgba(6, 78, 59, 0.10); /* emerald-900/10 */
+            color: #064e3b; /* emerald-900 */
+            padding: 0.5rem 1.25rem;
+        }
+        .gnav-tab.gnav-active .gnav-icon {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .gnav-tab:hover { opacity: 0.75; color: #064e3b; text-decoration: none; }
+
+        /* ── Responsive ─────────────────────────────────────────────────────── */
+        @media (max-width: 860px) {
+            .gamified-bottom-nav { display: flex; }
+            body        { padding-bottom: 90px; }
+            footer      { margin-bottom: 90px; }
+        }
         @media (max-width: 768px) {
-            .navbar-brand {
-                font-size: 1.5rem;
-            }
-            h2 {
-                font-size: 1.75rem;
-            }
-            .btn-lg {
-                padding: 0.875rem 1.5rem;
-                font-size: 1rem;
-            }
-            .container {
-                padding-left: 12px;
-                padding-right: 12px;
-            }
+            h2 { font-size: 1.75rem; }
+            .btn-lg { padding: 0.875rem 1.5rem; font-size: 1rem; }
+            .container { padding-left: 12px; padding-right: 12px; }
         }
         @media (max-width: 480px) {
             body { font-size: 0.92rem; }
-            .navbar-brand { font-size: 1.2rem; }
             h2 { font-size: 1.4rem; }
             h3 { font-size: 1.15rem; }
             .btn { min-height: 44px; }
             .form-control, .form-select { min-height: 44px; font-size: 1rem; }
             .card-body { padding: 12px; }
-            .nav-link { padding: 12px 8px; }
         }
         @media (max-width: 360px) {
             .container { padding-left: 8px; padding-right: 8px; }
         }
-
-        /* ── Mobile Bottom Nav ──────────────────────────────────── */
-        .mobile-bottom-nav {
-            display: none;
-            position: fixed; bottom: 0; left: 0; right: 0; z-index: 1050;
-            background: #0f1225; border-top: 1px solid rgba(102,126,234,.2);
-            padding: 6px 0 env(safe-area-inset-bottom, 6px);
-        }
-        .mobile-bottom-nav .nav-items {
-            display: flex; justify-content: space-around; align-items: center;
-        }
-        .mobile-bottom-nav .nav-tab {
-            display: flex; flex-direction: column; align-items: center;
-            text-decoration: none; color: rgba(255,255,255,.45);
-            font-size: .62rem; font-weight: 600; padding: 4px 8px;
-            transition: color .2s;
-        }
-        .mobile-bottom-nav .nav-tab i { font-size: 1.15rem; margin-bottom: 2px; }
-        .mobile-bottom-nav .nav-tab.active,
-        .mobile-bottom-nav .nav-tab:hover { color: #667eea; }
-
-        @media (max-width: 860px) {
-            .mobile-bottom-nav { display: block; }
-            body { padding-bottom: 70px; }  /* space for bottom nav */
-            footer { margin-bottom: 70px; }
-        }
     </style>
-    
+
     {% block extra_css %}{% endblock %}
 </head>
 <body>
-    <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark">
-        <div class="container">
-            <a class="navbar-brand" href="{% url 'home' %}">
-                <i class="fas fa-dumbbell"></i> VYAYAM
+
+    <!-- ── Site Header (clean white; no hamburger) ───────────────────────── -->
+    <header class="site-header">
+        <div class="header-inner">
+            <div class="header-spacer"></div>
+            <a class="brand" href="{% url 'home' %}">VYAYAM</a>
+            {% if request.session.patient_id %}
+            <a href="#" class="header-avatar" title="{{ request.user.first_name }}">
+                <span>{{ request.user.first_name|first|upper|default:"U" }}</span>
             </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    {% if request.session.patient_id %}
-                        {% if show_assessment_banner %}
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'onboarding_start' %}" style="color:#f093fb!important;font-weight:700;">
-                                <i class="fas fa-clipboard-check"></i> Complete Assessment
-                            </a>
-                        </li>
-                        {% endif %}
-                        <li class="nav-item">
-                            {% if request.session.has_strength_profile %}
-                            <a class="nav-link" href="{% url 'v1_dashboard' %}">
-                                <i class="fas fa-tachometer-alt"></i> Dashboard
-                            </a>
-                            {% else %}
-                            <a class="nav-link" href="{% url 'dashboard' %}">
-                                <i class="fas fa-tachometer-alt"></i> Dashboard
-                            </a>
-                            {% endif %}
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'exercise_library' %}">
-                                <i class="fas fa-book"></i> Exercises
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'v1_session_overview' %}">
-                                <i class="fas fa-heartbeat"></i> Workout
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'stretch_protocol' %}">
-                                <i class="fas fa-spa"></i> Stretching
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'v1_progress' %}">
-                                <i class="fas fa-chart-line"></i> Progress
-                            </a>
-                        </li>
-                        {% if request.session.has_strength_profile %}
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'v1_nutrition_dashboard' %}">
-                                <i class="fas fa-leaf"></i> Nutrition
-                            </a>
-                        </li>
-                        {% endif %}
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'patient_logout' %}"
-                               style="color:#ef4444!important;font-weight:600;">
-                                <i class="fas fa-sign-out-alt"></i> Logout
-                            </a>
-                        </li>
-                    {% else %}
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'patient_login' %}">
-                                <i class="fas fa-sign-in-alt"></i> Login
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'patient_register' %}">
-                                <i class="fas fa-user-plus"></i> Register
-                            </a>
-                        </li>
-                    {% endif %}
-                </ul>
-            </div>
+            {% else %}
+            <a href="{% url 'patient_login' %}" class="header-login">Login</a>
+            {% endif %}
         </div>
-    </nav>
-    
-    <!-- Messages -->
-    {% if messages %}
-        <div class="container mt-3">
-            {% for message in messages %}
-                <div class="alert alert-{{ message.tags }} alert-dismissible fade show fade-in" role="alert">
-                    <i class="fas fa-check-circle me-2"></i>
-                    {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-            {% endfor %}
-        </div>
+    </header>
+
+    <!-- Assessment banner (shown inline below header when needed) -->
+    {% if request.session.patient_id and show_assessment_banner %}
+    <div class="assessment-banner">
+        <i class="fas fa-clipboard-check me-1"></i>
+        Complete your strength assessment to unlock your training plan.
+        <a href="{% url 'onboarding_start' %}">Start now →</a>
+    </div>
     {% endif %}
-    
-    <!-- Main Content -->
+
+    <!-- ── Django Messages ───────────────────────────────────────────────── -->
+    {% if messages %}
+    <div class="container mt-3">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show fade-in" role="alert">
+            <i class="fas fa-check-circle me-2"></i>
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- ── Main Content ──────────────────────────────────────────────────── -->
     <div class="main-content">
         <div class="container">
             {% block content %}{% endblock %}
         </div>
     </div>
-    
-    <!-- Footer -->
+
+    <!-- ── Footer (minimal legal links only) ─────────────────────────────── -->
     <footer>
-        <div class="container text-center">
-            <p class="mb-2">
-                <i class="fas fa-dumbbell me-2"></i>
-                © 2025 VYAYAM | Professional AI-Powered Physiotherapy &amp; Strength Training Platform
-            </p>
-            <p class="mb-0" style="font-size:.82rem;opacity:.7;">
-                <a href="{% url 'privacy_policy' %}" style="color:inherit;text-decoration:underline;">Privacy Policy</a>
+        <div class="container">
+            <p class="legal-links">
+                © 2025 VYAYAM
                 &nbsp;&middot;&nbsp;
-                <a href="{% url 'terms_of_service' %}" style="color:inherit;text-decoration:underline;">Terms of Service</a>
+                <a href="{% url 'privacy_policy' %}">Privacy Policy</a>
                 &nbsp;&middot;&nbsp;
-                <a href="{% url 'disclaimer' %}" style="color:inherit;text-decoration:underline;">Medical Disclaimer</a>
+                <a href="{% url 'terms_of_service' %}">Terms of Service</a>
+                &nbsp;&middot;&nbsp;
+                <a href="{% url 'disclaimer' %}">Medical Disclaimer</a>
                 {% if request.session.patient_id %}
                 &nbsp;&middot;&nbsp;
-                <a href="{% url 'delete_account' %}" style="color:#fca5a5;text-decoration:underline;">Delete My Account</a>
+                <a href="{% url 'delete_account' %}" class="danger-link">Delete My Account</a>
                 {% endif %}
             </p>
         </div>
     </footer>
-    
-    <!-- Mobile Bottom Nav -->
+
+    <!-- ── Gamified 3-tab Bottom Nav (patients only, mobile) ─────────────── -->
     {% if request.session.patient_id %}
-    <nav class="mobile-bottom-nav" id="mobileBottomNav">
-      <div class="nav-items">
-        <a href="{% url 'v1_dashboard' %}" class="nav-tab" id="bnav-dash">
-          <i class="fas fa-home"></i><span>Home</span>
+    <nav class="gamified-bottom-nav" id="gamifiedBottomNav" aria-label="Main navigation">
+        <a href="{% url 'v1_dashboard' %}" class="gnav-tab" id="gnav-home">
+            <span class="material-symbols-outlined gnav-icon">home_health</span>
+            <span>Home</span>
         </a>
-        <a href="{% url 'v1_session_overview' %}" class="nav-tab" id="bnav-workout">
-          <i class="fas fa-heartbeat"></i><span>Workout</span>
+        <a href="{% url 'v1_progress' %}" class="gnav-tab" id="gnav-progress">
+            <span class="material-symbols-outlined gnav-icon">monitoring</span>
+            <span>Progress</span>
         </a>
-        <a href="{% url 'v1_nutrition_dashboard' %}" class="nav-tab" id="bnav-nutrition">
-          <i class="fas fa-leaf"></i><span>Nutrition</span>
+        <a href="#" class="gnav-tab" id="gnav-profile">
+            {# href will be {% url 'v1_profile' %} once that view is wired #}
+            <span class="material-symbols-outlined gnav-icon">person</span>
+            <span>Profile</span>
         </a>
-        <a href="{% url 'v1_progress' %}" class="nav-tab" id="bnav-progress">
-          <i class="fas fa-chart-line"></i><span>Progress</span>
-        </a>
-      </div>
     </nav>
     {% endif %}
 
-    <!-- Bootstrap 5 JS -->
+    <!-- Bootstrap 5 JS (kept — child templates use Bootstrap JS components) -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
+
+    <!-- Service Worker registration (kept) -->
     <script>
     if ('serviceWorker' in navigator) {
-      window.addEventListener('load', function() {
-        navigator.serviceWorker.register('/sw.js').then(function(reg) {
-          console.log('SW registered:', reg.scope);
-        }).catch(function(err) {
-          console.log('SW registration failed:', err);
+        window.addEventListener('load', function() {
+            navigator.serviceWorker.register('/sw.js').then(function(reg) {
+                console.log('SW registered:', reg.scope);
+            }).catch(function(err) {
+                console.log('SW registration failed:', err);
+            });
         });
-      });
     }
     </script>
 
+    <!-- CSRF token helpers (kept — required by child templates doing AJAX) -->
     <script>
-    // CSRF token helper — available globally for all AJAX calls
     function getCsrfToken() {
-        const cookie = document.cookie.split(';').find(c => c.trim().startsWith('csrftoken='));
+        var cookie = document.cookie.split(';').find(function(c) {
+            return c.trim().startsWith('csrftoken=');
+        });
         return cookie ? cookie.split('=')[1] : '';
     }
+    // Alias used by some child templates (e.g. v1_exercise_execute)
+    var getCsrf = getCsrfToken;
 
-    // Patch window.fetch to automatically inject X-CSRFToken on all non-GET requests
-    const _originalFetch = window.fetch;
-    window.fetch = function(url, options = {}) {
+    // Patch window.fetch to auto-inject X-CSRFToken on non-GET requests
+    var _originalFetch = window.fetch;
+    window.fetch = function(url, options) {
+        options = options || {};
         if (options.method && options.method.toUpperCase() !== 'GET') {
             options.headers = options.headers || {};
             if (options.headers instanceof Headers) {
@@ -642,26 +558,28 @@
     };
     </script>
 
+    <!-- Bottom nav active-state highlighting -->
     <script>
-    // Highlight active bottom nav tab
     (function() {
-      var path = window.location.pathname;
-      var tabs = {
-        'bnav-dash': ['/v1/dashboard', '/dashboard'],
-        'bnav-workout': ['/v1/session', '/v1/exercise', '/v1/warmup', '/v1/cooldown'],
-        'bnav-nutrition': ['/v1/nutrition', '/food'],
-        'bnav-progress': ['/v1/progress'],
-      };
-      for (var id in tabs) {
-        var el = document.getElementById(id);
-        if (el) {
-          for (var i = 0; i < tabs[id].length; i++) {
-            if (path.indexOf(tabs[id][i]) === 0) { el.classList.add('active'); break; }
-          }
+        var path = window.location.pathname;
+        var tabs = {
+            'gnav-home':     ['/v1/dashboard', '/dashboard', '/home'],
+            'gnav-progress': ['/v1/progress'],
+            'gnav-profile':  ['/v1/profile'],
+        };
+        for (var id in tabs) {
+            var el = document.getElementById(id);
+            if (!el) continue;
+            for (var i = 0; i < tabs[id].length; i++) {
+                if (path.indexOf(tabs[id][i]) === 0) {
+                    el.classList.add('gnav-active');
+                    break;
+                }
+            }
         }
-      }
     })();
     </script>
+
     {% block extra_js %}{% endblock %}
 </body>
 </html>

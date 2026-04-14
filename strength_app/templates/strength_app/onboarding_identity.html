@@ -1,145 +1,151 @@
-{% extends 'strength_app/base.html' %}
+{% extends 'strength_app/base_gamified.html' %}
 {% block title %}Identity — VYAYAM Assessment{% endblock %}
+{% block bottom_nav %}{% endblock %}
 
 {% block content %}
-<div class="fade-in">
-  <div class="row justify-content-center">
-    <div class="col-lg-6">
+<div class="max-w-xl mx-auto px-4 pt-4 pb-8 space-y-4">
 
-      <!-- Progress -->
-      <div class="mb-4">
-        <div class="d-flex justify-content-between align-items-center mb-2">
-          <span class="text-muted small fw-600">Step {{ step }} of {{ total }}</span>
-          <span class="text-muted small">Identity &amp; Physical Stats</span>
-        </div>
-        <div class="progress" style="height:6px;border-radius:6px;">
-          <div class="progress-bar" style="width:{% widthratio step total 100 %}%;background:var(--primary-gradient);"></div>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-body p-4">
-          <h4 class="fw-700 mb-1">About You</h4>
-          <p class="text-muted mb-4">Basic information to set up your profile. Your Patient ID is generated from your name.</p>
-
-          <form method="post">
-            {% csrf_token %}
-
-            <div class="mb-3">
-              <label class="form-label fw-600">Full Name *</label>
-              <input type="text" name="name" class="form-control" required placeholder="e.g. Anika Sharma">
-            </div>
-
-            <div class="row g-3 mb-3">
-              <div class="col-6">
-                <label class="form-label fw-600">Age *</label>
-                <input type="number" name="age" class="form-control" min="10" max="100" required placeholder="25">
-              </div>
-              <div class="col-6">
-                <label class="form-label fw-600">Biological Sex</label>
-                <select name="biological_sex" class="form-select">
-                  <option value="not_specified">Prefer not to say</option>
-                  <option value="male">Male</option>
-                  <option value="female">Female</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="row g-3 mb-3">
-              <div class="col-6">
-                <label class="form-label fw-600">Height (cm)</label>
-                <input type="number" name="height_cm" class="form-control" step="0.5" min="100" max="250" placeholder="170">
-              </div>
-              <div class="col-6">
-                <label class="form-label fw-600">Weight (kg)</label>
-                <input type="number" name="weight_kg" class="form-control" step="0.5" min="30" max="300" placeholder="70">
-              </div>
-            </div>
-
-            <hr class="my-3">
-
-            <div class="mb-3">
-              <label class="form-label fw-600">Phone *</label>
-              <input type="tel" name="phone" class="form-control" required placeholder="For login">
-            </div>
-            <div class="mb-3">
-              <label class="form-label fw-600">Email</label>
-              <input type="email" name="email" class="form-control" placeholder="Optional">
-            </div>
-
-            <hr class="my-3">
-
-            <div class="mb-3">
-              <label class="form-label fw-600">Password *</label>
-              <input type="password" name="password" id="id_password" class="form-control" required minlength="8" placeholder="Minimum 8 characters, letters + numbers">
-            </div>
-            <div class="mb-3">
-              <label class="form-label fw-600">Confirm Password *</label>
-              <input type="password" name="confirm_password" id="id_confirm_password" class="form-control" required placeholder="Repeat password">
-              <small class="text-muted">You'll use your phone number and this password to log in</small>
-              <div id="passwordMismatch" style="color:#ef4444;font-size:.82rem;display:none;margin-top:4px;">
-                Passwords do not match
-              </div>
-            </div>
-
-            <hr class="my-3">
-
-            <div class="mb-3">
-              <div class="form-check">
-                <input class="form-check-input" type="checkbox" name="consent_terms" id="id_consent_terms" required>
-                <label class="form-check-label" for="id_consent_terms">
-                  I agree to the <a href="{% url 'terms_of_service' %}" target="_blank">Terms of Service</a> *
-                </label>
-              </div>
-            </div>
-            <div class="mb-3">
-              <div class="form-check">
-                <input class="form-check-input" type="checkbox" name="consent_privacy" id="id_consent_privacy">
-                <label class="form-check-label" for="id_consent_privacy">
-                  I consent to VYAYAM collecting and processing my health information — including medical conditions, medications, surgical history, menstrual cycle data, sleep patterns, and exercise pain reports — to personalise my programme safely. Data is stored securely and never shared with third parties.
-                  <a href="{% url 'privacy_policy' %}" target="_blank">Privacy Policy</a> (optional)
-                </label>
-              </div>
-            </div>
-            <div class="mb-4">
-              <div class="form-check">
-                <input class="form-check-input" type="checkbox" name="consent_disclaimer" id="id_consent_disclaimer">
-                <label class="form-check-label" for="id_consent_disclaimer">
-                  I have read and understood the <a href="{% url 'disclaimer' %}" target="_blank">Medical Disclaimer</a>
-                  (recommended)
-                </label>
-              </div>
-            </div>
-
-            <button type="submit" id="submitBtn" class="btn w-100 py-3 fw-700" style="background:var(--primary-gradient);color:white;border:none;border-radius:10px;">
-              Save &amp; Continue <i class="fas fa-arrow-right ms-2"></i>
-            </button>
-          </form>
-
-          <script>
-            (function() {
-              const pw  = document.getElementById('id_password');
-              const cpw = document.getElementById('id_confirm_password');
-              const msg = document.getElementById('passwordMismatch');
-              const btn = document.getElementById('submitBtn');
-
-              function checkMatch() {
-                if (cpw.value && pw.value !== cpw.value) {
-                  msg.style.display = 'block';
-                  btn.disabled = true;
-                } else {
-                  msg.style.display = 'none';
-                  btn.disabled = false;
-                }
-              }
-              pw.addEventListener('input', checkMatch);
-              cpw.addEventListener('input', checkMatch);
-            })();
-          </script>
-        </div>
-      </div>
-
+  <!-- Progress -->
+  <div class="bg-surface-container-lowest rounded-lg px-5 py-4 shadow-[0_4px_20px_rgba(26,28,28,0.05)]">
+    <div class="flex justify-between items-center mb-2">
+      <span class="text-xs font-semibold text-on-secondary-container">Step {{ step }} of {{ total }}</span>
+      <span class="text-xs text-on-secondary-container">Identity &amp; Physical Stats</span>
+    </div>
+    <div class="h-1.5 rounded-full bg-surface-container-high overflow-hidden">
+      <div class="h-full rounded-full bg-gradient-to-r from-primary to-primary-container" style="width:{% widthratio step total 100 %}%"></div>
     </div>
   </div>
+
+  <!-- Form card -->
+  <div class="bg-surface-container-lowest rounded-lg p-5 shadow-[0_4px_20px_rgba(26,28,28,0.04)]">
+    <h4 class="font-bold text-lg text-on-surface mb-1">About You</h4>
+    <p class="text-sm text-on-secondary-container mb-5">Basic information to set up your profile. Your Patient ID is generated from your name.</p>
+
+    <form method="post" class="space-y-4">
+      {% csrf_token %}
+
+      <div>
+        <label class="block text-xs font-semibold text-on-surface mb-1">Full Name *</label>
+        <input type="text" name="name" required placeholder="e.g. Anika Sharma"
+               class="w-full bg-surface-container border border-outline-variant/40 rounded-lg px-3 py-2 text-sm text-on-surface focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20">
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs font-semibold text-on-surface mb-1">Age *</label>
+          <input type="number" name="age" min="10" max="100" required placeholder="25"
+                 class="w-full bg-surface-container border border-outline-variant/40 rounded-lg px-3 py-2 text-sm text-on-surface focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-on-surface mb-1">Biological Sex</label>
+          <select name="biological_sex"
+                  class="w-full bg-surface-container border border-outline-variant/40 rounded-lg px-3 py-2 text-sm text-on-surface focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20">
+            <option value="not_specified">Prefer not to say</option>
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs font-semibold text-on-surface mb-1">Height (cm)</label>
+          <input type="number" name="height_cm" step="0.5" min="100" max="250" placeholder="170"
+                 class="w-full bg-surface-container border border-outline-variant/40 rounded-lg px-3 py-2 text-sm text-on-surface focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-on-surface mb-1">Weight (kg)</label>
+          <input type="number" name="weight_kg" step="0.5" min="30" max="300" placeholder="70"
+                 class="w-full bg-surface-container border border-outline-variant/40 rounded-lg px-3 py-2 text-sm text-on-surface focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20">
+        </div>
+      </div>
+
+      <hr class="border-outline-variant/30">
+
+      <div>
+        <label class="block text-xs font-semibold text-on-surface mb-1">Phone *</label>
+        <input type="tel" name="phone" required placeholder="For login"
+               class="w-full bg-surface-container border border-outline-variant/40 rounded-lg px-3 py-2 text-sm text-on-surface focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20">
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-on-surface mb-1">Email</label>
+        <input type="email" name="email" placeholder="Optional"
+               class="w-full bg-surface-container border border-outline-variant/40 rounded-lg px-3 py-2 text-sm text-on-surface focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20">
+      </div>
+
+      <hr class="border-outline-variant/30">
+
+      <div>
+        <label class="block text-xs font-semibold text-on-surface mb-1">Password *</label>
+        <input type="password" name="password" id="id_password" required minlength="8"
+               placeholder="Minimum 8 characters, letters + numbers"
+               class="w-full bg-surface-container border border-outline-variant/40 rounded-lg px-3 py-2 text-sm text-on-surface focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20">
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-on-surface mb-1">Confirm Password *</label>
+        <input type="password" name="confirm_password" id="id_confirm_password" required
+               placeholder="Repeat password"
+               class="w-full bg-surface-container border border-outline-variant/40 rounded-lg px-3 py-2 text-sm text-on-surface focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20">
+        <div class="text-xs text-on-secondary-container mt-1">You'll use your phone number and this password to log in</div>
+        <div id="passwordMismatch" class="text-xs text-error mt-1" style="display:none;">
+          Passwords do not match
+        </div>
+      </div>
+
+      <hr class="border-outline-variant/30">
+
+      <div class="space-y-3">
+        <label class="flex items-start gap-3 cursor-pointer">
+          <input type="checkbox" name="consent_terms" id="id_consent_terms" required
+                 class="mt-0.5 rounded accent-primary flex-shrink-0">
+          <span class="text-sm text-on-secondary-container">
+            I agree to the <a href="{% url 'terms_of_service' %}" target="_blank" class="text-primary underline">Terms of Service</a> *
+          </span>
+        </label>
+        <label class="flex items-start gap-3 cursor-pointer">
+          <input type="checkbox" name="consent_privacy" id="id_consent_privacy"
+                 class="mt-0.5 rounded accent-primary flex-shrink-0">
+          <span class="text-sm text-on-secondary-container">
+            I consent to VYAYAM collecting and processing my health information — including medical conditions, medications, surgical history, menstrual cycle data, sleep patterns, and exercise pain reports — to personalise my programme safely. Data is stored securely and never shared with third parties.
+            <a href="{% url 'privacy_policy' %}" target="_blank" class="text-primary underline">Privacy Policy</a> (optional)
+          </span>
+        </label>
+        <label class="flex items-start gap-3 cursor-pointer">
+          <input type="checkbox" name="consent_disclaimer" id="id_consent_disclaimer"
+                 class="mt-0.5 rounded accent-primary flex-shrink-0">
+          <span class="text-sm text-on-secondary-container">
+            I have read and understood the <a href="{% url 'disclaimer' %}" target="_blank" class="text-primary underline">Medical Disclaimer</a> (recommended)
+          </span>
+        </label>
+      </div>
+
+      <button type="submit" id="submitBtn"
+              class="w-full py-3 bg-gradient-to-r from-primary to-primary-container text-white font-bold rounded-xl">
+        Save &amp; Continue <i class="fas fa-arrow-right ms-2"></i>
+      </button>
+    </form>
+
+    <script>
+      (function() {
+        const pw  = document.getElementById('id_password');
+        const cpw = document.getElementById('id_confirm_password');
+        const msg = document.getElementById('passwordMismatch');
+        const btn = document.getElementById('submitBtn');
+
+        function checkMatch() {
+          if (cpw.value && pw.value !== cpw.value) {
+            msg.style.display = 'block';
+            btn.disabled = true;
+          } else {
+            msg.style.display = 'none';
+            btn.disabled = false;
+          }
+        }
+        pw.addEventListener('input', checkMatch);
+        cpw.addEventListener('input', checkMatch);
+      })();
+    </script>
+  </div>
+
 </div>
 {% endblock %}

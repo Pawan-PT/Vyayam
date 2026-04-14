@@ -2,7 +2,7 @@
 {% load vyayam_filters %}
 {% block title %}{{ patient.name }} — VYAYAM Coach{% endblock %}
 {% block page_title %}
-  <a href="{% url 'coach_squad' %}" style="color:rgba(255,255,255,.5);text-decoration:none;font-size:.85rem;">← Squad</a>
+  <a href="{% url 'coach_squad' %}" style="color:rgba(26,28,28,.4);text-decoration:none;font-size:.85rem;">← Squad</a>
   &nbsp;/&nbsp; {{ patient.name }}
 {% endblock %}
 
@@ -22,26 +22,29 @@
   .three-col { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-bottom: 16px; }
   @media(max-width:700px){ .three-col { grid-template-columns: 1fr 1fr; } }
   .info-row { display: flex; justify-content: space-between; padding: 7px 0;
-    border-bottom: 1px solid rgba(255,255,255,.05); font-size: .85rem; }
+    border-bottom: 1px solid rgba(26,28,28,.07); font-size: .85rem; color: #1a1c1c; }
   .info-row:last-child { border-bottom: none; }
-  .info-label { opacity: .55; }
-  .rf-tag { display: inline-block; padding: 3px 10px; background: rgba(239,68,68,.15);
-    border: 1px solid rgba(239,68,68,.25); border-radius: 6px; font-size: .75rem;
-    color: #fca5a5; margin: 3px; }
-  .eq-tag { display: inline-block; padding: 3px 10px; background: rgba(102,126,234,.1);
-    border: 1px solid rgba(102,126,234,.2); border-radius: 6px; font-size: .75rem;
-    color: #a5b4fc; margin: 3px; }
+  .info-label { color: #3d4f42; opacity: .6; }
+  .rf-tag { display: inline-block; padding: 3px 10px; background: rgba(186,26,26,.1);
+    border: 1px solid rgba(186,26,26,.22); border-radius: 6px; font-size: .75rem;
+    color: #ba1a1a; margin: 3px; }
+  .eq-tag { display: inline-block; padding: 3px 10px; background: rgba(12,108,63,.1);
+    border: 1px solid rgba(12,108,63,.2); border-radius: 6px; font-size: .75rem;
+    color: #0c6c3f; margin: 3px; }
   .tl-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
-  .tl-green { background: #22c55e; }
+  .tl-green  { background: #22c55e; }
   .tl-yellow { background: #f59e0b; }
-  .tl-red { background: #ef4444; }
+  .tl-red    { background: #ef4444; }
   /* Flag modal */
-  .modal-backdrop { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.6);
+  .modal-backdrop { display: none; position: fixed; inset: 0; background: rgba(26,28,28,.5);
     z-index: 100; align-items: center; justify-content: center; }
-  .modal-box { background: #1a1f3a; border-radius: 16px; padding: 28px; max-width: 440px; width: 90%; }
-  .notes-textarea { width: 100%; background: #0d1117; border: 1px solid rgba(255,255,255,.12);
-    border-radius: 10px; padding: 10px 14px; color: #fff; font-size: .85rem;
-    min-height: 80px; resize: vertical; }
+  .modal-box { background: #fff; border-radius: 16px; padding: 26px;
+    max-width: 440px; width: 90%; border: 1px solid rgba(26,28,28,.1);
+    box-shadow: 0 8px 32px rgba(26,28,28,.15); }
+  .notes-textarea { width: 100%; background: #f4f7f5; border: 1px solid rgba(26,28,28,.14);
+    border-radius: 10px; padding: 10px 14px; color: #1a1c1c; font-size: .85rem;
+    min-height: 80px; resize: vertical; font-family: inherit; }
+  .notes-textarea:focus { outline: none; border-color: #0c6c3f; }
 </style>
 {% endblock %}
 
@@ -67,7 +70,6 @@
 
   <!-- Left column -->
   <div>
-
     <!-- Radar chart -->
     <div class="c-card">
       <div class="c-card-title">Capability Radar</div>
@@ -82,8 +84,7 @@
       <div class="c-card-title">Pattern Scores</div>
       <table class="c-table">
         <thead><tr>
-          <th>Pattern</th><th>Score</th>
-          <th>Asymmetry</th>
+          <th>Pattern</th><th>Score</th><th>Asymmetry</th>
         </tr></thead>
         <tbody>
           {% with scores=profile %}
@@ -109,17 +110,15 @@
       {% if red_flags %}
         {% for rf in red_flags %}<span class="rf-tag">{{ rf|replace_underscores|title }}</span>{% endfor %}
       {% else %}
-        <span style="opacity:.45;font-size:.85rem;">None recorded</span>
+        <span style="color:#3d4f42;opacity:.5;font-size:.85rem;">None recorded</span>
       {% endif %}
       <div class="c-card-title mt-3">Equipment Available</div>
       {% for eq in equipment %}<span class="eq-tag">{{ eq|replace_underscores|title }}</span>{% endfor %}
     </div>
-
   </div>
 
   <!-- Right column -->
   <div>
-
     <!-- Athlete info -->
     <div class="c-card">
       <div class="c-card-title">Athlete Profile</div>
@@ -158,7 +157,7 @@
         </tbody>
       </table>
       {% else %}
-      <div style="opacity:.45;font-size:.85rem;">No sessions yet.</div>
+      <div style="color:#3d4f42;opacity:.5;font-size:.85rem;">No sessions yet.</div>
       {% endif %}
     </div>
 
@@ -187,7 +186,7 @@
       <div class="c-card-title">Coach Notes</div>
       <textarea class="notes-textarea" id="coachNotesArea" placeholder="Add notes about this athlete...">{{ coach_notes }}</textarea>
       <button class="btn-coach btn-outline-c btn-sm-c mt-2" onclick="saveNotes()">Save Notes</button>
-      <span id="notesSaved" style="font-size:.75rem;color:#22c55e;margin-left:10px;display:none;">Saved ✓</span>
+      <span id="notesSaved" style="font-size:.75rem;color:#0c6c3f;margin-left:10px;display:none;">Saved ✓</span>
     </div>
 
     <!-- Set competition date -->
@@ -196,19 +195,19 @@
       <form method="POST" action="{% url 'coach_set_competition' patient.patient_id %}" style="display:flex;gap:10px;align-items:center;">
         {% csrf_token %}
         <input type="date" name="competition_date" value="{{ patient.competition_date|default:'' }}"
-          style="background:#0d1117;border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:8px 12px;color:#fff;font-size:.85rem;flex:1;">
+          style="background:#f4f7f5;border:1px solid rgba(26,28,28,.14);border-radius:8px;padding:8px 12px;color:#1a1c1c;font-size:.85rem;flex:1;font-family:inherit;">
         <button type="submit" class="btn-coach btn-outline-c btn-sm-c">Set</button>
       </form>
     </div>
 
     <!-- Active override -->
     {% if active_override %}
-    <div class="c-card" style="border-color:rgba(102,126,234,.3);">
+    <div class="c-card" style="border-color:rgba(12,108,63,.25);">
       <div class="c-card-title">Active Coach Override</div>
-      <div style="font-size:.85rem;">
-        <div style="opacity:.6;margin-bottom:8px;">Set {{ active_override.created_date|date:"d M Y" }} · {{ active_override.exercises_json|length }} exercise modifications</div>
+      <div style="font-size:.85rem;color:#1a1c1c;">
+        <div style="color:#3d4f42;opacity:.7;margin-bottom:8px;">Set {{ active_override.created_date|date:"d M Y" }} · {{ active_override.exercises_json|length }} exercise modifications</div>
         {% if active_override.clinical_reasoning %}
-        <div style="font-style:italic;opacity:.75;">{{ active_override.clinical_reasoning }}</div>
+        <div style="font-style:italic;color:#3d4f42;">{{ active_override.clinical_reasoning }}</div>
         {% endif %}
       </div>
     </div>
@@ -220,7 +219,9 @@
 <!-- Flag Modal -->
 <div class="modal-backdrop" id="flagModal">
   <div class="modal-box">
-    <h6 style="margin-bottom:14px;"><i class="fas fa-flag me-2" style="color:#ef4444;"></i>Flag {{ patient.name }} for Review</h6>
+    <h6 style="margin-bottom:14px;font-size:.95rem;font-weight:700;color:#1a1c1c;">
+      <i class="fas fa-flag me-2" style="color:#ba1a1a;"></i>Flag {{ patient.name }} for Review
+    </h6>
     <textarea class="notes-textarea" id="flagNote" placeholder="Reason for flagging (e.g. knee pain, missed sessions)..."></textarea>
     <div style="display:flex;gap:10px;margin-top:14px;">
       <button class="btn-coach btn-danger-c" onclick="submitFlag()">Flag</button>
@@ -244,10 +245,12 @@ new Chart(document.getElementById('radarChart').getContext('2d'), {
     datasets: [{
       label: 'Capability',
       data: RADAR_DATA,
-      backgroundColor: 'rgba(102,126,234,.15)',
-      borderColor: '#667eea',
+      backgroundColor: 'rgba(12,108,63,.15)',
+      borderColor: '#0c6c3f',
       borderWidth: 2,
-      pointBackgroundColor: '#667eea',
+      pointBackgroundColor: '#6bbf8a',
+      pointBorderColor: '#fff',
+      pointBorderWidth: 2,
       pointRadius: 4,
     }]
   },
@@ -255,10 +258,11 @@ new Chart(document.getElementById('radarChart').getContext('2d'), {
     responsive: true, maintainAspectRatio: true,
     scales: {
       r: {
-        min: 0, max: 5, ticks: { stepSize: 1, color: 'rgba(255,255,255,.4)', font: { size: 10 } },
-        grid: { color: 'rgba(255,255,255,.08)' },
-        pointLabels: { color: '#a5b4fc', font: { size: 11, weight: '700' } },
-        angleLines: { color: 'rgba(255,255,255,.08)' },
+        min: 0, max: 5,
+        ticks: { stepSize: 1, color: 'rgba(26,28,28,.35)', backdropColor: 'transparent', font: { size: 10 } },
+        grid: { color: 'rgba(26,28,28,.08)' },
+        pointLabels: { color: '#0c6c3f', font: { size: 11, weight: '700' } },
+        angleLines: { color: 'rgba(26,28,28,.08)' },
       }
     },
     plugins: { legend: { display: false } }

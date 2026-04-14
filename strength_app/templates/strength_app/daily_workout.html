@@ -1,258 +1,141 @@
-{% extends 'strength_app/base.html' %}
+{% extends 'strength_app/base_gamified.html' %}
 {% load static %}
-
-{% block title %}Daily Workout - VYAYAM{% endblock %}
+{% block title %}Daily Workout — VYAYAM{% endblock %}
+{% block bottom_nav %}{% endblock %}
 
 {% block content %}
-<div class="fade-in">
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="text-center mb-4">
-                <h1 class="display-5 gradient-text">
-                    <i class="fas fa-dumbbell me-2"></i>Today's Workout
-                </h1>
-                <p class="lead text-muted">Complete your personalized training session</p>
-            </div>
+<div class="max-w-3xl mx-auto px-4 pt-5 pb-12">
+  <div class="text-center mb-5">
+    <h1 class="text-2xl font-extrabold text-on-surface mb-1"><i class="fas fa-dumbbell me-2 text-primary"></i>Today's Workout</h1>
+    <p class="text-sm text-on-secondary-container">Complete your personalized training session</p>
+  </div>
+
+  <div class="flex flex-col lg:flex-row gap-5">
+
+    <!-- Main column -->
+    <div class="flex-1 space-y-4">
+
+      <!-- Overview -->
+      <div class="bg-surface-container-lowest rounded-xl shadow-[0_4px_20px_rgba(26,28,28,0.06)]">
+        <div class="px-5 py-3 border-b border-outline-variant/15 font-bold text-sm text-on-surface">
+          <i class="fas fa-list-check me-2 text-primary/70"></i>Workout Overview
         </div>
+        <div class="px-5 py-4">
+          <div class="grid grid-cols-3 gap-3 text-center mb-4">
+            <div class="bg-primary/8 rounded-xl p-3">
+              <div class="text-2xl font-extrabold text-primary">{{ total_exercises }}</div>
+              <div class="text-xs text-on-secondary-container mt-0.5">Exercises</div>
+            </div>
+            <div class="bg-surface-container rounded-xl p-3">
+              <div class="text-2xl font-extrabold text-on-surface">30–40</div>
+              <div class="text-xs text-on-secondary-container mt-0.5">Minutes</div>
+            </div>
+            <div class="bg-surface-container rounded-xl p-3">
+              <div class="text-2xl"><i class="fas fa-fire text-error"></i></div>
+              <div class="text-xs text-on-secondary-container mt-0.5">Moderate</div>
+            </div>
+          </div>
+
+          <!-- Form tracking notice -->
+          <div class="bg-primary/8 border border-primary/20 rounded-lg px-4 py-3">
+            <div class="font-bold text-sm text-primary mb-1.5"><i class="fas fa-camera me-1.5"></i>AI-Powered Form Tracking</div>
+            <p class="text-xs text-on-secondary-container mb-2">Real-time camera analysis with colour-coded feedback:</p>
+            <div class="flex flex-wrap gap-2">
+              <span class="bg-primary text-white text-xs font-bold px-3 py-1 rounded-full"><i class="fas fa-check me-1"></i>GREEN = Perfect</span>
+              <span class="text-xs font-bold px-3 py-1 rounded-full" style="background:#b08800;color:#fff;"><i class="fas fa-adjust me-1"></i>YELLOW = Adjust</span>
+              <span class="bg-error text-white text-xs font-bold px-3 py-1 rounded-full"><i class="fas fa-times me-1"></i>RED = Poor</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Exercise list -->
+      {% if exercises %}
+      <div class="bg-surface-container-lowest rounded-xl shadow-[0_4px_20px_rgba(26,28,28,0.06)]">
+        <div class="px-5 py-3 border-b border-outline-variant/15 font-bold text-sm text-on-surface">
+          <i class="fas fa-play-circle me-2 text-primary/70"></i>Exercise List
+        </div>
+        <div class="divide-y divide-outline-variant/10">
+          {% for exercise in exercises %}
+          <div class="flex items-center gap-3 px-5 py-3">
+            <div class="w-9 h-9 rounded-full bg-primary text-white flex items-center justify-center font-bold text-sm flex-shrink-0">{{ forloop.counter }}</div>
+            <div class="flex-1 min-w-0">
+              <div class="font-semibold text-sm text-on-surface">{{ exercise.exercise_name }}</div>
+              <span class="text-xs font-semibold px-2 py-0.5 rounded-full text-white"
+                    style="background:{% if exercise.type == 'stretching' %}#0c6c3f{% elif exercise.type == 'strength' %}#11998e{% else %}#d4a825{% endif %};">
+                {{ exercise.section }}
+              </span>
+            </div>
+            <div class="text-center flex-shrink-0">
+              <div class="text-xs text-on-secondary-container/60">Sets × Reps</div>
+              <div class="font-bold text-sm text-on-surface">{{ exercise.sets }} × {{ exercise.reps }}</div>
+            </div>
+            <a href="{% url 'execute_exercise' exercise.index %}"
+               class="flex-shrink-0 px-3 py-1.5 bg-primary text-white font-bold text-xs rounded-lg no-underline">
+              <i class="fas fa-play me-1"></i>Start
+            </a>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% else %}
+      <div class="bg-surface-container border border-outline-variant/30 rounded-xl px-4 py-4 text-sm text-on-secondary-container">
+        <i class="fas fa-exclamation-triangle me-2" style="color:#b08800;"></i>No exercises found. Please generate a prescription first.
+      </div>
+      {% endif %}
     </div>
 
-    <div class="row">
-        <div class="col-lg-8 mb-4">
-            <!-- Workout Overview Card -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="mb-0 text-white">
-                        <i class="fas fa-list-check me-2"></i>Workout Overview
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="row text-center mb-4">
-                        <div class="col-md-4">
-                            <div class="p-3 rounded" style="background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);">
-                                <h3 class="mb-1">{{ total_exercises }}</h3>
-                                <p class="text-muted mb-0 small">Total Exercises</p>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="p-3 rounded" style="background: linear-gradient(135deg, rgba(17, 153, 142, 0.1) 0%, rgba(56, 239, 125, 0.1) 100%);">
-                                <h3 class="mb-1">30-40</h3>
-                                <p class="text-muted mb-0 small">Minutes Duration</p>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="p-3 rounded" style="background: linear-gradient(135deg, rgba(240, 147, 251, 0.1) 0%, rgba(245, 87, 108, 0.1) 100%);">
-                                <h3 class="mb-1">
-                                    <i class="fas fa-fire text-danger"></i>
-                                </h3>
-                                <p class="text-muted mb-0 small">Moderate Intensity</p>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="alert alert-info mb-0">
-                        <h6 class="mb-2">
-                            <i class="fas fa-camera me-2"></i>AI-Powered Form Tracking
-                        </h6>
-                        <p class="mb-2 small">
-                            Real-time camera analysis with color-coded feedback:
-                        </p>
-                        <div class="d-flex gap-3 flex-wrap">
-                            <span class="badge bg-success" style="padding: 0.5rem 1rem;">
-                                <i class="fas fa-check me-1"></i>GREEN = Perfect Form
-                            </span>
-                            <span class="badge bg-warning" style="padding: 0.5rem 1rem;">
-                                <i class="fas fa-adjust me-1"></i>YELLOW = Adjust Form
-                            </span>
-                            <span class="badge bg-danger" style="padding: 0.5rem 1rem;">
-                                <i class="fas fa-times me-1"></i>RED = Poor Form
-                            </span>
-                        </div>
-                    </div>
-                </div>
-            </div>
+    <!-- Sidebar -->
+    <div class="lg:w-56 space-y-4">
 
-            <!-- Exercise List -->
-            {% if exercises %}
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0 text-white">
-                        <i class="fas fa-play-circle me-2"></i>Exercise List
-                    </h5>
-                </div>
-                <div class="card-body p-0">
-                    <div class="list-group list-group-flush">
-                        {% for exercise in exercises %}
-                        <div class="list-group-item">
-                            <div class="row align-items-center">
-                                <div class="col-md-1 text-center">
-                                    <div class="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center" 
-                                         style="width: 40px; height: 40px; font-weight: 600;">
-                                        {{ forloop.counter }}
-                                    </div>
-                                </div>
-                                <div class="col-md-5">
-                                    <h6 class="mb-1">{{ exercise.exercise_name }}</h6>
-                                    <span class="badge badge-sm" 
-                                          style="background: {% if exercise.type == 'stretching' %}#667eea{% elif exercise.type == 'strength' %}#11998e{% else %}#f093fb{% endif %};">
-                                        {{ exercise.section }}
-                                    </span>
-                                </div>
-                                <div class="col-md-3 text-center">
-                                    <small class="text-muted d-block">Sets × Reps</small>
-                                    <strong>{{ exercise.sets }} × {{ exercise.reps }}</strong>
-                                </div>
-                                <div class="col-md-3 text-end">
-                                    <a href="{% url 'execute_exercise' exercise.index %}" 
-                                       class="btn btn-sm btn-success">
-                                        <i class="fas fa-play me-1"></i>Start
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                        {% endfor %}
-                    </div>
-                </div>
-            </div>
-            {% else %}
-            <div class="alert alert-warning">
-                <i class="fas fa-exclamation-triangle me-2"></i>
-                No exercises found. Please generate a prescription first.
-            </div>
-            {% endif %}
+      <!-- Progress -->
+      <div class="bg-surface-container-lowest rounded-xl px-4 py-4 shadow-[0_4px_20px_rgba(26,28,28,0.06)]">
+        <div class="font-bold text-xs text-on-secondary-container/60 uppercase tracking-wide mb-3">
+          <i class="fas fa-chart-line me-1.5 text-primary/70"></i>Today's Progress
         </div>
-        
-        <!-- Sidebar -->
-        <div class="col-lg-4">
-            <!-- Progress Card -->
-            <div class="card mb-4" style="border-left: 4px solid #667eea;">
-                <div class="card-body">
-                    <h6 class="mb-3">
-                        <i class="fas fa-chart-line text-primary me-2"></i>Today's Progress
-                    </h6>
-                    <div class="mb-3">
-                        <div class="d-flex justify-content-between mb-2">
-                            <span class="small">Exercises Completed</span>
-                            <span class="small fw-bold">0 / {{ total_exercises }}</span>
-                        </div>
-                        <div class="progress" style="height: 8px;">
-                            <div class="progress-bar bg-success" role="progressbar" 
-                                 style="width: 0%"></div>
-                        </div>
-                    </div>
-                    <hr>
-                    <div class="text-center">
-                        <p class="small text-muted mb-2">Ready to start?</p>
-                        <i class="fas fa-trophy text-warning" style="font-size: 2rem;"></i>
-                    </div>
-                </div>
-            </div>
+        <div class="mb-2 flex justify-between text-xs text-on-secondary-container">
+          <span>Exercises Completed</span>
+          <span class="font-bold">0 / {{ total_exercises }}</span>
+        </div>
+        <div class="h-2 bg-surface-container-high rounded-full overflow-hidden mb-3">
+          <div class="h-full bg-primary rounded-full" style="width:0%;"></div>
+        </div>
+        <div class="text-center">
+          <p class="text-xs text-on-secondary-container/60 mb-1">Ready to start?</p>
+          <i class="fas fa-trophy text-tertiary-container text-2xl"></i>
+        </div>
+      </div>
 
-            <!-- Tips Card -->
-            <div class="card mb-4" style="border-left: 4px solid #11998e;">
-                <div class="card-body">
-                    <h6 class="mb-3">
-                        <i class="fas fa-lightbulb text-warning me-2"></i>Workout Tips
-                    </h6>
-                    <ul class="list-unstyled mb-0 small">
-                        <li class="mb-2">
-                            <i class="fas fa-check text-success me-2"></i>
-                            Stand 6-8 feet from camera
-                        </li>
-                        <li class="mb-2">
-                            <i class="fas fa-check text-success me-2"></i>
-                            Ensure full body is visible
-                        </li>
-                        <li class="mb-2">
-                            <i class="fas fa-check text-success me-2"></i>
-                            Use good lighting
-                        </li>
-                        <li class="mb-2">
-                            <i class="fas fa-check text-success me-2"></i>
-                            Focus on form, not speed
-                        </li>
-                        <li class="mb-2">
-                            <i class="fas fa-check text-success me-2"></i>
-                            Take full rest between sets
-                        </li>
-                        <li class="mb-0">
-                            <i class="fas fa-check text-success me-2"></i>
-                            Stay hydrated
-                        </li>
-                    </ul>
-                </div>
-            </div>
-            
-            <!-- Safety Card -->
-            <div class="card" style="border-left: 4px solid #eb3349;">
-                <div class="card-body">
-                    <h6 class="mb-3">
-                        <i class="fas fa-shield-heart text-danger me-2"></i>Safety First
-                    </h6>
-                    <p class="small text-muted mb-2">
-                        <strong>Stop immediately if you experience:</strong>
-                    </p>
-                    <ul class="small mb-0">
-                        <li>Sharp or sudden pain</li>
-                        <li>Dizziness or nausea</li>
-                        <li>Chest discomfort</li>
-                        <li>Excessive breathlessness</li>
-                    </ul>
-                </div>
-            </div>
+      <!-- Tips -->
+      <div class="bg-primary/8 border border-primary/15 rounded-xl px-4 py-4">
+        <div class="font-bold text-xs text-primary uppercase tracking-wide mb-2.5">
+          <i class="fas fa-lightbulb me-1.5"></i>Workout Tips
         </div>
+        <ul class="space-y-1.5 text-xs text-on-surface list-none">
+          <li class="flex items-center gap-1.5"><i class="fas fa-check text-primary text-xs"></i>Stand 6–8 feet from camera</li>
+          <li class="flex items-center gap-1.5"><i class="fas fa-check text-primary text-xs"></i>Ensure full body is visible</li>
+          <li class="flex items-center gap-1.5"><i class="fas fa-check text-primary text-xs"></i>Use good lighting</li>
+          <li class="flex items-center gap-1.5"><i class="fas fa-check text-primary text-xs"></i>Focus on form, not speed</li>
+          <li class="flex items-center gap-1.5"><i class="fas fa-check text-primary text-xs"></i>Take full rest between sets</li>
+          <li class="flex items-center gap-1.5"><i class="fas fa-check text-primary text-xs"></i>Stay hydrated</li>
+        </ul>
+      </div>
+
+      <!-- Safety -->
+      <div class="bg-error-container/30 border border-error/20 rounded-xl px-4 py-4">
+        <div class="font-bold text-xs text-error uppercase tracking-wide mb-2">
+          <i class="fas fa-shield-heart me-1.5"></i>Safety First
+        </div>
+        <p class="text-xs text-on-surface mb-1.5"><strong>Stop immediately if you experience:</strong></p>
+        <ul class="text-xs text-on-surface space-y-0.5 list-disc ps-4">
+          <li>Sharp or sudden pain</li>
+          <li>Dizziness or nausea</li>
+          <li>Chest discomfort</li>
+          <li>Excessive breathlessness</li>
+        </ul>
+      </div>
     </div>
+
+  </div>
 </div>
-
-<style>
-.gradient-text {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
-
-.fade-in {
-    animation: fadeIn 0.5s ease-in;
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-.list-group-item {
-    transition: all 0.3s;
-    border-left: 3px solid transparent;
-}
-
-.list-group-item:hover {
-    background-color: rgba(102, 126, 234, 0.05);
-    border-left-color: #667eea;
-}
-
-.card {
-    border: none;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    margin-bottom: 1.5rem;
-    border-radius: 12px;
-    overflow: hidden;
-}
-
-.card-header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border-bottom: none;
-    padding: 1rem 1.5rem;
-}
-
-.btn-success {
-    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-    border: none;
-    transition: all 0.3s;
-}
-
-.btn-success:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(17, 153, 142, 0.4);
-}
-</style>
 {% endblock %}

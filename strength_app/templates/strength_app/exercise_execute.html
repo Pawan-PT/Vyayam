@@ -1,9 +1,10 @@
-{% extends 'strength_app/base.html' %}
+{% extends 'strength_app/base_gamified.html' %}
 {% load static %}
 
 {% block title %}Exercise: {{ exercise.exercise_name }}{% endblock %}
+{% block bottom_nav %}{% endblock %}
 
-{% block extra_css %}
+{% block extra_head %}
 <style>
     body {
         background: #0a0e27;
@@ -150,13 +151,13 @@
     }
 
     .btn-primary {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, #0c6c3f 0%, #6bbf8a 100%);
         color: white;
     }
 
     .btn-primary:hover {
         transform: translateY(-2px);
-        box-shadow: 0 10px 20px rgba(102,126,234,0.4);
+        box-shadow: 0 10px 20px rgba(12,108,63,0.4);
     }
 
     .btn-success {
@@ -206,7 +207,7 @@
     .loading-spinner {
         border: 4px solid rgba(255,255,255,0.1);
         border-radius: 50%;
-        border-top: 4px solid #667eea;
+        border-top: 4px solid #0c6c3f;
         width: 60px;
         height: 60px;
         animation: spin 1s linear infinite;
@@ -247,7 +248,7 @@
     }
 
     .set-dot.current {
-        background: #667eea;
+        background: #0c6c3f;
         animation: pulse-dot 1s infinite;
     }
 
@@ -264,7 +265,7 @@
     <div class="mb-4">
         <h2>{{ exercise.exercise_name }}</h2>
         <p class="text-muted">
-            Exercise {{ exercise_index|add:1 }} of {{ total_exercises }} | 
+            Exercise {{ exercise_index|add:1 }} of {{ total_exercises }} |
             {{ exercise.sets }} sets × {{ exercise.reps }} reps
         </p>
     </div>
@@ -273,7 +274,7 @@
     <div class="video-section">
         <video id="cameraFeed" autoplay playsinline></video>
         <canvas id="videoCanvas"></canvas>
-        
+
         <!-- HUD Overlay -->
         <div class="feedback-hud">
             <!-- Left: Rep Counter -->
@@ -358,7 +359,7 @@
 </div>
 {% endblock %}
 
-{% block extra_js %}
+{% block extra_scripts %}
 <!-- MediaPipe Dependencies -->
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
@@ -400,7 +401,7 @@ const canvasElement = document.getElementById('videoCanvas');
 
 function initializeMediaPipe() {
     console.log('🎥 Initializing MediaPipe Pose...');
-    
+
     pose = new Pose({
         locateFile: (file) => {
             return `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`;
@@ -504,7 +505,7 @@ function analyzePose(results) {
 }
 
 function calculateAngle(a, b, c) {
-    const radians = Math.atan2(c.y - b.y, c.x - b.x) - 
+    const radians = Math.atan2(c.y - b.y, c.x - b.x) -
                    Math.atan2(a.y - b.y, a.x - b.x);
     let angle = Math.abs(radians * 180.0 / Math.PI);
     if (angle > 180.0) {
@@ -517,7 +518,7 @@ function calculateFormScore(leftKnee, rightKnee) {
     // Knee alignment
     const kneeDiff = Math.abs(leftKnee - rightKnee);
     const alignmentScore = Math.max(0, 100 - (kneeDiff * 3));
-    
+
     // Depth check (for squats)
     const avgKnee = (leftKnee + rightKnee) / 2;
     let depthScore;
@@ -528,13 +529,13 @@ function calculateFormScore(leftKnee, rightKnee) {
     } else {
         depthScore = Math.max(0, 100 - ((90 - avgKnee) * 2));
     }
-    
+
     return (alignmentScore + depthScore) / 2;
 }
 
 function detectRep(leftKnee, rightKnee, formScore) {
     const avgKnee = (leftKnee + rightKnee) / 2;
-    
+
     // Simple rep detection for squats
     if (state.phase === 'standing' && avgKnee < 140) {
         state.phase = 'descending';
@@ -556,7 +557,7 @@ function detectRep(leftKnee, rightKnee, formScore) {
 
 function completeRep(formScore) {
     state.currentRep++;
-    
+
     // Classify rep quality
     if (formScore >= 75) {
         state.greenReps++;
@@ -568,9 +569,9 @@ function completeRep(formScore) {
         state.redReps++;
         showCenterFeedback('🛑 Poor form', 1000);
     }
-    
+
     updateDisplay();
-    
+
     // Check if set complete
     if (state.currentRep >= CONFIG.targetReps) {
         completeSet();
@@ -580,9 +581,9 @@ function completeRep(formScore) {
 function completeSet() {
     state.currentRep = 0;
     state.currentSet++;
-    
+
     updateDisplay();
-    
+
     if (state.currentSet > CONFIG.targetSets) {
         finishExercise();
     } else {
@@ -594,7 +595,7 @@ function completeSet() {
 function startRestPeriod() {
     state.isPaused = true;
     let restRemaining = CONFIG.restTime;
-    
+
     const restInterval = setInterval(() => {
         if (restRemaining > 0) {
             showCenterFeedback(`Rest: ${restRemaining}s`, 1000);
@@ -617,10 +618,10 @@ function finishExercise() {
 function updateFormDisplay(score) {
     state.lastFormScore = score;
     document.getElementById('formScore').textContent = Math.round(score);
-    
+
     const formFill = document.getElementById('formFill');
     formFill.style.width = score + '%';
-    
+
     formFill.className = 'form-fill';
     if (score >= 75) {
         formFill.classList.add('green');
@@ -637,7 +638,7 @@ function updateDisplay() {
     document.getElementById('yellowCount').textContent = state.yellowReps;
     document.getElementById('redCount').textContent = state.redReps;
     document.getElementById('currentSet').textContent = state.currentSet;
-    
+
     // Update set tracker
     updateSetTracker();
 }
@@ -645,7 +646,7 @@ function updateDisplay() {
 function updateSetTracker() {
     const tracker = document.getElementById('setTracker');
     tracker.innerHTML = '';
-    
+
     for (let i = 1; i <= CONFIG.targetSets; i++) {
         const dot = document.createElement('div');
         dot.className = 'set-dot';
@@ -661,10 +662,10 @@ function updateSetTracker() {
 function showCenterFeedback(message, duration = 2000) {
     const feedback = document.getElementById('centerFeedback');
     const messageEl = document.getElementById('feedbackMessage');
-    
+
     messageEl.textContent = message;
     feedback.style.display = 'block';
-    
+
     setTimeout(() => {
         feedback.style.display = 'none';
     }, duration);
@@ -674,33 +675,33 @@ function showCenterFeedback(message, duration = 2000) {
 document.getElementById('startBtn').addEventListener('click', async function() {
     this.disabled = true;
     this.textContent = '🎥 Starting...';
-    
+
     try {
         document.getElementById('loadingIndicator').style.display = 'block';
-        
+
         // Initialize MediaPipe
         initializeMediaPipe();
-        
+
         // Start camera
         await camera.start();
-        
+
         // Hide loading, show video
         document.getElementById('loadingIndicator').style.display = 'none';
         canvasElement.style.display = 'block';
-        
+
         // Set canvas size
         canvasElement.width = 1280;
         canvasElement.height = 720;
-        
+
         // Start exercise
         state.isRunning = true;
         state.exerciseStartTime = Date.now();
         updateSetTracker();
-        
+
         this.style.display = 'none';
-        
+
         showCenterFeedback('Exercise Started! 💪', 2000);
-        
+
     } catch (error) {
         console.error('Error starting camera:', error);
         alert('Failed to start camera. Please ensure camera permissions are granted.');
@@ -720,7 +721,7 @@ document.getElementById('completeBtn').addEventListener('click', async function(
         sets_completed: state.currentSet - 1,
         practice_mode: false
     };
-    
+
     try {
         const response = await fetch('/save-exercise-results/', {
             method: 'POST',
@@ -729,9 +730,9 @@ document.getElementById('completeBtn').addEventListener('click', async function(
             },
             body: JSON.stringify(results)
         });
-        
+
         const data = await response.json();
-        
+
         if (data.success) {
             // Navigate to next exercise or completion
             {% if is_last_exercise %}

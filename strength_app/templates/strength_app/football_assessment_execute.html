@@ -1,59 +1,63 @@
-{% extends 'strength_app/base.html' %}
+{% extends 'strength_app/base_gamified.html' %}
 {% block title %}{{ test.name }} — Football Assessment{% endblock %}
+{% block bottom_nav %}{% endblock %}
 
 {% block content %}
-<div class="fade-in">
+<div class="max-w-xl mx-auto px-4 pt-6 pb-12 space-y-4">
 
   <!-- Progress -->
-  <div class="mb-3">
-    <div class="d-flex justify-content-between small text-muted mb-1">
+  <div>
+    <div class="flex justify-between text-xs text-on-secondary-container mb-1.5">
       <span>Test {{ test_index|add:1 }} of {{ total_tests }}</span>
       <span>{{ progress_pct }}%</span>
     </div>
-    <div class="progress" style="height:6px;">
-      <div class="progress-bar" style="width:{{ progress_pct }}%;background:var(--primary-gradient);"></div>
+    <div class="h-1.5 bg-surface-container-high rounded-full overflow-hidden">
+      <div class="h-full bg-primary rounded-full transition-all" style="width:{{ progress_pct }}%;"></div>
     </div>
   </div>
 
   <!-- Test card -->
-  <div class="card mb-4">
-    <div class="card-body p-4">
-      <h4 class="fw-800 mb-1">{{ test.name }}</h4>
-      <p class="text-muted mb-3">{{ test.measure }}</p>
-      {% if side %}
-      <div class="alert border-0 py-2 px-3 mb-3" style="background:rgba(102,126,234,.1);color:#667eea;">
-        <i class="fas fa-arrow-{% if side == 'left' %}left{% else %}right{% endif %} me-1"></i>
-        <strong>{{ side|title }} side</strong>
-      </div>
-      {% endif %}
+  <div class="bg-surface-container-lowest rounded-xl px-5 py-5 shadow-[0_4px_20px_rgba(26,28,28,0.06)]">
+    <h4 class="font-extrabold text-lg text-on-surface mb-1">{{ test.name }}</h4>
+    <p class="text-sm text-on-secondary-container mb-3">{{ test.measure }}</p>
 
-      <h6 class="fw-700 mb-2">Instructions</h6>
-      <ol class="mb-0">
-        {% for instruction in test.instructions %}
-        <li class="mb-1">{{ instruction }}</li>
-        {% endfor %}
-      </ol>
+    {% if side %}
+    <div class="flex items-center gap-2 bg-primary/8 border border-primary/20 rounded-lg px-3 py-2 mb-3">
+      <i class="fas fa-arrow-{% if side == 'left' %}left{% else %}right{% endif %} text-primary text-sm"></i>
+      <span class="font-bold text-sm text-primary">{{ side|title }} side</span>
     </div>
+    {% endif %}
+
+    <h6 class="font-bold text-sm text-on-surface mb-2">Instructions</h6>
+    <ol class="space-y-1.5 ps-5 list-decimal text-sm text-on-secondary-container">
+      {% for instruction in test.instructions %}
+      <li>{{ instruction }}</li>
+      {% endfor %}
+    </ol>
   </div>
 
-  <!-- Input -->
-  <div class="card mb-4">
-    <div class="card-body p-4">
-      <h6 class="fw-700 mb-3">Record Your Result</h6>
+  <!-- Input card -->
+  <div class="bg-surface-container-lowest rounded-xl px-5 py-5 shadow-[0_4px_20px_rgba(26,28,28,0.06)]">
+    <h6 class="font-bold text-sm text-on-surface mb-3">Record Your Result</h6>
 
-      <div class="mb-3">
-        <label class="form-label fw-600">{{ test.input_label }}</label>
-        <input type="number" step="any" id="rawValue" class="form-control form-control-lg"
-               placeholder="Enter value" autofocus>
-      </div>
+    <div class="mb-4">
+      <label class="block text-xs font-semibold text-on-surface mb-1.5">{{ test.input_label }}</label>
+      <input type="number" step="any" id="rawValue"
+             placeholder="Enter value" autofocus
+             class="w-full bg-surface-container border border-outline-variant/40 rounded-lg px-3 py-3 text-base text-on-surface focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20">
+    </div>
 
-      <!-- Scoring reference -->
-      <div class="mt-3">
-        <h6 class="fw-600 small text-muted mb-2">Scoring Guide</h6>
+    <!-- Scoring guide -->
+    <div>
+      <div class="text-xs font-semibold text-on-secondary-container/70 uppercase tracking-wide mb-2">Scoring Guide</div>
+      <div class="space-y-1.5">
         {% for item in scoring_items %}
-        <div class="d-flex align-items-center gap-2 mb-1">
-          <span class="badge rounded-pill {% if item.score >= 4 %}bg-success{% elif item.score >= 3 %}bg-primary{% elif item.score >= 2 %}bg-warning{% else %}bg-secondary{% endif %}" style="min-width:28px;">{{ item.score }}</span>
-          <span class="small">{{ item.desc }}</span>
+        <div class="flex items-center gap-2">
+          <span class="inline-flex items-center justify-center w-7 h-7 rounded-full text-white text-xs font-bold flex-shrink-0
+            {% if item.score >= 4 %}bg-primary{% elif item.score >= 3 %}bg-primary/70{% elif item.score >= 2 %}bg-tertiary-container{% else %}bg-surface-container-high text-on-surface{% endif %}">
+            {{ item.score }}
+          </span>
+          <span class="text-xs text-on-secondary-container">{{ item.desc }}</span>
         </div>
         {% endfor %}
       </div>
@@ -61,14 +65,18 @@
   </div>
 
   <!-- Save button -->
-  <div class="text-center mb-4">
-    <button id="saveBtn" class="btn btn-lg px-5 py-3 fw-700" style="background:var(--success-gradient);color:white;border:none;border-radius:14px;" onclick="saveResult()">
+  <div class="text-center pt-1">
+    <button id="saveBtn"
+            onclick="saveResult()"
+            class="px-8 py-3.5 bg-primary text-white font-bold text-sm rounded-xl shadow-[0_4px_16px_rgba(12,108,63,0.25)]">
       <i class="fas fa-check me-2"></i>Save &amp; Continue
     </button>
   </div>
 
 </div>
+{% endblock %}
 
+{% block extra_scripts %}
 <script>
 (function() {
   var thresholds = {{ test.scoring_thresholds|safe }};

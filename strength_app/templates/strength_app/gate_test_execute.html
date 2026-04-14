@@ -1,9 +1,10 @@
-{% extends 'strength_app/base.html' %}
+{% extends 'strength_app/base_gamified.html' %}
 {% load static %}
 
 {% block title %}{{ family.name }} — Level {{ level_index|add:1 }} — VYAYAM{% endblock %}
+{% block bottom_nav %}{% endblock %}
 
-{% block extra_css %}
+{% block extra_head %}
 <style>
 body { background: #0a0e27; color: #fff; }
 
@@ -17,7 +18,7 @@ body { background: #0a0e27; color: #fff; }
   transition: background 0.4s;
 }
 .progress-fam.done    { background: #22c55e; }
-.progress-fam.current { background: #667eea; animation: pulse-bar 1.5s infinite; }
+.progress-fam.current { background: #0c6c3f; animation: pulse-bar 1.5s infinite; }
 @keyframes pulse-bar { 0%,100% { opacity:1; } 50% { opacity:.6; } }
 
 /* ── Level ladder ── */
@@ -49,7 +50,7 @@ body { background: #0a0e27; color: #fff; }
   padding: 10px 16px; border-radius: 10px;
   border: 1px solid rgba(255,255,255,0.1);
 }
-.rep-num { font-size: 40px; font-weight: 700; color: #667eea; line-height: 1; }
+.rep-num { font-size: 40px; font-weight: 700; color: #0c6c3f; line-height: 1; }
 .rep-lbl { font-size: 11px; opacity: 0.6; text-transform: uppercase; margin-top: 2px; }
 
 .form-bar { width: 120px; height: 20px; background: rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden; margin-top: 6px; }
@@ -73,7 +74,7 @@ body { background: #0a0e27; color: #fff; }
 #loadingArea { text-align: center; padding: 60px 24px; }
 
 
-.spin { border: 4px solid rgba(255,255,255,0.1); border-top-color: #667eea;
+.spin { border: 4px solid rgba(255,255,255,0.1); border-top-color: #0c6c3f;
   border-radius: 50%; width: 52px; height: 52px;
   animation: spin 1s linear infinite; margin: 0 auto 16px; }
 @keyframes spin { to { transform: rotate(360deg); } }
@@ -88,7 +89,7 @@ body { background: #0a0e27; color: #fff; }
 .btn-g:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 18px rgba(0,0,0,0.3); }
 .btn-g:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
 
-.btn-start   { background: linear-gradient(135deg,#667eea,#764ba2); color:#fff; }
+.btn-start   { background: linear-gradient(135deg,#0c6c3f,#6bbf8a); color:#fff; }
 .btn-tooEasy { background: linear-gradient(135deg,#22c55e,#16a34a); color:#fff; }
 .btn-myLevel { background: linear-gradient(135deg,#f59e0b,#d97706); color:#fff; }
 .btn-cannot  { background: linear-gradient(135deg,#ef4444,#dc2626); color:#fff; }
@@ -103,7 +104,7 @@ body { background: #0a0e27; color: #fff; }
 .instruction-list { list-style: none; padding: 0; margin: 0; }
 .instruction-list li { padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.06); font-size: 14px; }
 .instruction-list li:last-child { border-bottom: none; }
-.instruction-list li::before { content: '→ '; color: #667eea; }
+.instruction-list li::before { content: '→ '; color: #0c6c3f; }
 
 /* ── Modal ── */
 .modal-backdrop {
@@ -125,10 +126,10 @@ body { background: #0a0e27; color: #fff; }
   color: #fff; padding: 10px 14px; font-size: 15px; margin-bottom: 4px;
   box-sizing: border-box;
 }
-.field-input:focus { outline: none; border-color: #667eea; }
+.field-input:focus { outline: none; border-color: #0c6c3f; }
 textarea.field-input { resize: vertical; }
 .range-row { display: flex; justify-content: space-between; font-size: 11px; opacity: 0.5; margin-bottom: 14px; }
-input[type=range] { width: 100%; accent-color: #667eea; }
+input[type=range] { width: 100%; accent-color: #0c6c3f; }
 .capability-preview {
   padding: 12px 16px; border-radius: 10px; margin: 16px 0;
   font-weight: 600; font-size: 15px; text-align: center;
@@ -310,7 +311,7 @@ input[type=range] { width: 100%; accent-color: #667eea; }
 
 {% endblock %}
 
-{% block extra_js %}
+{% block extra_scripts %}
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>

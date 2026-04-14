@@ -1,105 +1,100 @@
-{% extends 'strength_app/base.html' %}
+{% extends 'strength_app/base_gamified.html' %}
 {% block title %}Mess Mode — VYAYAM{% endblock %}
 
-{% block extra_css %}
+{% block extra_head %}
 <style>
-  body { background: #0a0e27; color: #fff; }
-  .mess-container { max-width: 860px; margin: 0 auto; padding: 24px 20px; }
-  h1 { font-size: 1.5rem; font-weight: 800; margin-bottom: 4px; }
-  .card { background: #1a1f3a; border-radius: 16px; padding: 20px; margin-bottom: 18px; }
-  .card-label { font-size: .7rem; text-transform: uppercase; letter-spacing: 1px; opacity: .5; margin-bottom: 12px; }
-  .food-checkbox-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(175px, 1fr)); gap: 10px; }
-  .food-checkbox-item {
-    background: #252b4a; border-radius: 10px; padding: 10px 12px;
-    cursor: pointer; border: 2px solid transparent; transition: all .2s;
-    display: flex; align-items: flex-start; gap: 10px;
-  }
-  .food-checkbox-item:has(input:checked) { border-color: #667eea; background: rgba(102,126,234,.12); }
-  .food-checkbox-item input { margin-top: 2px; accent-color: #667eea; }
-  .fcb-name { font-weight: 600; font-size: .85rem; }
-  .fcb-meta { font-size: .72rem; opacity: .5; margin-top: 2px; }
-  label.field-label { font-size: .85rem; opacity: .7; margin-bottom: 4px; display: block; }
-  select, textarea {
-    width: 100%; background: #2a2f4a; border: 1px solid rgba(255,255,255,.1);
-    color: #fff; border-radius: 10px; padding: 10px 14px; font-size: .9rem;
-  }
-  textarea { resize: vertical; min-height: 70px; }
-  .btn-submit {
-    width: 100%; padding: 14px; font-weight: 700; font-size: 1rem;
-    background: linear-gradient(135deg, #11998e, #38ef7d);
-    border: none; border-radius: 12px; color: #fff; cursor: pointer; margin-top: 8px;
-  }
-  .guidance-box {
-    background: rgba(56,239,125,.1); border: 1px solid rgba(56,239,125,.3);
-    border-radius: 12px; padding: 18px 20px; white-space: pre-line;
-    font-size: .92rem; line-height: 1.7;
-  }
-  .recent-row { padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,.06); font-size: .85rem; }
-  .back-link { color: rgba(255,255,255,.4); font-size: .85rem; text-decoration: none; display: inline-block; margin-bottom: 16px; }
-  .back-link:hover { color: #fff; }
+  /* :has() for checkbox-driven visual selection — light theme */
+  .food-checkbox-item { border: 2px solid transparent; transition: all .2s; cursor: pointer; }
+  .food-checkbox-item:has(input:checked) { border-color: #0c6c3f; background: rgba(12,108,63,0.08); }
+  .food-checkbox-item input { accent-color: #0c6c3f; }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="mess-container">
-  <a href="{% url 'v1_nutrition_dashboard' %}" class="back-link"><i class="fas fa-arrow-left me-1"></i> Back to Nutrition</a>
-  <h1>Mess Mode</h1>
-  <p style="opacity:.55;font-size:.9rem;margin-bottom:20px;">Select what's being served today — we'll tell you how much to eat.</p>
+<div class="max-w-xl mx-auto px-4 pt-4 pb-8 space-y-4">
 
+  <!-- Top bar -->
+  <div class="bg-surface-container-lowest rounded-lg px-5 py-4 shadow-[0_4px_20px_rgba(26,28,28,0.05)] flex items-center justify-between">
+    <div>
+      <div class="text-lg font-extrabold text-on-surface">Mess Mode</div>
+      <div class="text-xs text-on-secondary-container font-medium mt-0.5">Select what's being served — we'll tell you how much to eat</div>
+    </div>
+    <a href="{% url 'v1_nutrition_dashboard' %}"
+       class="inline-flex items-center gap-1.5 text-sm text-primary font-semibold no-underline">
+      <i class="fas fa-arrow-left text-xs"></i>Nutrition
+    </a>
+  </div>
+
+  <!-- Guidance box (shown after POST) -->
   {% if guidance %}
-  <div class="card">
-    <div class="card-label">Your Guidance</div>
-    <div class="guidance-box">{{ guidance }}</div>
+  <div class="bg-primary/8 border border-primary/25 rounded-lg p-5">
+    <div class="text-[0.6rem] font-extrabold uppercase tracking-[0.12em] text-on-secondary-container opacity-60 mb-3">Your Guidance</div>
+    <div class="text-sm text-on-surface leading-relaxed whitespace-pre-line">{{ guidance }}</div>
   </div>
   {% endif %}
 
+  <!-- Food selection form -->
   <form method="post">
     {% csrf_token %}
-    <div class="card">
-      <div class="card-label">What's on the menu today?</div>
-      <div class="food-checkbox-grid">
+
+    <div class="bg-surface-container-lowest rounded-lg p-5 shadow-[0_4px_20px_rgba(26,28,28,0.04)] space-y-4">
+      <div class="text-[0.6rem] font-extrabold uppercase tracking-[0.12em] text-on-secondary-container opacity-60">What's on the menu today?</div>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;">
         {% for food in mess_foods %}
-        <label class="food-checkbox-item">
-          <input type="checkbox" name="food_ids" value="{{ food.id }}"
+        <label class="food-checkbox-item bg-surface-container rounded-lg p-3 flex items-start gap-2">
+          <input type="checkbox" name="food_ids" value="{{ food.id }}" class="mt-0.5 flex-shrink-0"
             {% if food in selected_items %}checked{% endif %}>
           <div>
-            <div class="fcb-name">{{ food.name }}</div>
-            <div class="fcb-meta">{{ food.calories_per_100g|floatformat:0 }} kcal/100g · {{ food.protein_per_100g }}g P</div>
+            <div class="font-semibold text-sm text-on-surface leading-snug">{{ food.name }}</div>
+            <div class="text-xs text-on-secondary-container mt-0.5 opacity-70">
+              {{ food.calories_per_100g|floatformat:0 }} kcal/100g · {{ food.protein_per_100g }}g P
+            </div>
           </div>
         </label>
         {% endfor %}
       </div>
 
-      <div style="margin-top:18px;">
-        <label class="field-label">Meal</label>
-        <select name="meal_type">
+      <div>
+        <label class="block text-xs font-semibold text-on-surface mb-1">Meal</label>
+        <select name="meal_type"
+                class="w-full bg-surface-container border border-outline-variant/40 rounded-lg px-3 py-2 text-sm text-on-surface focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20">
           {% for m in meal_types %}
           <option value="{{ m }}" {% if m == 'lunch' %}selected{% endif %}>{{ m|capfirst }}</option>
           {% endfor %}
         </select>
       </div>
 
-      <div style="margin-top:14px;">
-        <label class="field-label">Extra items not listed above (optional free text)</label>
-        <textarea name="raw_description" placeholder="e.g. sweet pongal, kesari bath, rasam..."></textarea>
+      <div>
+        <label class="block text-xs font-semibold text-on-surface mb-1">Extra items not listed above <span class="font-normal text-on-secondary-container">(optional free text)</span></label>
+        <textarea name="raw_description" placeholder="e.g. sweet pongal, kesari bath, rasam…" rows="3"
+                  class="w-full bg-surface-container border border-outline-variant/40 rounded-lg px-3 py-2 text-sm text-on-surface focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 resize-y"></textarea>
       </div>
 
-      <button type="submit" class="btn-submit">
+      <button type="submit"
+              class="w-full py-3 bg-gradient-to-r from-primary to-primary-container text-white font-bold rounded-xl">
         <i class="fas fa-magic me-2"></i>Get My Portion Guidance
       </button>
     </div>
   </form>
 
+  <!-- Recent mess entries -->
   {% if recent %}
-  <div class="card">
-    <div class="card-label">Recent Mess Entries</div>
-    {% for entry in recent %}
-    <div class="recent-row">
-      <strong>{{ entry.entry_date|date:"D d M" }}</strong> — {{ entry.meal_type|capfirst }}
-      {% if entry.raw_description %} · {{ entry.raw_description|truncatechars:60 }}{% endif %}
+  <div class="bg-surface-container-lowest rounded-lg p-5 shadow-[0_4px_20px_rgba(26,28,28,0.04)]">
+    <div class="text-[0.6rem] font-extrabold uppercase tracking-[0.12em] text-on-secondary-container opacity-60 mb-3">Recent Mess Entries</div>
+    <div class="divide-y divide-outline-variant/15">
+      {% for entry in recent %}
+      <div class="py-2.5">
+        <span class="text-sm font-semibold text-on-surface">{{ entry.entry_date|date:"D d M" }}</span>
+        <span class="text-sm text-on-secondary-container"> — {{ entry.meal_type|capfirst }}</span>
+        {% if entry.raw_description %}
+        <span class="text-sm text-on-secondary-container"> · {{ entry.raw_description|truncatechars:60 }}</span>
+        {% endif %}
+      </div>
+      {% endfor %}
     </div>
-    {% endfor %}
   </div>
   {% endif %}
+
 </div>
 {% endblock %}

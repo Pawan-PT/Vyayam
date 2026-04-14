@@ -1,37 +1,40 @@
-{% extends 'strength_app/base.html' %}
+{% extends 'strength_app/base_gamified.html' %}
 {% block title %}Conditioning — VYAYAM{% endblock %}
+{% block bottom_nav %}{% endblock %}
 
-{% block content %}
+{% block extra_head %}
 <style>
-  .cond-hero { background:linear-gradient(135deg,#11998e 0%,#38ef7d 100%);color:white;border-radius:16px;padding:24px;margin-bottom:20px; }
+  .cond-hero { background:linear-gradient(135deg,#0c6c3f 0%,#6bbf8a 100%);color:white;border-radius:16px;padding:24px;margin-bottom:20px; }
   .cond-hero h3 { font-weight:800;margin-bottom:6px; }
-  .proto-card { background:var(--card-bg,#1e1e2e);border-radius:14px;padding:18px;margin-bottom:14px;border:1px solid rgba(255,255,255,.08); }
-  .proto-card.selected { border-color:#38ef7d;box-shadow:0 0 0 2px rgba(56,239,125,.3); }
-  .proto-card h6 { font-weight:700;margin-bottom:4px; }
-  .talk-test-box { background:rgba(56,239,125,.1);border:1px solid rgba(56,239,125,.3);border-radius:12px;padding:16px;margin:16px 0; }
-  .talk-test-box .label { font-size:.75rem;text-transform:uppercase;letter-spacing:1px;color:#6ee7b7;font-weight:700;margin-bottom:6px; }
+  .proto-card { background:#fff;border-radius:14px;padding:18px;margin-bottom:14px;border:1px solid rgba(26,28,28,0.10);box-shadow:0 2px 8px rgba(26,28,28,0.06); }
+  .proto-card.selected { border-color:#0c6c3f;box-shadow:0 0 0 2px rgba(12,108,63,.2); }
+  .proto-card h6 { font-weight:700;margin-bottom:4px;color:#1a1c1c; }
+  .talk-test-box { background:rgba(12,108,63,.08);border:1px solid rgba(12,108,63,.2);border-radius:12px;padding:16px;margin:16px 0; }
+  .talk-test-box .label { font-size:.75rem;text-transform:uppercase;letter-spacing:1px;color:#0c6c3f;font-weight:700;margin-bottom:6px; }
   .timer-container { text-align:center;margin:24px 0; }
-  .timer-display { font-size:4rem;font-weight:800;font-variant-numeric:tabular-nums;color:white;margin:8px 0; }
+  .timer-display { font-size:4rem;font-weight:800;font-variant-numeric:tabular-nums;color:#1a1c1c;margin:8px 0; }
   .timer-label { font-size:1.1rem;font-weight:600;margin-bottom:12px; }
   .timer-btn { padding:14px 32px;font-size:1rem;font-weight:700;border:none;border-radius:12px;cursor:pointer;margin:4px; }
-  .btn-go { background:#38ef7d;color:#1a1a2e; }
-  .btn-pause { background:#f59e0b;color:#1a1a2e; }
-  .btn-skip { background:rgba(255,255,255,.1);color:white; }
+  .btn-go { background:#0c6c3f;color:#fff; }
+  .btn-pause { background:#b08800;color:#fff; }
+  .btn-skip { background:rgba(26,28,28,.08);color:#1a1c1c; }
   .round-indicator { display:flex;gap:8px;justify-content:center;margin:12px 0; }
-  .round-dot { width:14px;height:14px;border-radius:50%;background:rgba(255,255,255,.15); }
-  .round-dot.done { background:#38ef7d; }
-  .round-dot.active { background:#f59e0b;animation:pulse 1s infinite; }
+  .round-dot { width:14px;height:14px;border-radius:50%;background:rgba(26,28,28,.15); }
+  .round-dot.done { background:#0c6c3f; }
+  .round-dot.active { background:#b08800;animation:pulse 1s infinite; }
   @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
-  .rpe-badge { display:inline-block;background:rgba(56,239,125,.2);color:#6ee7b7;padding:4px 12px;border-radius:20px;font-weight:700;font-size:.85rem; }
+  .rpe-badge { display:inline-block;background:rgba(12,108,63,.12);color:#0c6c3f;padding:4px 12px;border-radius:20px;font-weight:700;font-size:.85rem; }
   .modality-list { display:flex;flex-wrap:wrap;gap:8px;margin-top:8px; }
-  .modality-chip { background:rgba(255,255,255,.08);padding:6px 14px;border-radius:20px;font-size:.8rem;color:#ccc; }
+  .modality-chip { background:rgba(26,28,28,.06);padding:6px 14px;border-radius:20px;font-size:.8rem;color:#3d4f42; }
   .phase-label { font-size:.85rem;text-transform:uppercase;letter-spacing:1px;font-weight:700;margin-bottom:4px; }
-  .phase-work { color:#38ef7d; }
-  .phase-rest { color:#f59e0b; }
-  .sprint-info { background:rgba(255,255,255,.05);border-radius:12px;padding:14px;margin:12px 0; }
+  .phase-work { color:#0c6c3f; }
+  .phase-rest { color:#b08800; }
+  .sprint-info { background:rgba(26,28,28,.04);border-radius:12px;padding:14px;margin:12px 0;font-size:.88rem;color:#3d4f42; }
 </style>
+{% endblock %}
 
-<div class="fade-in">
+{% block content %}
+<div class="max-w-xl mx-auto px-4 pt-5 pb-12">
 
   <div class="cond-hero">
     <h3><i class="fas fa-running me-2"></i>Conditioning Session</h3>
@@ -42,14 +45,14 @@
   {% if available_protocols|length > 1 %}
   <div class="proto-card">
     <h6>Choose Your Protocol</h6>
-    <p style="font-size:.8rem;color:#999;margin-bottom:12px;">Recommended for your current season phase.</p>
+    <p style="font-size:.8rem;color:#3d4f42;margin-bottom:12px;">Recommended for your current season phase.</p>
     {% for p in available_protocols %}
     <a href="?protocol={{ p.key }}" style="text-decoration:none;color:inherit;">
       <div class="proto-card {% if p.is_selected %}selected{% endif %}" style="margin-bottom:8px;padding:12px;">
         <div style="display:flex;justify-content:space-between;align-items:center;">
           <div>
-            <strong>{{ p.name }}</strong>
-            <div style="font-size:.8rem;color:#999;margin-top:2px;">{{ p.description|truncatewords:15 }}</div>
+            <strong style="color:#1a1c1c;">{{ p.name }}</strong>
+            <div style="font-size:.8rem;color:#3d4f42;margin-top:2px;">{{ p.description|truncatewords:15 }}</div>
           </div>
           <span class="rpe-badge">RPE {{ p.rpe_target }}</span>
         </div>
@@ -62,9 +65,8 @@
   <!-- Selected Protocol Details -->
   <div class="proto-card">
     <h6>{{ protocol.name }}</h6>
-    <p style="font-size:.85rem;color:#ccc;">{{ protocol.description }}</p>
+    <p style="font-size:.85rem;color:#3d4f42;">{{ protocol.description }}</p>
     <span class="rpe-badge">Target: RPE {{ protocol.rpe_target }}</span>
-
     <div class="modality-list">
       {% for m in protocol.modality_options %}
       <span class="modality-chip">{{ m }}</span>
@@ -75,18 +77,17 @@
   <!-- Talk Test Box -->
   <div class="talk-test-box">
     <div class="label"><i class="fas fa-comment-dots me-1"></i>Talk Test — Your Intensity Guide</div>
-    <p style="font-size:.95rem;margin-bottom:0;color:white;">{{ protocol.talk_test }}</p>
+    <p style="font-size:.95rem;margin-bottom:0;color:#1a1c1c;">{{ protocol.talk_test }}</p>
   </div>
 
   <!-- Timer Section -->
   <div class="proto-card" id="timerSection">
 
     {% if protocol.protocol.type == 'continuous' %}
-    <!-- CONTINUOUS TIMER (Zone 1) -->
     <div class="timer-container">
       <div class="phase-label phase-work">Continuous — {{ protocol.protocol.duration_minutes }} minutes</div>
       <div class="timer-display" id="timerDisplay">{{ protocol.protocol.duration_minutes }}:00</div>
-      <p style="font-size:.85rem;color:#999;">{{ protocol.protocol.instructions }}</p>
+      <p style="font-size:.85rem;color:#3d4f42;">{{ protocol.protocol.instructions }}</p>
       <div>
         <button class="timer-btn btn-go" id="btnStart" onclick="startTimer()"><i class="fas fa-play me-1"></i>Start</button>
         <button class="timer-btn btn-pause" id="btnPause" onclick="pauseTimer()" style="display:none;"><i class="fas fa-pause me-1"></i>Pause</button>
@@ -94,7 +95,6 @@
     </div>
 
     {% elif protocol.protocol.type == 'intervals' %}
-    <!-- INTERVAL TIMER (Zone 2 / Zone 3) -->
     <div class="timer-container">
       <div class="phase-label" id="phaseLabel">Ready</div>
       <div class="timer-display" id="timerDisplay">{{ protocol.protocol.work_seconds|divisibleby:60|default:"0" }}:00</div>
@@ -103,7 +103,7 @@
         <div class="round-dot" id="dot{{ forloop.counter0 }}"></div>
         {% endfor %}
       </div>
-      <p style="font-size:.85rem;color:#999;" id="phaseInstructions">{{ protocol.protocol.instructions }}</p>
+      <p style="font-size:.85rem;color:#3d4f42;" id="phaseInstructions">{{ protocol.protocol.instructions }}</p>
       <div>
         <button class="timer-btn btn-go" id="btnStart" onclick="startTimer()"><i class="fas fa-play me-1"></i>Start</button>
         <button class="timer-btn btn-pause" id="btnPause" onclick="pauseTimer()" style="display:none;"><i class="fas fa-pause me-1"></i>Pause</button>
@@ -112,13 +112,12 @@
     </div>
 
     {% elif protocol.protocol.type == 'sprint_intervals' %}
-    <!-- RSA SPRINT TIMER -->
     <div class="timer-container">
       <div class="phase-label" id="phaseLabel">Ready — {{ protocol.protocol.sets }} sets of {{ protocol.protocol.sprints_per_set }} sprints</div>
       <div class="timer-display" id="timerDisplay">--</div>
       <div style="margin:12px 0;">
         <span id="setCounter" style="font-size:1.1rem;font-weight:700;">Set 1 / {{ protocol.protocol.sets }}</span>
-        <span style="margin:0 8px;color:#555;">•</span>
+        <span style="margin:0 8px;color:#94a3b8;">•</span>
         <span id="sprintCounter" style="font-size:1.1rem;font-weight:700;">Sprint 1 / {{ protocol.protocol.sprints_per_set }}</span>
       </div>
       <div class="sprint-info">
@@ -141,13 +140,15 @@
     <a href="{% url 'v1_post_session_feedback' %}" class="timer-btn btn-go" id="btnDone" style="display:none;text-decoration:none;">
       <i class="fas fa-check me-1"></i>Done — Give Feedback
     </a>
-    <a href="{% url 'v1_session_overview' %}" style="color:#a5b4fc;font-size:.85rem;text-decoration:underline;display:block;margin-top:12px;">
+    <a href="{% url 'v1_session_overview' %}" style="color:#0c6c3f;font-size:.85rem;text-decoration:underline;display:block;margin-top:12px;">
       <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
     </a>
   </div>
 
 </div>
+{% endblock %}
 
+{% block extra_scripts %}
 <script>
 (function(){
   const type = '{{ protocol.protocol.type }}';
@@ -294,7 +295,6 @@
       }
     } else if (type === 'sprint_intervals') {
       if (rsaPhase === 'rest_sprint') {
-        // Sprint done, announce
         rsaPhase = 'sprint';
         if (window.speechSynthesis) {
           const u = new SpeechSynthesisUtterance('Sprint! Go!');
@@ -303,7 +303,6 @@
         }
         display.textContent = 'GO!';
         if (phaseLabel) { phaseLabel.textContent = 'SPRINT ' + currentSprint + ' — ALL OUT!'; phaseLabel.className = 'phase-label phase-work'; }
-        // Wait for user to press "Next" after sprinting
         btnStart.style.display = '';
         btnStart.innerHTML = '<i class="fas fa-check me-1"></i>Sprint Done';
         btnStart.onclick = function() {
@@ -315,7 +314,6 @@
               sessionDone();
               return;
             }
-            // Rest between sets
             rsaPhase = 'rest_set';
             remaining = restBetweenSets;
             display.textContent = fmt(remaining);
@@ -338,7 +336,6 @@
         };
         btnPause.style.display = 'none';
       } else if (rsaPhase === 'rest_set') {
-        // Set rest done, start next set
         if (window.speechSynthesis) {
           const u = new SpeechSynthesisUtterance('Set ' + currentSet + '. Get ready.');
           u.rate = 0.9;

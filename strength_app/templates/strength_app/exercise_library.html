@@ -1,266 +1,181 @@
-{% extends 'strength_app/base.html' %}
+{% extends 'strength_app/base_gamified.html' %}
 
-{% block title %}Exercise Library - VYAYAM{% endblock %}
+{% block title %}Exercise Library — VYAYAM{% endblock %}
+{% block bottom_nav %}{% endblock %}
 
 {% block content %}
-<div class="fade-in">
-    <!-- Header -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="text-center mb-4">
-                <h1 class="display-5 gradient-text">
-                    <i class="fas fa-book-open me-2"></i>Exercise Library
-                </h1>
-                <p class="lead text-muted">Browse {{ counts.total }} professional physiotherapy exercises</p>
-            </div>
-        </div>
-    </div>
+<div class="max-w-3xl mx-auto px-4 pt-6 pb-12 space-y-6">
 
-    <!-- Exercise Stats -->
-    <div class="row g-3 mb-5">
-        <div class="col-md-2">
-            <div class="stat-card primary text-center">
-                <div class="mb-2" style="font-size: 2rem; opacity: 0.3;">
-                    <i class="fas fa-dumbbell"></i>
-                </div>
-                <h3 class="mb-1">{{ counts.strength }}</h3>
-                <small class="text-muted">💪 Strength</small>
-            </div>
-        </div>
-        <div class="col-md-2">
-            <div class="stat-card danger text-center">
-                <div class="mb-2" style="font-size: 2rem; opacity: 0.3;">
-                    <i class="fas fa-running"></i>
-                </div>
-                <h3 class="mb-1">{{ counts.cardio }}</h3>
-                <small class="text-muted">🏃 Cardio</small>
-            </div>
-        </div>
-        <div class="col-md-2">
-            <div class="stat-card text-center" style="border-left-color: #f59e0b;">
-                <div class="mb-2" style="font-size: 2rem; opacity: 0.3; color: #f59e0b;">
-                    <i class="fas fa-child-reaching"></i>
-                </div>
-                <h3 class="mb-1">{{ counts.stretching }}</h3>
-                <small class="text-muted">🧘 Stretching</small>
-            </div>
-        </div>
-        <div class="col-md-2">
-            <div class="stat-card text-center" style="border-left-color: #4facfe;">
-                <div class="mb-2" style="font-size: 2rem; opacity: 0.3; color: #4facfe;">
-                    <i class="fas fa-balance-scale"></i>
-                </div>
-                <h3 class="mb-1">{{ counts.balance }}</h3>
-                <small class="text-muted">⚖️ Balance</small>
-            </div>
-        </div>
-        <div class="col-md-2">
-            <div class="stat-card success text-center">
-                <div class="mb-2" style="font-size: 2rem; opacity: 0.3;">
-                    <i class="fas fa-arrows-rotate"></i>
-                </div>
-                <h3 class="mb-1">{{ counts.mobility }}</h3>
-                <small class="text-muted">🔄 Mobility</small>
-            </div>
-        </div>
-        <div class="col-md-2">
-            <div class="stat-card text-center" style="border-left-color: #764ba2;">
-                <div class="mb-2" style="font-size: 2rem; opacity: 0.3; color: #764ba2;">
-                    <i class="fas fa-star"></i>
-                </div>
-                <h3 class="mb-1 text-primary">{{ counts.total }}</h3>
-                <small class="text-muted">✨ Total</small>
-            </div>
-        </div>
-    </div>
+  <!-- Header -->
+  <div class="text-center mb-2">
+    <h1 class="text-2xl font-extrabold text-on-surface mb-1">
+      <i class="fas fa-book-open me-2 text-primary"></i>Exercise Library
+    </h1>
+    <p class="text-sm text-on-secondary-container">Browse {{ counts.total }} professional physiotherapy exercises</p>
+  </div>
 
-    <!-- STRENGTH EXERCISES -->
-    <div class="card mb-5">
-        <div class="card-header">
-            <h4 class="mb-0 text-white">
-                <i class="fas fa-dumbbell me-2"></i>Strength Training
-                <span class="badge bg-light text-dark ms-2">{{ counts.strength }} exercises</span>
-            </h4>
-        </div>
-        <div class="card-body">
-            <div class="row g-3">
-                {% for exercise_id, exercise in strength_exercises.items %}
-                    <div class="col-md-4">
-                        <div class="card h-100 border-0" style="box-shadow: var(--shadow-sm); transition: all 0.3s ease;">
-                            <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-start mb-3">
-                                    <h6 class="card-title mb-0" style="flex: 1;">
-                                        {{ exercise.display_name }}
-                                    </h6>
-                                    {% if exercise.new_in_v2 %}
-                                        <span class="badge bg-success ms-2">NEW</span>
-                                    {% endif %}
-                                </div>
-                                <div class="mb-3">
-                                    <span class="badge" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-                                        {{ exercise.level|title }}
-                                    </span>
-                                    {% if exercise.unilateral %}
-                                        <span class="badge bg-info">Unilateral</span>
-                                    {% endif %}
-                                </div>
-                                <a href="{% url 'exercise_detail' exercise_id %}" class="btn btn-outline-primary btn-sm w-100">
-                                    <i class="fas fa-info-circle me-1"></i>View Details
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                {% endfor %}
-            </div>
-        </div>
+  <!-- Stats row -->
+  <div class="grid grid-cols-3 gap-3 sm:grid-cols-6">
+    <div class="bg-surface-container-lowest rounded-xl p-3 text-center shadow-[0_2px_8px_rgba(26,28,28,0.06)]">
+      <i class="fas fa-dumbbell text-primary text-lg mb-1 block"></i>
+      <div class="text-xl font-extrabold text-on-surface">{{ counts.strength }}</div>
+      <div class="text-xs text-on-secondary-container mt-0.5">Strength</div>
     </div>
-
-    <!-- CARDIO EXERCISES -->
-    <div class="card mb-5">
-        <div class="card-header bg-danger">
-            <h4 class="mb-0 text-white">
-                <i class="fas fa-heart-pulse me-2"></i>Cardio & Conditioning
-                <span class="badge bg-light text-dark ms-2">{{ counts.cardio }} exercises</span>
-            </h4>
-        </div>
-        <div class="card-body">
-            <div class="row g-3">
-                {% for exercise_id, exercise in cardio_exercises.items %}
-                    <div class="col-md-4">
-                        <div class="card h-100 border-0" style="box-shadow: var(--shadow-sm);">
-                            <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-start mb-3">
-                                    <h6 class="card-title mb-0" style="flex: 1;">
-                                        {{ exercise.display_name }}
-                                    </h6>
-                                    {% if exercise.new_in_v2 %}
-                                        <span class="badge bg-success ms-2">NEW</span>
-                                    {% endif %}
-                                </div>
-                                <div class="mb-3">
-                                    <span class="badge bg-danger">
-                                        {{ exercise.subcategory|title }}
-                                    </span>
-                                </div>
-                                <a href="{% url 'exercise_detail' exercise_id %}" class="btn btn-outline-danger btn-sm w-100">
-                                    <i class="fas fa-info-circle me-1"></i>View Details
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                {% endfor %}
-            </div>
-        </div>
+    <div class="bg-surface-container-lowest rounded-xl p-3 text-center shadow-[0_2px_8px_rgba(26,28,28,0.06)]">
+      <i class="fas fa-running text-error text-lg mb-1 block"></i>
+      <div class="text-xl font-extrabold text-on-surface">{{ counts.cardio }}</div>
+      <div class="text-xs text-on-secondary-container mt-0.5">Cardio</div>
     </div>
-
-    <!-- STRETCHING EXERCISES -->
-    <div class="card mb-5">
-        <div class="card-header bg-warning">
-            <h4 class="mb-0 text-white">
-                <i class="fas fa-child-reaching me-2"></i>Stretching & Flexibility
-                <span class="badge bg-light text-dark ms-2">{{ counts.stretching }} exercises</span>
-            </h4>
-        </div>
-        <div class="card-body">
-            <div class="row g-3">
-                {% for exercise_id, exercise in stretching_exercises.items %}
-                    <div class="col-md-4">
-                        <div class="card h-100 border-0" style="box-shadow: var(--shadow-sm);">
-                            <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-start mb-3">
-                                    <h6 class="card-title mb-0" style="flex: 1;">
-                                        {{ exercise.display_name }}
-                                    </h6>
-                                    {% if exercise.new_in_v2 %}
-                                        <span class="badge bg-success ms-2">NEW</span>
-                                    {% endif %}
-                                </div>
-                                <div class="mb-3">
-                                    <span class="badge bg-warning text-dark">
-                                        {{ exercise.subcategory|title }}
-                                    </span>
-                                </div>
-                                <a href="{% url 'exercise_detail' exercise_id %}" class="btn btn-outline-warning btn-sm w-100">
-                                    <i class="fas fa-info-circle me-1"></i>View Details
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                {% endfor %}
-            </div>
-        </div>
+    <div class="bg-surface-container-lowest rounded-xl p-3 text-center shadow-[0_2px_8px_rgba(26,28,28,0.06)]">
+      <i class="fas fa-child-reaching text-lg mb-1 block" style="color:#b08800;"></i>
+      <div class="text-xl font-extrabold text-on-surface">{{ counts.stretching }}</div>
+      <div class="text-xs text-on-secondary-container mt-0.5">Stretching</div>
     </div>
-
-    <!-- BALANCE EXERCISES -->
-    <div class="card mb-5">
-        <div class="card-header bg-info">
-            <h4 class="mb-0 text-white">
-                <i class="fas fa-balance-scale me-2"></i>Balance & Proprioception
-                <span class="badge bg-light text-dark ms-2">{{ counts.balance }} exercises</span>
-            </h4>
-        </div>
-        <div class="card-body">
-            <div class="row g-3">
-                {% for exercise_id, exercise in balance_exercises.items %}
-                    <div class="col-md-4">
-                        <div class="card h-100 border-0" style="box-shadow: var(--shadow-sm);">
-                            <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-start mb-3">
-                                    <h6 class="card-title mb-0" style="flex: 1;">
-                                        {{ exercise.display_name }}
-                                    </h6>
-                                    {% if exercise.new_in_v2 %}
-                                        <span class="badge bg-success ms-2">NEW</span>
-                                    {% endif %}
-                                </div>
-                                <a href="{% url 'exercise_detail' exercise_id %}" class="btn btn-outline-info btn-sm w-100">
-                                    <i class="fas fa-info-circle me-1"></i>View Details
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                {% endfor %}
-            </div>
-        </div>
+    <div class="bg-surface-container-lowest rounded-xl p-3 text-center shadow-[0_2px_8px_rgba(26,28,28,0.06)]">
+      <i class="fas fa-balance-scale text-lg mb-1 block" style="color:#0284c7;"></i>
+      <div class="text-xl font-extrabold text-on-surface">{{ counts.balance }}</div>
+      <div class="text-xs text-on-secondary-container mt-0.5">Balance</div>
     </div>
-
-    <!-- MOBILITY EXERCISES -->
-    <div class="card mb-5">
-        <div class="card-header bg-success">
-            <h4 class="mb-0 text-white">
-                <i class="fas fa-arrows-rotate me-2"></i>Mobility & Activation
-                <span class="badge bg-light text-dark ms-2">{{ counts.mobility }} exercises</span>
-            </h4>
-        </div>
-        <div class="card-body">
-            <div class="row g-3">
-                {% for exercise_id, exercise in mobility_exercises.items %}
-                    <div class="col-md-4">
-                        <div class="card h-100 border-0" style="box-shadow: var(--shadow-sm);">
-                            <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-start mb-3">
-                                    <h6 class="card-title mb-0" style="flex: 1;">
-                                        {{ exercise.display_name }}
-                                    </h6>
-                                    {% if exercise.new_in_v2 %}
-                                        <span class="badge bg-success ms-2">NEW</span>
-                                    {% endif %}
-                                </div>
-                                <a href="{% url 'exercise_detail' exercise_id %}" class="btn btn-outline-success btn-sm w-100">
-                                    <i class="fas fa-info-circle me-1"></i>View Details
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                {% endfor %}
-            </div>
-        </div>
+    <div class="bg-surface-container-lowest rounded-xl p-3 text-center shadow-[0_2px_8px_rgba(26,28,28,0.06)]">
+      <i class="fas fa-arrows-rotate text-primary-container text-lg mb-1 block"></i>
+      <div class="text-xl font-extrabold text-on-surface">{{ counts.mobility }}</div>
+      <div class="text-xs text-on-secondary-container mt-0.5">Mobility</div>
     </div>
+    <div class="bg-primary/8 rounded-xl p-3 text-center shadow-[0_2px_8px_rgba(26,28,28,0.06)]">
+      <i class="fas fa-star text-primary text-lg mb-1 block"></i>
+      <div class="text-xl font-extrabold text-primary">{{ counts.total }}</div>
+      <div class="text-xs text-on-secondary-container mt-0.5">Total</div>
+    </div>
+  </div>
 
-    <div class="text-center">
-        <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary btn-lg">
-            <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+  <!-- STRENGTH -->
+  <div>
+    <div class="flex items-center gap-3 bg-primary rounded-xl px-4 py-3 mb-3">
+      <i class="fas fa-dumbbell text-white"></i>
+      <span class="font-bold text-white text-sm flex-1">Strength Training</span>
+      <span class="bg-white/20 text-white text-xs font-semibold px-2.5 py-1 rounded-full">{{ counts.strength }}</span>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      {% for exercise_id, exercise in strength_exercises.items %}
+      <div class="bg-surface-container-lowest rounded-xl p-4 shadow-[0_2px_8px_rgba(26,28,28,0.06)] flex flex-col gap-2">
+        <div class="flex items-start justify-between gap-2">
+          <span class="font-semibold text-sm text-on-surface leading-snug">{{ exercise.display_name }}</span>
+          {% if exercise.new_in_v2 %}<span class="bg-primary/10 text-primary text-xs font-bold px-2 py-0.5 rounded-full flex-shrink-0">NEW</span>{% endif %}
+        </div>
+        <div class="flex flex-wrap gap-1.5">
+          <span class="bg-primary/10 text-primary text-xs font-semibold px-2.5 py-0.5 rounded-full">{{ exercise.level|title }}</span>
+          {% if exercise.unilateral %}<span class="bg-surface-container text-on-secondary-container text-xs font-semibold px-2.5 py-0.5 rounded-full">Unilateral</span>{% endif %}
+        </div>
+        <a href="{% url 'exercise_detail' exercise_id %}"
+           class="mt-auto w-full py-2 border border-primary/40 text-primary font-semibold text-xs rounded-lg text-center no-underline">
+          <i class="fas fa-info-circle me-1"></i>View Details
         </a>
+      </div>
+      {% endfor %}
     </div>
+  </div>
+
+  <!-- CARDIO -->
+  <div>
+    <div class="flex items-center gap-3 bg-error rounded-xl px-4 py-3 mb-3">
+      <i class="fas fa-heart-pulse text-white"></i>
+      <span class="font-bold text-white text-sm flex-1">Cardio &amp; Conditioning</span>
+      <span class="bg-white/20 text-white text-xs font-semibold px-2.5 py-1 rounded-full">{{ counts.cardio }}</span>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      {% for exercise_id, exercise in cardio_exercises.items %}
+      <div class="bg-surface-container-lowest rounded-xl p-4 shadow-[0_2px_8px_rgba(26,28,28,0.06)] flex flex-col gap-2">
+        <div class="flex items-start justify-between gap-2">
+          <span class="font-semibold text-sm text-on-surface leading-snug">{{ exercise.display_name }}</span>
+          {% if exercise.new_in_v2 %}<span class="bg-primary/10 text-primary text-xs font-bold px-2 py-0.5 rounded-full flex-shrink-0">NEW</span>{% endif %}
+        </div>
+        <span class="bg-error-container/30 text-error text-xs font-semibold px-2.5 py-0.5 rounded-full self-start">{{ exercise.subcategory|title }}</span>
+        <a href="{% url 'exercise_detail' exercise_id %}"
+           class="mt-auto w-full py-2 border border-error/40 text-error font-semibold text-xs rounded-lg text-center no-underline">
+          <i class="fas fa-info-circle me-1"></i>View Details
+        </a>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- STRETCHING -->
+  <div>
+    <div class="flex items-center gap-3 rounded-xl px-4 py-3 mb-3" style="background:#b08800;">
+      <i class="fas fa-child-reaching text-white"></i>
+      <span class="font-bold text-white text-sm flex-1">Stretching &amp; Flexibility</span>
+      <span class="bg-white/20 text-white text-xs font-semibold px-2.5 py-1 rounded-full">{{ counts.stretching }}</span>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      {% for exercise_id, exercise in stretching_exercises.items %}
+      <div class="bg-surface-container-lowest rounded-xl p-4 shadow-[0_2px_8px_rgba(26,28,28,0.06)] flex flex-col gap-2">
+        <div class="flex items-start justify-between gap-2">
+          <span class="font-semibold text-sm text-on-surface leading-snug">{{ exercise.display_name }}</span>
+          {% if exercise.new_in_v2 %}<span class="bg-primary/10 text-primary text-xs font-bold px-2 py-0.5 rounded-full flex-shrink-0">NEW</span>{% endif %}
+        </div>
+        <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full self-start" style="background:rgba(176,136,0,0.12);color:#b08800;">{{ exercise.subcategory|title }}</span>
+        <a href="{% url 'exercise_detail' exercise_id %}"
+           class="mt-auto w-full py-2 border font-semibold text-xs rounded-lg text-center no-underline" style="border-color:rgba(176,136,0,0.4);color:#b08800;">
+          <i class="fas fa-info-circle me-1"></i>View Details
+        </a>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- BALANCE -->
+  <div>
+    <div class="flex items-center gap-3 rounded-xl px-4 py-3 mb-3" style="background:#0284c7;">
+      <i class="fas fa-balance-scale text-white"></i>
+      <span class="font-bold text-white text-sm flex-1">Balance &amp; Proprioception</span>
+      <span class="bg-white/20 text-white text-xs font-semibold px-2.5 py-1 rounded-full">{{ counts.balance }}</span>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      {% for exercise_id, exercise in balance_exercises.items %}
+      <div class="bg-surface-container-lowest rounded-xl p-4 shadow-[0_2px_8px_rgba(26,28,28,0.06)] flex flex-col gap-2">
+        <div class="flex items-start justify-between gap-2">
+          <span class="font-semibold text-sm text-on-surface leading-snug">{{ exercise.display_name }}</span>
+          {% if exercise.new_in_v2 %}<span class="bg-primary/10 text-primary text-xs font-bold px-2 py-0.5 rounded-full flex-shrink-0">NEW</span>{% endif %}
+        </div>
+        <a href="{% url 'exercise_detail' exercise_id %}"
+           class="mt-auto w-full py-2 border font-semibold text-xs rounded-lg text-center no-underline" style="border-color:rgba(2,132,199,0.4);color:#0284c7;">
+          <i class="fas fa-info-circle me-1"></i>View Details
+        </a>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- MOBILITY -->
+  <div>
+    <div class="flex items-center gap-3 bg-primary-container rounded-xl px-4 py-3 mb-3">
+      <i class="fas fa-arrows-rotate text-on-primary-container"></i>
+      <span class="font-bold text-on-primary-container text-sm flex-1">Mobility &amp; Activation</span>
+      <span class="bg-white/20 text-on-primary-container text-xs font-semibold px-2.5 py-1 rounded-full">{{ counts.mobility }}</span>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      {% for exercise_id, exercise in mobility_exercises.items %}
+      <div class="bg-surface-container-lowest rounded-xl p-4 shadow-[0_2px_8px_rgba(26,28,28,0.06)] flex flex-col gap-2">
+        <div class="flex items-start justify-between gap-2">
+          <span class="font-semibold text-sm text-on-surface leading-snug">{{ exercise.display_name }}</span>
+          {% if exercise.new_in_v2 %}<span class="bg-primary/10 text-primary text-xs font-bold px-2 py-0.5 rounded-full flex-shrink-0">NEW</span>{% endif %}
+        </div>
+        <a href="{% url 'exercise_detail' exercise_id %}"
+           class="mt-auto w-full py-2 border border-primary/40 text-primary font-semibold text-xs rounded-lg text-center no-underline">
+          <i class="fas fa-info-circle me-1"></i>View Details
+        </a>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Back -->
+  <div class="text-center pt-2">
+    <a href="{% url 'dashboard' %}"
+       class="inline-flex items-center gap-2 px-5 py-2.5 border border-outline-variant/40 bg-surface-container text-on-secondary-container font-semibold text-sm rounded-xl no-underline">
+      <i class="fas fa-arrow-left text-xs"></i>Back to Dashboard
+    </a>
+  </div>
+
 </div>
 {% endblock %}

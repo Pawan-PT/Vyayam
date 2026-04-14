@@ -1,55 +1,56 @@
-{% extends 'strength_app/base.html' %}
+{% extends 'strength_app/base_gamified.html' %}
 {% load vyayam_filters %}
 {% block title %}V1 Dashboard — VYAYAM{% endblock %}
 
-{% block extra_css %}
+{% block extra_head %}
 <style>
-  body { background: #0a0e27; color: #fff; }
   .dash-wrap { max-width: 1100px; margin: 0 auto; padding: 24px 16px; }
-  .hero { background: linear-gradient(135deg, #667eea, #764ba2);
+  .hero { background: linear-gradient(135deg, #0c6c3f, #6bbf8a);
     border-radius: 20px; padding: 28px; margin-bottom: 24px;
     display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; }
   .hero h2 { color: #fff; font-size: 1.6rem; margin-bottom: 4px; }
-  .hero p  { color: rgba(255,255,255,.75); font-size: .9rem; margin: 0; }
-  .deload-banner { background: rgba(245,158,11,.1); border: 1px solid rgba(245,158,11,.35);
-    border-radius: 14px; padding: 16px 20px; margin-bottom: 20px; font-size: .88rem; }
+  .hero p  { color: rgba(255,255,255,.80); font-size: .9rem; margin: 0; }
+  .deload-banner { background: rgba(176,136,0,.1); border: 1px solid rgba(176,136,0,.35);
+    border-radius: 14px; padding: 16px 20px; margin-bottom: 20px; font-size: .88rem; color: #1a1c1c; }
   .grid-2 { display: grid; grid-template-columns: 1fr 380px; gap: 20px; }
   @media(max-width:860px){ .grid-2 { grid-template-columns: 1fr; } }
-  .card-dark { background: #1a1f3a; border-radius: 18px; padding: 22px; }
+  .card-light { background: #fff; border-radius: 18px; padding: 22px; border: 1px solid rgba(26,28,28,.08); box-shadow: 0 4px 20px rgba(26,28,28,.06); }
   .section-title { font-size: .7rem; font-weight: 800; text-transform: uppercase;
-    letter-spacing: 1.5px; opacity: .5; margin: 0 0 14px; }
+    letter-spacing: 1.5px; color: #3d4f42; opacity: .6; margin: 0 0 14px; }
   /* Radar */
   #radarChart { display: block; max-width: 360px; margin: 0 auto; }
   /* Today's session card */
-  .session-preview { background: #1a1f3a; border-radius: 18px; padding: 22px; margin-bottom: 20px; }
+  .session-preview { background: #fff; border-radius: 18px; padding: 22px; margin-bottom: 20px; border: 1px solid rgba(26,28,28,.08); box-shadow: 0 4px 20px rgba(26,28,28,.06); }
   .start-btn { display: block; width: 100%; padding: 16px; font-size: 1rem; font-weight: 700;
-    background: linear-gradient(135deg, #11998e, #38ef7d);
+    background: linear-gradient(135deg, #0c6c3f, #6bbf8a);
     border: none; border-radius: 14px; color: white; cursor: pointer;
     text-align: center; text-decoration: none; margin-top: 16px; }
   .start-btn:hover { opacity: .9; }
   .mobility-btn { background: linear-gradient(135deg, #4facfe, #00f2fe); }
-  .ex-chip { display: inline-block; background: rgba(102,126,234,.15);
-    border: 1px solid rgba(102,126,234,.25); border-radius: 8px;
-    padding: 5px 12px; font-size: .78rem; font-weight: 600; color: #a5b4fc;
+  .ex-chip { display: inline-block; background: rgba(12,108,63,.1);
+    border: 1px solid rgba(12,108,63,.2); border-radius: 8px;
+    padding: 5px 12px; font-size: .78rem; font-weight: 600; color: #0c6c3f;
     margin: 3px 4px 3px 0; }
   .meta-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
-  .meta-chip { background: rgba(255,255,255,.07); border-radius: 20px;
-    padding: 4px 12px; font-size: .75rem; font-weight: 700; }
+  .meta-chip { background: rgba(26,28,28,.06); border-radius: 20px;
+    padding: 4px 12px; font-size: .75rem; font-weight: 700; color: #3d4f42; }
   /* History */
-  .hist-table { width: 100%; border-collapse: collapse; font-size: .85rem; }
-  .hist-table th { text-align: left; opacity: .5; font-weight: 600; padding: 6px 0; font-size: .72rem; text-transform: uppercase; }
-  .hist-table td { padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,.06); }
+  .hist-table { width: 100%; border-collapse: collapse; font-size: .85rem; color: #1a1c1c; }
+  .hist-table th { text-align: left; color: #3d4f42; font-weight: 600; padding: 6px 0; font-size: .72rem; text-transform: uppercase; opacity: .6; }
+  .hist-table td { padding: 10px 0; border-bottom: 1px solid rgba(26,28,28,.07); }
   .tl-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; vertical-align: middle; }
   .tl-dot.green  { background: #22c55e; }
-  .tl-dot.yellow { background: #f59e0b; }
-  .tl-dot.red    { background: #ef4444; }
-  .tl-dot.none   { background: #475569; }
+  .tl-dot.yellow { background: #b08800; }
+  .tl-dot.red    { background: #ba1a1a; }
+  .tl-dot.none   { background: #94a3b8; }
   /* Stats row */
   .stats-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-bottom: 20px; }
-  .stat-box { background: #1a1f3a; border-radius: 14px; padding: 16px; text-align: center; }
-  .stat-box .val { font-size: 1.6rem; font-weight: 800; color: #667eea; }
-  .stat-box .lbl { font-size: .72rem; opacity: .6; margin-top: 2px; }
+  .stat-box { background: #fff; border-radius: 14px; padding: 16px; text-align: center; border: 1px solid rgba(26,28,28,.08); box-shadow: 0 2px 8px rgba(26,28,28,.05); }
+  .stat-box .val { font-size: 1.6rem; font-weight: 800; color: #0c6c3f; }
+  .stat-box .lbl { font-size: .72rem; color: #3d4f42; opacity: .6; margin-top: 2px; }
   @media(max-width:600px){ .stats-row { grid-template-columns: repeat(2,1fr); } }
+  /* Football card */
+  .football-card { background: #fff; border-radius: 18px; padding: 22px; margin-bottom: 20px; border-left: 4px solid #d4a825; box-shadow: 0 4px 20px rgba(26,28,28,.06); }
 </style>
 {% endblock %}
 
@@ -59,7 +60,7 @@
   <div class="hero">
     <div>
       <h2>Welcome back, {{ patient.name }}!</h2>
-      <p><i class="fas fa-id-card me-2"></i><span style="opacity:.5;font-size:.8em;">{{ patient.patient_id }}</span>
+      <p><i class="fas fa-id-card me-2"></i><span style="opacity:.6;font-size:.8em;">{{ patient.patient_id }}</span>
         {% if state %} · Week {{ state.current_week }} · {{ state.current_phase|friendly_phase }}{% endif %}
         · {{ today|date:"l, N j" }}
       </p>
@@ -71,7 +72,7 @@
 
   {% if is_deload %}
   <div class="deload-banner">
-    <i class="fas fa-battery-quarter me-2" style="color:#f59e0b;"></i>
+    <i class="fas fa-battery-quarter me-2" style="color:#b08800;"></i>
     <strong>Recovery Week</strong> — We've pulled back the volume this week so your body can absorb all the work you've done. Keep the effort, just fewer sets.
   </div>
   {% endif %}
@@ -96,13 +97,13 @@
     <!-- Left: radar + history -->
     <div>
       <!-- Radar -->
-      <div class="card-dark" style="margin-bottom:20px;">
+      <div class="card-light" style="margin-bottom:20px;">
         <div class="section-title">Your Strength Map</div>
         <canvas id="radarChart"></canvas>
       </div>
 
       <!-- Recent history -->
-      <div class="card-dark">
+      <div class="card-light">
         <div class="section-title">Recent Sessions</div>
         {% if recent_sessions %}
         <table class="hist-table">
@@ -128,7 +129,7 @@
           </tbody>
         </table>
         {% else %}
-        <div style="opacity:.4;font-size:.88rem;text-align:center;padding:24px 0;">No sessions yet — start your first!</div>
+        <div style="color:#3d4f42;font-size:.88rem;text-align:center;padding:24px 0;opacity:.5;">No sessions yet — start your first!</div>
         {% endif %}
       </div>
     </div>
@@ -143,31 +144,31 @@
           {% endif %}
           {% if meta.patterns_today %}
           {% for p in meta.patterns_today %}
-          <span class="meta-chip" style="background:rgba(17,153,142,.15);color:#6ee7b7;">{{ p|title }}</span>
+          <span class="meta-chip" style="background:rgba(12,108,63,.1);color:#0c6c3f;">{{ p|title }}</span>
           {% endfor %}
           {% endif %}
           {% if is_deload %}
-          <span class="meta-chip" style="background:rgba(245,158,11,.15);color:#fcd34d;">Deload</span>
+          <span class="meta-chip" style="background:rgba(176,136,0,.15);color:#b08800;">Deload</span>
           {% endif %}
           {% if is_mobility %}
-          <span class="meta-chip" style="background:rgba(79,172,254,.15);color:#93c5fd;">Mobility Only</span>
+          <span class="meta-chip" style="background:rgba(79,172,254,.15);color:#0284c7;">Mobility Only</span>
           {% endif %}
         </div>
 
         {% if working_sets_preview %}
-        <div style="font-size:.8rem;opacity:.6;margin-bottom:10px;">First {{ working_sets_preview|length }} exercise{{ working_sets_preview|length|pluralize }}:</div>
+        <div style="font-size:.8rem;color:#3d4f42;opacity:.7;margin-bottom:10px;">First {{ working_sets_preview|length }} exercise{{ working_sets_preview|length|pluralize }}:</div>
         {% for ex in working_sets_preview %}
-        <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.06);">
-          <span style="min-width:22px;height:22px;border-radius:50%;background:rgba(102,126,234,.2);display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:800;color:#a5b4fc;">{{ forloop.counter }}</span>
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(26,28,28,.07);">
+          <span style="min-width:22px;height:22px;border-radius:50%;background:rgba(12,108,63,.15);display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:800;color:#0c6c3f;">{{ forloop.counter }}</span>
           <div style="flex:1;">
-            <div style="font-weight:700;font-size:.88rem;">{{ ex.exercise_name|default:ex.exercise_id }}</div>
-            <div style="font-size:.75rem;opacity:.6;">{{ ex.sets }}×{{ ex.reps }} · {{ ex.tempo|default:"3-1-2-0" }}</div>
+            <div style="font-weight:700;font-size:.88rem;color:#1a1c1c;">{{ ex.exercise_name|default:ex.exercise_id }}</div>
+            <div style="font-size:.75rem;color:#3d4f42;opacity:.7;">{{ ex.sets }}×{{ ex.reps }} · {{ ex.tempo|default:"3-1-2-0" }}</div>
           </div>
           <span class="ex-chip">{{ ex.movement_pattern|title }}</span>
         </div>
         {% endfor %}
         {% if summary.total_exercises and summary.total_exercises > 4 %}
-        <div style="text-align:center;font-size:.78rem;opacity:.5;padding-top:8px;">+{{ summary.total_exercises|add:"-4" }} more…</div>
+        <div style="text-align:center;font-size:.78rem;color:#3d4f42;opacity:.5;padding-top:8px;">+{{ summary.total_exercises|add:"-4" }} more…</div>
         {% endif %}
         {% endif %}
 
@@ -184,8 +185,8 @@
 
       <!-- Modifier notes -->
       {% if modifiers.hormonal_phase %}
-      <div style="background:rgba(240,147,251,.1);border:1px solid rgba(240,147,251,.25);border-radius:14px;padding:14px 18px;font-size:.82rem;margin-top:12px;">
-        <i class="fas fa-moon me-2" style="color:#f093fb;"></i>
+      <div style="background:rgba(12,108,63,.07);border:1px solid rgba(12,108,63,.2);border-radius:14px;padding:14px 18px;font-size:.82rem;color:#1a1c1c;margin-top:12px;">
+        <i class="fas fa-moon me-2 text-primary"></i>
         {% if modifiers.hormonal_phase == 'follicular' %}Your energy tends to be higher right now — push a little harder today.
         {% elif modifiers.hormonal_phase == 'ovulatory' %}You're at your peak energy window — make the most of today's session.
         {% elif modifiers.hormonal_phase == 'luteal' %}Energy may dip this week — today's session is adjusted to work with your body.
@@ -194,9 +195,9 @@
       </div>
       {% endif %}
 
-      <!-- Re-assess link (Task 7d) -->
+      <!-- Re-assess link -->
       <div style="text-align:center;margin-top:16px;">
-        <a href="{% url 'onboarding_strength_test' %}" style="font-size:.78rem;opacity:.5;color:#a5b4fc;text-decoration:none;">
+        <a href="{% url 'onboarding_strength_test' %}" style="font-size:.78rem;opacity:.5;color:#0c6c3f;text-decoration:none;">
           <i class="fas fa-sync-alt me-1"></i>Re-run strength assessment
         </a>
       </div>
@@ -206,51 +207,52 @@
 
 {% if football.is_football %}
 <!-- Football Athlete Status Card -->
-<div style="background:#1a1f3a;border-radius:18px;padding:22px;margin-bottom:20px;border-left:4px solid #667eea;">
+<div class="football-card" style="max-width:1100px;margin:0 auto 20px;padding:22px;">
   <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;">
     <div>
-      <div style="font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:1.5px;opacity:.5;margin-bottom:6px;">Football Athlete</div>
-      <div style="font-weight:800;font-size:1.1rem;color:#a5b4fc;">Level {{ football.football_level }} — {{ football.level_name }}</div>
+      <div style="font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:1.5px;color:#3d4f42;opacity:.6;margin-bottom:6px;">Football Athlete</div>
+      <div style="font-weight:800;font-size:1.1rem;color:#d4a825;">Level {{ football.football_level }} — {{ football.level_name }}</div>
     </div>
-    <a href="{% url 'football_assessment' %}" style="font-size:.75rem;padding:6px 12px;border:1px solid rgba(102,126,234,.4);border-radius:8px;color:#a5b4fc;text-decoration:none;white-space:nowrap;">Reassess</a>
+    <a href="{% url 'football_assessment' %}" style="font-size:.75rem;padding:6px 12px;border:1px solid rgba(212,168,37,.4);border-radius:8px;color:#d4a825;text-decoration:none;white-space:nowrap;">Reassess</a>
   </div>
   <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px;">
-    <div style="background:rgba(255,255,255,.04);border-radius:10px;padding:10px;">
-      <div style="font-size:.68rem;opacity:.5;margin-bottom:4px;">F-V Profile</div>
-      <div style="font-weight:700;font-size:.82rem;">{{ football.fv_label|default:"Balanced" }}</div>
+    <div style="background:rgba(26,28,28,.04);border-radius:10px;padding:10px;">
+      <div style="font-size:.68rem;color:#3d4f42;opacity:.6;margin-bottom:4px;">F-V Profile</div>
+      <div style="font-weight:700;font-size:.82rem;color:#1a1c1c;">{{ football.fv_label|default:"Balanced" }}</div>
     </div>
-    <div style="background:rgba(255,255,255,.04);border-radius:10px;padding:10px;">
-      <div style="font-size:.68rem;opacity:.5;margin-bottom:4px;">HSR Phase</div>
-      <div style="font-weight:700;font-size:.82rem;">Phase {{ football.hsr_phase }}</div>
+    <div style="background:rgba(26,28,28,.04);border-radius:10px;padding:10px;">
+      <div style="font-size:.68rem;color:#3d4f42;opacity:.6;margin-bottom:4px;">HSR Phase</div>
+      <div style="font-weight:700;font-size:.82rem;color:#1a1c1c;">Phase {{ football.hsr_phase }}</div>
     </div>
-    <div style="background:rgba(255,255,255,.04);border-radius:10px;padding:10px;">
-      <div style="font-size:.68rem;opacity:.5;margin-bottom:4px;">Plyometrics</div>
+    <div style="background:rgba(26,28,28,.04);border-radius:10px;padding:10px;">
+      <div style="font-size:.68rem;color:#3d4f42;opacity:.6;margin-bottom:4px;">Plyometrics</div>
       <div style="font-weight:700;font-size:.82rem;">
-        {% if football.plyometric_cleared %}<span style="color:#6ee7b7;">Cleared</span>{% else %}<span style="color:#fcd34d;">Locked</span>{% endif %}
+        {% if football.plyometric_cleared %}<span style="color:#0c6c3f;">Cleared</span>{% else %}<span style="color:#b08800;">Locked</span>{% endif %}
       </div>
     </div>
   </div>
   {% if football.lsi_flag %}
-  <div style="background:rgba(245,158,11,.12);border-radius:10px;padding:10px 12px;font-size:.78rem;margin-bottom:10px;">
-    <i class="fas fa-exclamation-triangle me-1" style="color:#fcd34d;"></i>
+  <div style="background:rgba(176,136,0,.1);border-radius:10px;padding:10px 12px;font-size:.78rem;color:#1a1c1c;margin-bottom:10px;">
+    <i class="fas fa-exclamation-triangle me-1" style="color:#b08800;"></i>
     Asymmetry — Hop LSI {{ football.lsi_hop }}%, Y-Balance LSI {{ football.lsi_ybalance }}%. Extra unilateral work included.
   </div>
   {% endif %}
   {% if football.reassessment_due %}
-  <div style="background:rgba(102,126,234,.12);border-radius:10px;padding:10px 12px;font-size:.78rem;">
-    <i class="fas fa-sync-alt me-1" style="color:#a5b4fc;"></i>
-    4+ weeks since last assessment. <a href="{% url 'football_assessment' %}" style="color:#a5b4fc;font-weight:700;">Reassess now</a> to update your level.
+  <div style="background:rgba(12,108,63,.08);border-radius:10px;padding:10px 12px;font-size:.78rem;color:#1a1c1c;">
+    <i class="fas fa-sync-alt me-1 text-primary"></i>
+    4+ weeks since last assessment. <a href="{% url 'football_assessment' %}" style="color:#0c6c3f;font-weight:700;">Reassess now</a> to update your level.
   </div>
   {% endif %}
 </div>
 {% endif %}
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 {{ radar_data|json_script:"radar-data" }}
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 const radarData = JSON.parse(document.getElementById('radar-data').textContent);
-const labels = Object.keys(radarData);
-const values = Object.values(radarData);
 
 new Chart(document.getElementById('radarChart'), {
   type: 'radar',
@@ -259,9 +261,9 @@ new Chart(document.getElementById('radarChart'), {
     datasets: [{
       label: 'Your Strength',
       data: Object.values(radarData),
-      borderColor: '#667eea',
-      backgroundColor: 'rgba(102,126,234,0.15)',
-      pointBackgroundColor: '#667eea',
+      borderColor: '#0c6c3f',
+      backgroundColor: 'rgba(12,108,63,0.15)',
+      pointBackgroundColor: '#6bbf8a',
       pointBorderColor: '#fff',
       pointBorderWidth: 2,
       pointRadius: 6,
@@ -276,7 +278,7 @@ new Chart(document.getElementById('radarChart'), {
     plugins: {
       legend: { display: false },
       tooltip: {
-        backgroundColor: 'rgba(30,30,50,0.95)',
+        backgroundColor: 'rgba(26,28,28,0.92)',
         titleFont: { size: 14, weight: '700' },
         bodyFont: { size: 13 },
         padding: 12,
@@ -291,14 +293,14 @@ new Chart(document.getElementById('radarChart'), {
         min: 0, max: 5,
         ticks: {
           stepSize: 1, display: true,
-          color: 'rgba(255,255,255,0.3)',
+          color: 'rgba(26,28,28,0.3)',
           backdropColor: 'transparent',
           font: { size: 10 }
         },
-        grid: { color: 'rgba(255,255,255,0.08)', circular: true },
-        angleLines: { color: 'rgba(255,255,255,0.08)' },
+        grid: { color: 'rgba(26,28,28,0.08)', circular: true },
+        angleLines: { color: 'rgba(26,28,28,0.08)' },
         pointLabels: {
-          color: 'rgba(255,255,255,0.85)',
+          color: 'rgba(26,28,28,0.85)',
           font: { size: 13, weight: '700', family: 'Inter, sans-serif' },
           padding: 15,
         }
