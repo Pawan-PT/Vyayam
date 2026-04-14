@@ -99,21 +99,21 @@ urlpatterns = [
     path('dashboard/', views.dashboard, name='dashboard'),
     
     # ========================================================================
-    # LEGACY — disabled for V1 pilot (old CV-based system)
+    # LEGACY — re-enabled (templates reference these routes)
     # ========================================================================
-    # path('gate-testing/', views.gate_testing, name='gate_testing'),
+    path('gate-testing/', views.gate_testing, name='gate_testing'),
     # path('execute-gate-test/<int:family_index>/<int:level_index>/', views.execute_gate_test, name='execute_gate_test'),
     # path('save-gate-test-result/', views.save_gate_test_result, name='save_gate_test_result'),
-    # path('gate-test-results/', views.gate_test_results, name='gate_test_results'),
-    # path('prescription/', views.prescription, name='prescription'),
-    # path('daily-workout/', views.daily_workout, name='daily_workout'),
-    # path('execute-exercise/<int:exercise_index>/', views.execute_exercise, name='execute_exercise'),
+    path('gate-test-results/', views.gate_test_results, name='gate_test_results'),
+    path('prescription/', views.prescription, name='prescription'),
+    path('daily-workout/', views.daily_workout, name='daily_workout'),
+    path('execute-exercise/<int:exercise_index>/', views.execute_exercise, name='execute_exercise'),
     # path('save-exercise-results/', views.save_exercise_results, name='save_exercise_results'),
-    # path('workout-complete/', views.workout_complete, name='workout_complete'),
-    # path('progress-reports/', views.progress_reports, name='progress_reports'),
-    # path('generate-report/', views.generate_report, name='generate_report'),
-    # path('view-report/<int:report_id>/', views.view_report, name='view_report'),
-    # path('download-report/<int:report_id>/', views.download_report, name='download_report'),
+    path('workout-complete/', views.workout_complete, name='workout_complete'),
+    path('progress-reports/', views.progress_reports, name='progress_reports'),
+    path('generate-report/', views.generate_report, name='generate_report'),
+    path('view-report/<int:report_id>/', views.view_report, name='view_report'),
+    path('download-report/<int:report_id>/', views.download_report, name='download_report'),
     
     # ========================================================================
     # LEGAL PAGES
