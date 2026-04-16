@@ -234,7 +234,7 @@ def v1_dashboard(request):
         'current_week': phase_ctx['current_week'],
         'total_weeks': phase_ctx['total_weeks'],
         'phase_range': phase_ctx['phase_range'],
-        'session_url': '/v1/session/overview/',
+        'session_url': '/v1/session/',
     }
     return render(request, 'strength_app/v1_home_gamified.html', context)
 
