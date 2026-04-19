@@ -18,12 +18,11 @@ Context variables expected:
 {% block title %}Home — VYAYAM{% endblock %}
 
 {% block header %}
-<header class="bg-zinc-50/80 backdrop-blur-md sticky top-0 z-50">
-  <div class="flex justify-between items-center w-full px-6 py-4">
-    <h1 class="text-2xl font-extrabold tracking-tighter text-emerald-800 font-headline ml-auto">VYAYAM</h1>
-    {# CSS-only avatar: dark green circle + user initial (bug fix: no Google-hosted image) #}
-    <div class="w-10 h-10 rounded-full bg-emerald-700 flex items-center justify-center flex-shrink-0 shadow-sm ml-4">
-      <span class="text-white font-bold text-base leading-none">{{ user.first_name|first|upper }}</span>
+<header class="bg-zinc-50/85 backdrop-blur-md sticky top-0 z-50 border-b border-outline-variant/25">
+  <div class="flex items-center w-full px-5 py-3.5">
+    <h1 class="text-[22px] font-extrabold tracking-[-0.04em] text-emerald-800 font-headline mr-auto">VYAYAM</h1>
+    <div class="w-9 h-9 rounded-full bg-emerald-700 flex items-center justify-center flex-shrink-0 shadow-sm">
+      <span class="text-white font-bold text-sm leading-none">{{ user.first_name|first|upper }}</span>
     </div>
   </div>
 </header>

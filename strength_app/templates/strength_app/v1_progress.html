@@ -32,182 +32,233 @@ Context variables expected:
 {% block body_class %}bg-background font-body text-on-surface min-h-screen flex flex-col{% endblock %}
 
 {% block content %}
-<main class="flex-grow pt-24 pb-32 px-6 overflow-x-hidden">
+<main class="flex-grow pt-6 pb-28 px-5 overflow-x-hidden space-y-5">
 
   <!-- Header Section -->
-  <section class="mb-8">
-    <h2 class="text-3xl font-extrabold tracking-tight text-on-surface mb-2">Your Movement Map</h2>
-    <p class="text-on-secondary-container text-sm">
-      Visualizing your functional strength balance across seven core human movement patterns.
+  <section>
+    <h2 class="text-[26px] font-extrabold tracking-tight text-on-surface mb-1.5 leading-[1.1]">Your Movement Map</h2>
+    <p class="text-on-secondary-container text-sm leading-relaxed">
+      Visualising your functional strength balance across seven core movement patterns.
     </p>
   </section>
 
-  <!-- Radar Chart Container
-       px-8 ensures HINGE (left) and CARRY (right) labels are not clipped (bug fix) -->
-  <section class="relative aspect-square w-full max-w-sm mx-auto flex items-center justify-center mb-10 scale-[0.85] px-8">
-    <div class="absolute inset-0 radar-grid rounded-full border-[0.5px] border-outline-variant/10"></div>
+  <!-- Radar Chart Card -->
+  <section class="bg-surface-container-lowest rounded-[20px] py-5 px-3
+                  shadow-[0_4px_20px_rgba(26,28,28,0.04)] border border-on-surface/[0.05]">
+    <div class="relative aspect-square w-full max-w-sm mx-auto flex items-center justify-center px-8">
+      <div class="absolute inset-0 radar-grid rounded-full border-[0.5px] border-outline-variant/10"></div>
+      <svg class="w-full h-full drop-shadow-sm" viewBox="0 0 400 400">
+        <!-- Grid Rings -->
+        <circle class="text-outline-variant/20" cx="200" cy="200" fill="none" r="160" stroke="currentColor" stroke-width="1"></circle>
+        <circle class="text-outline-variant/20" cx="200" cy="200" fill="none" r="120" stroke="currentColor" stroke-width="1"></circle>
+        <circle class="text-outline-variant/20" cx="200" cy="200" fill="none" r="80"  stroke="currentColor" stroke-width="1"></circle>
+        <circle class="text-outline-variant/20" cx="200" cy="200" fill="none" r="40"  stroke="currentColor" stroke-width="1"></circle>
+        <!-- Axis Lines: Push, Pull, Carry, Lunge, Squat, Hinge, Core -->
+        <g class="text-outline-variant/30" stroke="currentColor" stroke-width="1">
+          <line x1="200" y1="200" x2="200" y2="40"></line>
+          <line x1="200" y1="200" x2="340" y2="120"></line>
+          <line x1="200" y1="200" x2="360" y2="280"></line>
+          <line x1="200" y1="200" x2="260" y2="380"></line>
+          <line x1="200" y1="200" x2="140" y2="380"></line>
+          <line x1="200" y1="200" x2="40"  y2="280"></line>
+          <line x1="200" y1="200" x2="60"  y2="120"></line>
+        </g>
+        <path class="fill-primary-container/20 stroke-primary stroke-2"
+              d="{{ radar_path|default:'M 200 60 L 320 130 L 340 260 L 250 360 L 140 370 L 60 270 L 80 140 Z' }}">
+        </path>
+        {% for p in movement_patterns %}
+        <circle class="fill-primary" cx="{{ p.radar_x }}" cy="{{ p.radar_y }}" r="4.5"></circle>
+        {% empty %}
+        <circle class="fill-primary" cx="200" cy="60"  r="4.5"></circle>
+        <circle class="fill-primary" cx="320" cy="130" r="4.5"></circle>
+        <circle class="fill-primary" cx="340" cy="260" r="4.5"></circle>
+        <circle class="fill-primary" cx="250" cy="360" r="4.5"></circle>
+        <circle class="fill-primary" cx="140" cy="370" r="4.5"></circle>
+        <circle class="fill-primary" cx="60"  cy="270" r="4.5"></circle>
+        <circle class="fill-primary" cx="80"  cy="140" r="4.5"></circle>
+        {% endfor %}
+      </svg>
 
-    <svg class="w-full h-full drop-shadow-sm" viewBox="0 0 400 400">
-      <!-- Grid Rings -->
-      <circle class="text-outline-variant/20" cx="200" cy="200" fill="none" r="160" stroke="currentColor" stroke-width="1"></circle>
-      <circle class="text-outline-variant/20" cx="200" cy="200" fill="none" r="120" stroke="currentColor" stroke-width="1"></circle>
-      <circle class="text-outline-variant/20" cx="200" cy="200" fill="none" r="80"  stroke="currentColor" stroke-width="1"></circle>
-      <circle class="text-outline-variant/20" cx="200" cy="200" fill="none" r="40"  stroke="currentColor" stroke-width="1"></circle>
-      <!-- Axis Lines: Push, Pull, Carry, Lunge, Squat, Hinge, Core -->
-      <g class="text-outline-variant/30" stroke="currentColor" stroke-width="1">
-        <line x1="200" y1="200" x2="200" y2="40"></line>
-        <line x1="200" y1="200" x2="340" y2="120"></line>
-        <line x1="200" y1="200" x2="360" y2="280"></line>
-        <line x1="200" y1="200" x2="260" y2="380"></line>
-        <line x1="200" y1="200" x2="140" y2="380"></line>
-        <line x1="200" y1="200" x2="40"  y2="280"></line>
-        <line x1="200" y1="200" x2="60"  y2="120"></line>
-      </g>
-      <!-- Data Shape: path computed in view and passed as radar_path context var -->
-      <path class="fill-primary-container/20 stroke-primary stroke-2"
-            d="{{ radar_path|default:'M 200 60 L 320 130 L 340 260 L 250 360 L 140 370 L 60 270 L 80 140 Z' }}">
-      </path>
-      <!-- Data Nodes -->
+      <!-- Floating Labels -->
       {% for p in movement_patterns %}
-      <circle class="fill-primary" cx="{{ p.radar_x }}" cy="{{ p.radar_y }}" r="4"></circle>
-      {% empty %}
-      <circle class="fill-primary" cx="200" cy="60"  r="4"></circle>
-      <circle class="fill-primary" cx="320" cy="130" r="4"></circle>
-      <circle class="fill-primary" cx="340" cy="260" r="4"></circle>
-      <circle class="fill-primary" cx="250" cy="360" r="4"></circle>
-      <circle class="fill-primary" cx="140" cy="370" r="4"></circle>
-      <circle class="fill-primary" cx="60"  cy="270" r="4"></circle>
-      <circle class="fill-primary" cx="80"  cy="140" r="4"></circle>
-      {% endfor %}
-    </svg>
-
-    <!-- Floating Labels -->
-    {% for p in movement_patterns %}
-    <div class="absolute {{ p.label_pos }} {{ p.label_align }}">
-      <span class="block text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">{{ p.name }}</span>
-      {% if p.rank_class == 'gold' %}
-        <span class="inline-block px-2 py-0.5 bg-tertiary-fixed text-on-tertiary-fixed text-[8px] font-bold rounded-full">{{ p.rank_label }}</span>
-      {% else %}
-        <span class="inline-block px-2 py-0.5 bg-secondary-fixed text-on-secondary-fixed text-[8px] font-bold rounded-full">{{ p.rank_label }}</span>
-      {% endif %}
-    </div>
-    {% empty %}
-    {# Static fallback — remove once view passes movement_patterns #}
-    <div class="absolute top-[-5%] left-1/2 -translate-x-1/2 text-center">
-      <span class="block text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">Push</span>
-      <span class="inline-block px-2 py-0.5 bg-tertiary-fixed text-on-tertiary-fixed text-[8px] font-bold rounded-full">GOLD II</span>
-    </div>
-    <div class="absolute top-[18%] right-[-15%] text-right">
-      <span class="block text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">Pull</span>
-      <span class="inline-block px-2 py-0.5 bg-secondary-fixed text-on-secondary-fixed text-[8px] font-bold rounded-full">SILVER I</span>
-    </div>
-    <div class="absolute bottom-[28%] right-[-18%] text-right">
-      <span class="block text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">Carry</span>
-      <span class="inline-block px-2 py-0.5 bg-tertiary-fixed text-on-tertiary-fixed text-[8px] font-bold rounded-full">GOLD I</span>
-    </div>
-    <div class="absolute bottom-[-5%] right-[10%] text-center">
-      <span class="block text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">Lunge</span>
-      <span class="inline-block px-2 py-0.5 bg-secondary-fixed text-on-secondary-fixed text-[8px] font-bold rounded-full">SILVER II</span>
-    </div>
-    <div class="absolute bottom-[-5%] left-[10%] text-center">
-      <span class="block text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">Squat</span>
-      <span class="inline-block px-2 py-0.5 bg-tertiary-fixed text-on-tertiary-fixed text-[8px] font-bold rounded-full">GOLD II</span>
-    </div>
-    <div class="absolute bottom-[28%] left-[-18%] text-left">
-      <span class="block text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">Hinge</span>
-      <span class="inline-block px-2 py-0.5 bg-secondary-fixed text-on-secondary-fixed text-[8px] font-bold rounded-full">SILVER I</span>
-    </div>
-    <div class="absolute top-[18%] left-[-15%] text-left">
-      <span class="block text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">Core</span>
-      <span class="inline-block px-2 py-0.5 bg-secondary-fixed text-on-secondary-fixed text-[8px] font-bold rounded-full">SILVER III</span>
-    </div>
-    {% endfor %}
-  </section>
-
-  <!-- Horizontal Pattern Insight Cards -->
-  <section class="mt-8">
-    <div class="flex items-center justify-between mb-4">
-      <h3 class="text-xs font-bold uppercase tracking-widest text-secondary">Pattern Insights</h3>
-    </div>
-    <div class="flex gap-4 overflow-x-auto pb-4 -mx-6 px-6 snap-x snap-mandatory">
-      {% for p in movement_patterns %}
-      <div class="snap-center shrink-0 w-36 bg-surface-container-lowest rounded-lg p-4 shadow-[0_12px_40px_rgba(26,28,28,0.04)] flex flex-col">
-        <span class="text-xs font-bold text-on-surface mb-2">{{ p.name }}</span>
-        <div class="mb-3">
-          {% if p.rank_class == 'gold' %}
-            <span class="px-2 py-0.5 bg-tertiary-fixed text-on-tertiary-fixed text-[9px] font-extrabold rounded-full">{{ p.rank_label }}</span>
-          {% else %}
-            <span class="px-2 py-0.5 bg-secondary-fixed text-on-secondary-fixed text-[9px] font-extrabold rounded-full">{{ p.rank_label }}</span>
-          {% endif %}
-        </div>
-        <div class="w-full h-1 bg-surface-container-high rounded-full mb-2 overflow-hidden">
-          <div class="h-full bg-primary rounded-full" style="width: {{ p.xp_pct|default:50 }}%"></div>
-        </div>
-        <div class="flex items-center justify-between">
-          <span class="text-[9px] text-on-secondary-container font-medium tracking-tight">{{ p.xp|default:0 }} XP</span>
-          {% if p.trend == 'up' %}
-            <span class="material-symbols-outlined text-[14px] text-primary" style="font-variation-settings:'wght' 700;">arrow_upward</span>
-          {% elif p.trend == 'down' %}
-            <span class="material-symbols-outlined text-[14px] text-error" style="font-variation-settings:'wght' 700;">arrow_downward</span>
-          {% else %}
-            <span class="material-symbols-outlined text-[14px] text-secondary" style="font-variation-settings:'wght' 700;">horizontal_rule</span>
-          {% endif %}
-        </div>
+      <div class="absolute {{ p.label_pos }} {{ p.label_align }}">
+        <span class="block text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">{{ p.name }}</span>
+        {% if p.rank_class == 'gold' %}
+          <span class="inline-block px-2 py-0.5 bg-tertiary-fixed text-on-tertiary-fixed text-[8px] font-bold rounded-full">{{ p.rank_label }}</span>
+        {% else %}
+          <span class="inline-block px-2 py-0.5 bg-secondary-fixed text-on-secondary-fixed text-[8px] font-bold rounded-full">{{ p.rank_label }}</span>
+        {% endif %}
       </div>
       {% empty %}
-      {# Static fallback cards — remove once view passes movement_patterns #}
-      <div class="snap-center shrink-0 w-36 bg-surface-container-lowest rounded-lg p-4 shadow-[0_12px_40px_rgba(26,28,28,0.04)] flex flex-col">
-        <span class="text-xs font-bold text-on-surface mb-2">Squat</span>
-        <div class="mb-3"><span class="px-2 py-0.5 bg-tertiary-fixed text-on-tertiary-fixed text-[9px] font-extrabold rounded-full">GOLD II</span></div>
-        <div class="w-full h-1 bg-surface-container-high rounded-full mb-2 overflow-hidden"><div class="h-full bg-primary w-[75%] rounded-full"></div></div>
-        <div class="flex items-center justify-between">
-          <span class="text-[9px] text-on-secondary-container font-medium">840 XP</span>
-          <span class="material-symbols-outlined text-[14px] text-primary" style="font-variation-settings:'wght' 700;">arrow_upward</span>
-        </div>
+      <div class="absolute top-[-5%] left-1/2 -translate-x-1/2 text-center">
+        <span class="block text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">Push</span>
+        <span class="inline-block px-2 py-0.5 bg-tertiary-fixed text-on-tertiary-fixed text-[8px] font-bold rounded-full">GOLD II</span>
       </div>
-      <div class="snap-center shrink-0 w-36 bg-surface-container-lowest rounded-lg p-4 shadow-[0_12px_40px_rgba(26,28,28,0.04)] flex flex-col">
-        <span class="text-xs font-bold text-on-surface mb-2">Hinge</span>
-        <div class="mb-3"><span class="px-2 py-0.5 bg-secondary-fixed text-on-secondary-fixed text-[9px] font-extrabold rounded-full">SILVER I</span></div>
-        <div class="w-full h-1 bg-surface-container-high rounded-full mb-2 overflow-hidden"><div class="h-full bg-primary w-[40%] rounded-full"></div></div>
-        <div class="flex items-center justify-between">
-          <span class="text-[9px] text-on-secondary-container font-medium">420 XP</span>
-          <span class="material-symbols-outlined text-[14px] text-secondary" style="font-variation-settings:'wght' 700;">horizontal_rule</span>
-        </div>
+      <div class="absolute top-[18%] right-[-15%] text-right">
+        <span class="block text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">Pull</span>
+        <span class="inline-block px-2 py-0.5 bg-secondary-fixed text-on-secondary-fixed text-[8px] font-bold rounded-full">SILVER I</span>
       </div>
-      <div class="snap-center shrink-0 w-36 bg-surface-container-lowest rounded-lg p-4 shadow-[0_12px_40px_rgba(26,28,28,0.04)] flex flex-col">
-        <span class="text-xs font-bold text-on-surface mb-2">Push</span>
-        <div class="mb-3"><span class="px-2 py-0.5 bg-tertiary-fixed text-on-tertiary-fixed text-[9px] font-extrabold rounded-full">GOLD II</span></div>
-        <div class="w-full h-1 bg-surface-container-high rounded-full mb-2 overflow-hidden"><div class="h-full bg-primary w-[90%] rounded-full"></div></div>
-        <div class="flex items-center justify-between">
-          <span class="text-[9px] text-on-secondary-container font-medium">950 XP</span>
-          <span class="material-symbols-outlined text-[14px] text-primary" style="font-variation-settings:'wght' 700;">arrow_upward</span>
-        </div>
+      <div class="absolute bottom-[28%] right-[-18%] text-right">
+        <span class="block text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">Carry</span>
+        <span class="inline-block px-2 py-0.5 bg-[#f5d0b8] text-[#5a2e00] text-[8px] font-bold rounded-full">BRONZE II</span>
       </div>
-      <div class="snap-center shrink-0 w-36 bg-surface-container-lowest rounded-lg p-4 shadow-[0_12px_40px_rgba(26,28,28,0.04)] flex flex-col">
-        <span class="text-xs font-bold text-on-surface mb-2">Pull</span>
-        <div class="mb-3"><span class="px-2 py-0.5 bg-secondary-fixed text-on-secondary-fixed text-[9px] font-extrabold rounded-full">SILVER I</span></div>
-        <div class="w-full h-1 bg-surface-container-high rounded-full mb-2 overflow-hidden"><div class="h-full bg-primary w-[30%] rounded-full"></div></div>
-        <div class="flex items-center justify-between">
-          <span class="text-[9px] text-on-secondary-container font-medium">310 XP</span>
-          <span class="material-symbols-outlined text-[14px] text-error" style="font-variation-settings:'wght' 700;">arrow_downward</span>
-        </div>
+      <div class="absolute bottom-[-5%] right-[10%] text-center">
+        <span class="block text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">Lunge</span>
+        <span class="inline-block px-2 py-0.5 bg-tertiary-fixed text-on-tertiary-fixed text-[8px] font-bold rounded-full">GOLD II</span>
+      </div>
+      <div class="absolute bottom-[-5%] left-[10%] text-center">
+        <span class="block text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">Squat</span>
+        <span class="inline-block px-2 py-0.5 bg-tertiary-fixed text-on-tertiary-fixed text-[8px] font-bold rounded-full">GOLD II</span>
+      </div>
+      <div class="absolute bottom-[28%] left-[-18%] text-left">
+        <span class="block text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">Hinge</span>
+        <span class="inline-block px-2 py-0.5 bg-secondary-fixed text-on-secondary-fixed text-[8px] font-bold rounded-full">SILVER I</span>
+      </div>
+      <div class="absolute top-[18%] left-[-15%] text-left">
+        <span class="block text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">Core</span>
+        <span class="inline-block px-2 py-0.5 bg-secondary-fixed text-on-secondary-fixed text-[8px] font-bold rounded-full">SILVER I</span>
       </div>
       {% endfor %}
     </div>
   </section>
 
-  <!-- Asymmetry Indicator -->
+  <!-- Vertical Pattern Insight List -->
+  <section>
+    <p class="text-[10px] font-extrabold tracking-[0.14em] uppercase text-on-secondary-container opacity-70 mb-2.5">Pattern Insights</p>
+    <div class="flex flex-col gap-2">
+
+      {% for p in movement_patterns %}
+      <div class="flex items-center gap-3 px-3.5 py-3 bg-surface-container-lowest rounded-[14px]
+                  shadow-[0_2px_8px_rgba(26,28,28,0.04)] border border-on-surface/[0.05]">
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-2 mb-1.5">
+            <span class="text-sm font-bold text-on-surface">{{ p.name }}</span>
+            {% if p.rank_class == 'gold' %}
+              <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-tertiary-fixed text-on-tertiary-fixed text-[10px] font-extrabold leading-none">{{ p.rank_label }}</span>
+            {% elif p.rank_class == 'bronze' %}
+              <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-[#f5d0b8] text-[#5a2e00] text-[10px] font-extrabold leading-none">{{ p.rank_label }}</span>
+            {% else %}
+              <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-secondary-fixed text-on-secondary-fixed text-[10px] font-extrabold leading-none">{{ p.rank_label }}</span>
+            {% endif %}
+          </div>
+          <div class="h-1.5 bg-surface-container-high rounded-full overflow-hidden">
+            <div class="h-full rounded-full bg-gradient-to-r from-primary to-primary-container transition-all duration-700"
+                 style="width: {{ p.xp_pct|default:50 }}%"></div>
+          </div>
+        </div>
+        <div class="text-right flex-shrink-0">
+          <div class="text-base font-extrabold text-emerald-800 tracking-tight leading-none">{{ p.xp|default:0 }}</div>
+          <div class="text-[10px] text-on-secondary-container mt-0.5">XP</div>
+        </div>
+      </div>
+
+      {% empty %}
+      {# Static fallback rows — remove once view passes movement_patterns #}
+      <div class="flex items-center gap-3 px-3.5 py-3 bg-surface-container-lowest rounded-[14px] shadow-[0_2px_8px_rgba(26,28,28,0.04)] border border-on-surface/[0.05]">
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-2 mb-1.5">
+            <span class="text-sm font-bold text-on-surface">Squat</span>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-tertiary-fixed text-on-tertiary-fixed text-[10px] font-extrabold leading-none">GOLD II</span>
+          </div>
+          <div class="h-1.5 bg-surface-container-high rounded-full overflow-hidden"><div class="h-full w-[82%] rounded-full bg-gradient-to-r from-primary to-primary-container"></div></div>
+        </div>
+        <div class="text-right flex-shrink-0">
+          <div class="text-base font-extrabold text-emerald-800 tracking-tight leading-none">1240</div>
+          <div class="text-[10px] text-on-secondary-container mt-0.5">XP</div>
+        </div>
+      </div>
+      <div class="flex items-center gap-3 px-3.5 py-3 bg-surface-container-lowest rounded-[14px] shadow-[0_2px_8px_rgba(26,28,28,0.04)] border border-on-surface/[0.05]">
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-2 mb-1.5">
+            <span class="text-sm font-bold text-on-surface">Hinge</span>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-secondary-fixed text-on-secondary-fixed text-[10px] font-extrabold leading-none">SILVER I</span>
+          </div>
+          <div class="h-1.5 bg-surface-container-high rounded-full overflow-hidden"><div class="h-full w-[61%] rounded-full bg-gradient-to-r from-primary to-primary-container"></div></div>
+        </div>
+        <div class="text-right flex-shrink-0">
+          <div class="text-base font-extrabold text-emerald-800 tracking-tight leading-none">870</div>
+          <div class="text-[10px] text-on-secondary-container mt-0.5">XP</div>
+        </div>
+      </div>
+      <div class="flex items-center gap-3 px-3.5 py-3 bg-surface-container-lowest rounded-[14px] shadow-[0_2px_8px_rgba(26,28,28,0.04)] border border-on-surface/[0.05]">
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-2 mb-1.5">
+            <span class="text-sm font-bold text-on-surface">Push</span>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-tertiary-fixed text-on-tertiary-fixed text-[10px] font-extrabold leading-none">GOLD I</span>
+          </div>
+          <div class="h-1.5 bg-surface-container-high rounded-full overflow-hidden"><div class="h-full w-[76%] rounded-full bg-gradient-to-r from-primary to-primary-container"></div></div>
+        </div>
+        <div class="text-right flex-shrink-0">
+          <div class="text-base font-extrabold text-emerald-800 tracking-tight leading-none">1100</div>
+          <div class="text-[10px] text-on-secondary-container mt-0.5">XP</div>
+        </div>
+      </div>
+      <div class="flex items-center gap-3 px-3.5 py-3 bg-surface-container-lowest rounded-[14px] shadow-[0_2px_8px_rgba(26,28,28,0.04)] border border-on-surface/[0.05]">
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-2 mb-1.5">
+            <span class="text-sm font-bold text-on-surface">Pull</span>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-secondary-fixed text-on-secondary-fixed text-[10px] font-extrabold leading-none">SILVER II</span>
+          </div>
+          <div class="h-1.5 bg-surface-container-high rounded-full overflow-hidden"><div class="h-full w-[52%] rounded-full bg-gradient-to-r from-primary to-primary-container"></div></div>
+        </div>
+        <div class="text-right flex-shrink-0">
+          <div class="text-base font-extrabold text-emerald-800 tracking-tight leading-none">720</div>
+          <div class="text-[10px] text-on-secondary-container mt-0.5">XP</div>
+        </div>
+      </div>
+      <div class="flex items-center gap-3 px-3.5 py-3 bg-surface-container-lowest rounded-[14px] shadow-[0_2px_8px_rgba(26,28,28,0.04)] border border-on-surface/[0.05]">
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-2 mb-1.5">
+            <span class="text-sm font-bold text-on-surface">Lunge</span>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-tertiary-fixed text-on-tertiary-fixed text-[10px] font-extrabold leading-none">GOLD II</span>
+          </div>
+          <div class="h-1.5 bg-surface-container-high rounded-full overflow-hidden"><div class="h-full w-[79%] rounded-full bg-gradient-to-r from-primary to-primary-container"></div></div>
+        </div>
+        <div class="text-right flex-shrink-0">
+          <div class="text-base font-extrabold text-emerald-800 tracking-tight leading-none">1180</div>
+          <div class="text-[10px] text-on-secondary-container mt-0.5">XP</div>
+        </div>
+      </div>
+      <div class="flex items-center gap-3 px-3.5 py-3 bg-surface-container-lowest rounded-[14px] shadow-[0_2px_8px_rgba(26,28,28,0.04)] border border-on-surface/[0.05]">
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-2 mb-1.5">
+            <span class="text-sm font-bold text-on-surface">Carry</span>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-[#f5d0b8] text-[#5a2e00] text-[10px] font-extrabold leading-none">BRONZE II</span>
+          </div>
+          <div class="h-1.5 bg-surface-container-high rounded-full overflow-hidden"><div class="h-full w-[38%] rounded-full bg-gradient-to-r from-primary to-primary-container"></div></div>
+        </div>
+        <div class="text-right flex-shrink-0">
+          <div class="text-base font-extrabold text-emerald-800 tracking-tight leading-none">420</div>
+          <div class="text-[10px] text-on-secondary-container mt-0.5">XP</div>
+        </div>
+      </div>
+      <div class="flex items-center gap-3 px-3.5 py-3 bg-surface-container-lowest rounded-[14px] shadow-[0_2px_8px_rgba(26,28,28,0.04)] border border-on-surface/[0.05]">
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-2 mb-1.5">
+            <span class="text-sm font-bold text-on-surface">Core</span>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-secondary-fixed text-on-secondary-fixed text-[10px] font-extrabold leading-none">SILVER I</span>
+          </div>
+          <div class="h-1.5 bg-surface-container-high rounded-full overflow-hidden"><div class="h-full w-[64%] rounded-full bg-gradient-to-r from-primary to-primary-container"></div></div>
+        </div>
+        <div class="text-right flex-shrink-0">
+          <div class="text-base font-extrabold text-emerald-800 tracking-tight leading-none">910</div>
+          <div class="text-[10px] text-on-secondary-container mt-0.5">XP</div>
+        </div>
+      </div>
+      {% endfor %}
+
+    </div>
+  </section>
+
+  <!-- Asymmetry / Insight Banner -->
   {% if asymmetry %}
-  <section class="mt-6">
-    <div class="bg-error-container/60 border border-error/10 rounded-lg p-4 flex items-start gap-4 shadow-[0_8px_30px_rgba(186,26,26,0.03)]">
-      <div class="bg-error/10 rounded-full p-2 flex items-center justify-center shrink-0">
-        <span class="material-symbols-outlined text-error text-[20px]">warning</span>
-      </div>
+  <section>
+    <div class="flex items-start gap-3 px-4 py-3.5
+                bg-primary/[0.06] border border-primary/[0.15] rounded-[16px] text-emerald-800">
+      <span class="material-symbols-outlined text-[20px] flex-shrink-0 mt-0.5" style="font-variation-settings:'FILL' 1;">info</span>
       <div>
-        <h4 class="text-sm font-extrabold text-on-error-container mb-0.5">Left/Right Imbalance Detected</h4>
-        <p class="text-xs text-on-error-container/80 leading-relaxed font-medium">
-          {{ asymmetry.description }}
-        </p>
+        <div class="text-xs font-extrabold mb-0.5">Left/Right Imbalance Detected</div>
+        <div class="text-xs leading-relaxed">{{ asymmetry.description }}</div>
       </div>
     </div>
   </section>

@@ -93,14 +93,11 @@
 <body class="{% block body_class %}bg-surface text-on-surface min-h-screen pb-32{% endblock %}">
 
   {% block header %}
-  {# Default header: VYAYAM logo centred, small CSS avatar top-right #}
-  <header class="bg-zinc-50/80 backdrop-blur-md sticky top-0 z-50">
-    <div class="flex justify-between items-center w-full px-6 py-4">
-      <div class="w-10"></div>
-      <h1 class="text-2xl font-extrabold tracking-tighter text-emerald-800 font-headline">VYAYAM</h1>
-      {# CSS-only geometric avatar: dark green circle + user initial #}
-      <div class="w-10 h-10 rounded-full bg-emerald-700 flex items-center justify-center flex-shrink-0">
-        <span class="text-white font-bold text-base leading-none">{{ user.first_name|first|upper }}</span>
+  <header class="bg-zinc-50/85 backdrop-blur-md sticky top-0 z-50 border-b border-outline-variant/25">
+    <div class="flex items-center w-full px-5 py-3.5">
+      <h1 class="text-[22px] font-extrabold tracking-[-0.04em] text-emerald-800 font-headline mr-auto">VYAYAM</h1>
+      <div class="w-9 h-9 rounded-full bg-emerald-700 flex items-center justify-center flex-shrink-0 shadow-sm">
+        <span class="text-white font-bold text-sm leading-none">{{ user.first_name|first|upper }}</span>
       </div>
     </div>
   </header>
@@ -109,58 +106,59 @@
   {% block content %}{% endblock %}
 
   {% block bottom_nav %}
-  {# Bottom navigation — highlights the active tab via URL name #}
-  <nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-6 pb-8 pt-4
-              bg-white/80 backdrop-blur-xl rounded-t-[2rem]
-              shadow-[0_-12px_40px_rgba(26,28,28,0.04)]">
+  {# Bottom navigation — floating glassmorphic pill #}
+  <nav class="fixed bottom-4 left-3 right-3 z-50 flex justify-around items-center p-1.5
+              bg-white/80 backdrop-blur-xl rounded-full
+              shadow-[0_-8px_32px_rgba(0,0,0,0.08),0_0_0_1px_rgba(26,28,28,0.06)]">
+
+    {% with active=request.resolver_match.url_name %}
 
     {# Home tab #}
-    {% with active_home=request.resolver_match.url_name %}
-    {% if active_home == 'v1_dashboard' or active_home == 'v1_home_gamified' %}
+    {% if active == 'v1_dashboard' or active == 'v1_home_gamified' %}
     <a href="{% url 'v1_dashboard' %}"
-       class="flex flex-col items-center justify-center bg-emerald-100 text-emerald-900 rounded-full px-5 py-2 transition-all duration-300">
-      <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">home_health</span>
-      <span class="text-[11px] font-medium tracking-wide uppercase mt-1">Home</span>
+       class="flex-1 flex flex-col items-center justify-center gap-0.5 py-2.5 px-1.5 bg-emerald-100/70 text-emerald-900 rounded-full transition-all duration-200">
+      <span class="material-symbols-outlined text-[22px]" style="font-variation-settings:'FILL' 1;">home_health</span>
+      <span class="text-[10px] font-extrabold tracking-[0.04em]">Home</span>
     </a>
     {% else %}
     <a href="{% url 'v1_dashboard' %}"
-       class="flex flex-col items-center justify-center text-zinc-500 p-2 hover:opacity-80 transition-opacity">
-      <span class="material-symbols-outlined">home_health</span>
-      <span class="text-[11px] font-medium tracking-wide uppercase mt-1">Home</span>
+       class="flex-1 flex flex-col items-center justify-center gap-0.5 py-2.5 px-1.5 text-on-surface-variant rounded-full hover:bg-surface-container-low transition-all duration-200">
+      <span class="material-symbols-outlined text-[22px]">home_health</span>
+      <span class="text-[10px] font-semibold tracking-[0.04em]">Home</span>
     </a>
     {% endif %}
 
     {# Progress tab #}
-    {% if active_home == 'v1_progress' or active_home == 'v1_progress_dashboard' %}
+    {% if active == 'v1_progress' or active == 'v1_progress_dashboard' %}
     <a href="{% url 'v1_progress' %}"
-       class="flex flex-col items-center justify-center bg-emerald-100 text-emerald-900 rounded-full px-5 py-2 transition-all duration-300">
-      <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">monitoring</span>
-      <span class="text-[11px] font-medium tracking-wide uppercase mt-1">Progress</span>
+       class="flex-1 flex flex-col items-center justify-center gap-0.5 py-2.5 px-1.5 bg-emerald-100/70 text-emerald-900 rounded-full transition-all duration-200">
+      <span class="material-symbols-outlined text-[22px]" style="font-variation-settings:'FILL' 1;">monitoring</span>
+      <span class="text-[10px] font-extrabold tracking-[0.04em]">Progress</span>
     </a>
     {% else %}
     <a href="{% url 'v1_progress' %}"
-       class="flex flex-col items-center justify-center text-zinc-500 p-2 hover:opacity-80 transition-opacity">
-      <span class="material-symbols-outlined">monitoring</span>
-      <span class="text-[11px] font-medium tracking-wide uppercase mt-1">Progress</span>
+       class="flex-1 flex flex-col items-center justify-center gap-0.5 py-2.5 px-1.5 text-on-surface-variant rounded-full hover:bg-surface-container-low transition-all duration-200">
+      <span class="material-symbols-outlined text-[22px]">monitoring</span>
+      <span class="text-[10px] font-semibold tracking-[0.04em]">Progress</span>
     </a>
     {% endif %}
 
-    {# Profile tab — URL to be wired when v1_profile view is created #}
-    {% if active_home == 'v1_profile' %}
+    {# Profile tab #}
+    {% if active == 'v1_profile' %}
     <a href="{% url 'v1_profile' %}"
-       class="flex flex-col items-center justify-center bg-emerald-100 text-emerald-900 rounded-full px-5 py-2 transition-all duration-300">
-      <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">person</span>
-      <span class="text-[11px] font-medium tracking-wide uppercase mt-1">Profile</span>
+       class="flex-1 flex flex-col items-center justify-center gap-0.5 py-2.5 px-1.5 bg-emerald-100/70 text-emerald-900 rounded-full transition-all duration-200">
+      <span class="material-symbols-outlined text-[22px]" style="font-variation-settings:'FILL' 1;">person</span>
+      <span class="text-[10px] font-extrabold tracking-[0.04em]">Profile</span>
     </a>
     {% else %}
-    <a href="#"
-       class="flex flex-col items-center justify-center text-zinc-500 p-2 hover:opacity-80 transition-opacity">
-      <span class="material-symbols-outlined">person</span>
-      <span class="text-[11px] font-medium tracking-wide uppercase mt-1">Profile</span>
+    <a href="{% url 'v1_profile' %}"
+       class="flex-1 flex flex-col items-center justify-center gap-0.5 py-2.5 px-1.5 text-on-surface-variant rounded-full hover:bg-surface-container-low transition-all duration-200">
+      <span class="material-symbols-outlined text-[22px]">person</span>
+      <span class="text-[10px] font-semibold tracking-[0.04em]">Profile</span>
     </a>
     {% endif %}
-    {% endwith %}
 
+    {% endwith %}
   </nav>
   {% endblock %}
 
