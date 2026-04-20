@@ -1382,6 +1382,7 @@ def generate_v1_session(patient):
                 continue
             seen_patterns.add(pattern)
             capability = score_map.get(pattern, 2)
+            age_max_cap = age_limits.get('max_capability', 5)
             # Block progression when significant asymmetry exists (safety gate)
             asym_rule = asymmetry_rules.get(pattern, {})
             if asym_rule.get('asymmetry') == 'significant':
@@ -1390,12 +1391,12 @@ def generate_v1_session(patient):
                     f'resolve bilateral deficit before advancing.'
                 )
                 continue
-            if capability < 5:
+            if capability < age_max_cap:
                 fc = patient.family_capabilities.filter(
                     family_id__startswith=pattern
                 ).first()
                 if fc and check_progression_ready(fc):
-                    new_cap = min(capability + 1, 5)
+                    new_cap = min(capability + 1, age_max_cap)  # never exceed age cap
                     score_map[pattern] = new_cap
                     setattr(strength_profile, f'{pattern}_score', new_cap)
                     strength_profile.save(update_fields=[f'{pattern}_score'])
