@@ -57,7 +57,7 @@ class SplitSquatJumpV2:
                                   'la':la,'ra':ra,'le':le,'re':re,'lw':lw,'rw':rw}}
 
     def get_target_poses(self):
-        return {phase:{'avg_knee':90,'tolerance':20} for phase in ['lunge', 'airborne', 'landing']}
+        return {phase:{'avg_knee':90,'tolerance':20} for phase in ['start', 'active', 'lunge', 'airborne', 'landing']}
 
     def validate_form(self, angles, phase):
         feedback = {}

@@ -57,7 +57,7 @@ class DropPushUpV2:
                                   'la':la,'ra':ra,'le':le,'re':re,'lw':lw,'rw':rw}}
 
     def get_target_poses(self):
-        return {phase:{'avg_knee':90,'tolerance':20} for phase in ['elevated', 'falling', 'push', 'up']}
+        return {phase:{'avg_knee':90,'tolerance':20} for phase in ['start', 'active', 'elevated', 'falling', 'push', 'up']}
 
     def validate_form(self, angles, phase):
         feedback = {}
