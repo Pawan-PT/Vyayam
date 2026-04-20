@@ -540,6 +540,9 @@ class WorkoutSession(models.Model):
     total_green_reps_all = models.IntegerField(default=0)
     overall_session_form_score = models.FloatField(default=0.0)
     
+    # XP earned this session (persisted so total_xp reflects variable form-based scoring)
+    xp_earned = models.IntegerField(default=0)
+
     # Daily Feedback
     patient_comfortable = models.BooleanField(default=True)
     difficulty_rating = models.IntegerField(

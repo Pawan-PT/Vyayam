@@ -29,8 +29,13 @@ LEVEL_TITLES = {
 
 def compute_xp_and_level(patient):
     """Return dict with total_xp, user_level, xp_current, xp_next_level, xp_percentage, level_title."""
-    total_sessions = WorkoutSession.objects.filter(patient=patient).count()
-    total_xp = total_sessions * XP_PER_SESSION
+    from django.db.models import Sum
+    qs = WorkoutSession.objects.filter(patient=patient)
+    total_sessions = qs.count()
+    # Sum persisted xp_earned; fall back to flat rate for legacy sessions with xp_earned=0
+    stored_xp = qs.aggregate(s=Sum('xp_earned'))['s'] or 0
+    legacy_sessions = qs.filter(xp_earned=0).count()
+    total_xp = stored_xp + legacy_sessions * XP_PER_SESSION
     user_level = min(MAX_LEVEL, total_xp // XP_PER_LEVEL + 1)
     xp_into_level = total_xp - (user_level - 1) * XP_PER_LEVEL
     xp_next = XP_PER_LEVEL
@@ -218,17 +223,32 @@ def compute_achievements(patient, total_sessions, streak_days):
 
 # ── Session-complete XP ──────────────────────────────────────────────────
 
+MIN_FORM_SCORE_FOR_XP = 55    # Below this: 0 XP (unsafe form — injury risk)
+REDUCED_FORM_THRESHOLD = 70   # Below this: base XP only (no bonus)
+
+
 def compute_session_xp(exercise_results):
-    """Compute XP earned from a single session's exercise results."""
+    """Compute XP earned from a single session's exercise results.
+
+    Form gate:
+      avg_form < 55  → 0 XP (exercise was performed unsafely)
+      avg_form 55-69 → base XP only (no quality bonus)
+      avg_form ≥ 70  → base + quality bonus (existing behaviour)
+    """
     if not exercise_results:
         return XP_PER_SESSION  # fallback
 
-    base = len(exercise_results) * 10
-    bonus = sum(
-        5 for r in exercise_results
-        if float(r.get('form_score', 0)) >= 80
-    )
-    return max(XP_PER_SESSION, base + bonus)
+    total_xp = 0
+    for r in exercise_results:
+        form_score = float(r.get('form_score', 0))
+        if form_score < MIN_FORM_SCORE_FOR_XP:
+            continue  # 0 XP — unsafe form
+        ex_base = 10
+        if form_score >= 80:
+            ex_base += 5  # quality bonus
+        total_xp += ex_base
+
+    return max(XP_PER_SESSION, total_xp)
 
 
 # ── Phase display helper ─────────────────────────────────────────────────

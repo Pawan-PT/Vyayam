@@ -164,3 +164,19 @@ def get_alternative(red_flag_id, pattern):
     flag_config = RED_FLAG_EXERCISE_MAP.get(red_flag_id, {})
     replacements = flag_config.get('replace_with', {})
     return replacements.get(pattern, None)
+
+
+def get_pattern_level_caps(red_flags_list):
+    """
+    Return the most restrictive level cap per pattern across all active red flags.
+
+    Returns:
+        dict[str, int] — e.g. {'lunge': 3} meaning lunge exercises must not exceed level 3.
+    """
+    caps = {}
+    for flag_id in red_flags_list:
+        flag_config = RED_FLAG_EXERCISE_MAP.get(flag_id, {})
+        for pattern, max_level in flag_config.get('exclude_patterns_above_level', {}).items():
+            if pattern not in caps or max_level < caps[pattern]:
+                caps[pattern] = max_level
+    return caps

@@ -9,6 +9,7 @@ CHANGES FROM V1:
 """
 
 import cv2
+import math
 import numpy as np
 from typing import Dict, Tuple, Optional
 
@@ -161,24 +162,29 @@ class AROverlayV2:
             joints: Joint positions {'lk': (x, y), 'rk': (x, y), ...}
             color: BGR color tuple
         """
-        # Skeleton lines
+        # Core lower-body connections always drawn when present
         lines = [
+            ('ls', 'rs'),                   # Shoulder bar
             ('ls', 'lh'), ('rs', 'rh'),     # Shoulders to hips
+            ('lh', 'rh'),                   # Hip bar
             ('lh', 'lk'), ('rh', 'rk'),     # Hips to knees
             ('lk', 'la'), ('rk', 'ra'),     # Knees to ankles
+            # Upper body — PUSH/PULL/CARRY patterns
+            ('ls', 'le'), ('rs', 're'),     # Shoulders to elbows
+            ('le', 'lw'), ('re', 'rw'),     # Elbows to wrists
         ]
-        
+
         for start, end in lines:
             if start in joints and end in joints:
                 cv2.line(frame, joints[start], joints[end], color, 3, cv2.LINE_AA)
-        
+
         # Draw joints
         for joint_pos in joints.values():
             cv2.circle(frame, joint_pos, 8, color, -1)
             cv2.circle(frame, joint_pos, 10, (255, 255, 255), 2)
-        
+
         return frame
-    
+
     def draw_target_skeleton(self,
                             frame: np.ndarray,
                             target_joints: Dict,
@@ -196,18 +202,17 @@ class AROverlayV2:
         
         overlay = frame.copy()
         
-        # Skeleton lines
         lines = [
-            ('ls', 'lh'), ('rs', 'rh'),
-            ('lh', 'lk'), ('rh', 'rk'),
-            ('lk', 'la'), ('rk', 'ra'),
+            ('ls', 'rs'), ('ls', 'lh'), ('rs', 'rh'), ('lh', 'rh'),
+            ('lh', 'lk'), ('rh', 'rk'), ('lk', 'la'), ('rk', 'ra'),
+            ('ls', 'le'), ('rs', 're'), ('le', 'lw'), ('re', 'rw'),
         ]
-        
+
         for start, end in lines:
             if start in target_joints and end in target_joints:
                 cv2.line(overlay, target_joints[start], target_joints[end],
-                        self.target_color, 2, cv2.LINE_AA)
-        
+                         self.target_color, 2, cv2.LINE_AA)
+
         # Draw joints
         for joint_pos in target_joints.values():
             cv2.circle(overlay, joint_pos, 6, self.target_color, -1)
@@ -226,39 +231,81 @@ class AROverlayV2:
                                 current_angles: Dict,
                                 target_angles: Dict) -> Dict:
         """
-        Calculate where joints SHOULD be based on target angles
-        
-        Args:
-            current_joints: Current joint positions
-            current_angles: Current measured angles
-            target_angles: Target angles
-        
-        Returns:
-            Dict of target joint positions
+        Calculate where joints SHOULD be for 6 movement patterns using 2D forward kinematics.
+
+        Pattern detection (from which angle keys are present in target_angles):
+          PUSH / PULL  — 'avg_elbow' present: rotate forearm around elbow pivot
+          HINGE        — 'avg_hip' present, no 'avg_elbow': rotate torso around hip pivot
+          SQUAT/LUNGE  — 'avg_knee' present: vertical knee displacement
+          CORE         — 'body_alignment' present: hip sag correction
+          CARRY        — none of the above: return current joints (upright posture goal)
         """
-        target_joints = {}
-        
-        # For squats: adjust knee height based on angle difference
-        if 'avg_knee' in target_angles and 'avg_knee' in current_angles:
-            angle_diff = target_angles['avg_knee'] - current_angles['avg_knee']
-            
-            # Vertical adjustment (more bent = lower knees)
-            vertical_adjustment = angle_diff * 2  # Scale factor
-            
-            # Adjust knee positions
-            if 'lk' in current_joints:
-                lk = current_joints['lk']
-                target_joints['lk'] = (lk[0], int(lk[1] - vertical_adjustment))
-            
-            if 'rk' in current_joints:
-                rk = current_joints['rk']
-                target_joints['rk'] = (rk[0], int(rk[1] - vertical_adjustment))
-        
-        # Copy other joints that don't need adjustment
-        for key in ['lh', 'rh', 'la', 'ra', 'ls', 'rs']:
-            if key in current_joints:
-                target_joints[key] = current_joints[key]
-        
+        # Start with all current joints as baseline
+        target_joints = {k: v for k, v in current_joints.items()}
+
+        has_elbow = 'avg_elbow' in target_angles and 'avg_elbow' in current_angles
+        has_hip = 'avg_hip' in target_angles and 'avg_hip' in current_angles
+        has_knee = 'avg_knee' in target_angles and 'avg_knee' in current_angles
+        has_align = 'body_alignment' in target_angles and 'body_alignment' in current_angles
+
+        # ── PUSH / PULL: rotate forearm around elbow ─────────────────────────
+        if has_elbow:
+            elbow_diff = target_angles['avg_elbow'] - current_angles['avg_elbow']
+            angle_rad = math.radians(elbow_diff)
+            cos_a, sin_a = math.cos(angle_rad), math.sin(angle_rad)
+            for s_key, e_key, w_key in [('ls', 'le', 'lw'), ('rs', 're', 'rw')]:
+                if e_key in current_joints and w_key in current_joints:
+                    elbow = current_joints[e_key]
+                    wrist = current_joints[w_key]
+                    fa_dx = wrist[0] - elbow[0]
+                    fa_dy = wrist[1] - elbow[1]
+                    fa_len = max(math.hypot(fa_dx, fa_dy), 1)
+                    fa_nx, fa_ny = fa_dx / fa_len, fa_dy / fa_len
+                    new_nx = fa_nx * cos_a - fa_ny * sin_a
+                    new_ny = fa_nx * sin_a + fa_ny * cos_a
+                    target_joints[w_key] = (
+                        elbow[0] + int(new_nx * fa_len),
+                        elbow[1] + int(new_ny * fa_len),
+                    )
+
+        # ── HINGE: rotate torso around hip pivot ─────────────────────────────
+        if has_hip and not has_elbow:
+            hip_diff = target_angles['avg_hip'] - current_angles['avg_hip']
+            # Positive hip_diff = more extended = torso rises (smaller Y in image)
+            angle_rad = math.radians(-hip_diff)
+            cos_a, sin_a = math.cos(angle_rad), math.sin(angle_rad)
+            for s_key, h_key in [('ls', 'lh'), ('rs', 'rh')]:
+                if s_key in current_joints and h_key in current_joints:
+                    shoulder = current_joints[s_key]
+                    hip = current_joints[h_key]
+                    dx = shoulder[0] - hip[0]
+                    dy = shoulder[1] - hip[1]
+                    new_dx = dx * cos_a - dy * sin_a
+                    new_dy = dx * sin_a + dy * cos_a
+                    target_joints[s_key] = (
+                        hip[0] + int(new_dx),
+                        hip[1] + int(new_dy),
+                    )
+
+        # ── SQUAT / LUNGE: vertical knee displacement ─────────────────────────
+        if has_knee:
+            knee_diff = target_angles['avg_knee'] - current_angles['avg_knee']
+            vertical_adj = knee_diff * 2  # 1° ≈ 2 px vertical travel
+            for k_key in ['lk', 'rk']:
+                if k_key in target_joints:
+                    k = target_joints[k_key]
+                    target_joints[k_key] = (k[0], int(k[1] - vertical_adj))
+
+        # ── CORE: hip sag correction via body_alignment ───────────────────────
+        if has_align:
+            align_diff = target_angles['body_alignment'] - current_angles['body_alignment']
+            hip_adj = align_diff * 1.5
+            for h_key in ['lh', 'rh']:
+                if h_key in target_joints:
+                    h = target_joints[h_key]
+                    target_joints[h_key] = (h[0], int(h[1] - hip_adj))
+
+        # CARRY: target_joints already equals current_joints — no displacement needed
         return target_joints
     
     def calculate_angle_differences(self,
@@ -364,9 +411,14 @@ class AROverlayV2:
     
     def _get_joint_for_angle(self, angle_name: str, joints: Dict) -> Optional[str]:
         """Helper: Get joint to annotate for given angle"""
-        if 'knee' in angle_name.lower():
+        name = angle_name.lower()
+        if 'elbow' in name:
+            return 'le' if 'le' in joints else ('re' if 're' in joints else None)
+        elif 'knee' in name:
             return 'lk' if 'lk' in joints else None
-        elif 'hip' in angle_name.lower():
+        elif 'hip' in name:
+            return 'lh' if 'lh' in joints else None
+        elif 'alignment' in name or 'back' in name:
             return 'lh' if 'lh' in joints else None
         else:
             return 'lk' if 'lk' in joints else None

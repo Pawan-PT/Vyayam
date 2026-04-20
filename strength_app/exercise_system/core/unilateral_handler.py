@@ -311,9 +311,39 @@ class UnilateralExerciseHandler:
     
     def is_complete(self) -> bool:
         """Check if both sides are complete"""
-        return (self.left_reps_completed >= self.total_reps_per_side and 
+        return (self.left_reps_completed >= self.total_reps_per_side and
                 self.right_reps_completed >= self.total_reps_per_side)
-    
+
+    def check_asymmetry_safe(self) -> Tuple[bool, str]:
+        """
+        Check whether completed reps show a safe bilateral balance.
+
+        Uses Limb Symmetry Index (LSI) thresholds:
+          <10%  → safe, no block
+          10-20% → mild asymmetry, warn but don't block
+          >20%  → significant asymmetry, block next set
+
+        Returns:
+            (is_safe: bool, message: str)
+        """
+        total = self.left_reps_completed + self.right_reps_completed
+        if total == 0:
+            return True, ''
+
+        diff = abs(self.left_reps_completed - self.right_reps_completed)
+        asymmetry_pct = diff / total * 100
+
+        if asymmetry_pct > 20:
+            weaker = 'LEFT' if self.left_reps_completed < self.right_reps_completed else 'RIGHT'
+            return False, (
+                f'Significant asymmetry ({asymmetry_pct:.0f}%) — '
+                f'{weaker} side deficit. Add extra set on {weaker} side before progressing.'
+            )
+        elif asymmetry_pct > 10:
+            weaker = 'LEFT' if self.left_reps_completed < self.right_reps_completed else 'RIGHT'
+            return True, f'Mild asymmetry ({asymmetry_pct:.0f}%) — prioritise {weaker} side.'
+        return True, ''
+
     def get_stats(self) -> Dict:
         """Get complete statistics"""
         left_avg = (sum(self.left_form_scores) / len(self.left_form_scores) 

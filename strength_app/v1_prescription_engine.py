@@ -251,6 +251,13 @@ def _select_exercises_for_pattern(pattern, capability, patient, age_limits):
     capped_capability = min(capability, age_limits.get('max_capability', 5))
     capped_capability = max(1, capped_capability)
 
+    # Red-flag level caps (e.g. ACL grade 1-2 → lunge ≤ level 3)
+    from .red_flag_map import get_pattern_level_caps
+    red_flags = patient.red_flags_json or []
+    level_caps = get_pattern_level_caps(red_flags)
+    if pattern in level_caps:
+        capped_capability = min(capped_capability, level_caps[pattern])
+
     levels = chain.get('levels', [])
     if capped_capability > len(levels):
         capped_capability = len(levels)
@@ -1375,12 +1382,21 @@ def generate_v1_session(patient):
                 continue
             seen_patterns.add(pattern)
             capability = score_map.get(pattern, 2)
-            if capability < 5:
+            age_max_cap = age_limits.get('max_capability', 5)
+            # Block progression when significant asymmetry exists (safety gate)
+            asym_rule = asymmetry_rules.get(pattern, {})
+            if asym_rule.get('asymmetry') == 'significant':
+                modifier_notes.append(
+                    f'{pattern.title()} progression BLOCKED: significant asymmetry — '
+                    f'resolve bilateral deficit before advancing.'
+                )
+                continue
+            if capability < age_max_cap:
                 fc = patient.family_capabilities.filter(
                     family_id__startswith=pattern
                 ).first()
                 if fc and check_progression_ready(fc):
-                    new_cap = min(capability + 1, 5)
+                    new_cap = min(capability + 1, age_max_cap)  # never exceed age cap
                     score_map[pattern] = new_cap
                     setattr(strength_profile, f'{pattern}_score', new_cap)
                     strength_profile.save(update_fields=[f'{pattern}_score'])

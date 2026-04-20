@@ -97,9 +97,10 @@ class GluteBridgeV2:
         ra = analyzer.get_coords(results, analyzer.mp_pose.PoseLandmark.RIGHT_ANKLE, shape)
         rs = analyzer.get_coords(results, analyzer.mp_pose.PoseLandmark.RIGHT_SHOULDER, shape)
         
-        # Hip angles (shoulder-hip-knee)
-        left_hip = analyzer.smooth_angle(analyzer.calculate_angle(ls, lh, lk), 'left')
-        right_hip = analyzer.smooth_angle(analyzer.calculate_angle(rs, rh, rk), 'right')
+        # Hip angles (shoulder-hip-ankle): ankle is a fixed ground reference in supine position;
+        # this correctly measures hip extension magnitude. Different from standing hinge where ankle is mobile.
+        left_hip = analyzer.smooth_angle(analyzer.calculate_angle(ls, lh, la), 'left')
+        right_hip = analyzer.smooth_angle(analyzer.calculate_angle(rs, rh, ra), 'right')
         
         # Knee angles
         left_knee = analyzer.calculate_angle(lh, lk, la)

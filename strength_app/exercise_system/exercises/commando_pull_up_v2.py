@@ -73,6 +73,24 @@ class CommandoPullUpV2:
 
     def validate_form(self, angles, phase):
         feedback = {}
+        targets = self.get_target_poses().get(phase, {})
+        tolerance = targets.get('tolerance', 20)
+        for angle_key in ('avg_knee', 'avg_hip', 'avg_elbow'):
+            target_val = targets.get(angle_key)
+            if target_val is None or angle_key not in angles:
+                continue
+            diff = abs(angles[angle_key] - target_val)
+            if diff <= tolerance:
+                status, msg = FormStatus.CORRECT, 'Good position'
+            elif diff <= tolerance * 1.5:
+                status, msg = FormStatus.NEEDS_ADJUSTMENT, 'Adjust position'
+            else:
+                status, msg = FormStatus.INCORRECT, 'Check alignment'
+            feedback[angle_key] = JointFeedback(
+                status=status,
+                angle=angles[angle_key],
+                message=msg,
+            )
         return feedback
 
     def update_rep_counter(self, angle, feedback, voice):
