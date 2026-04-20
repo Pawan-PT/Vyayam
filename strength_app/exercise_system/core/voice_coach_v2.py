@@ -258,3 +258,65 @@ class VoiceCoachV2:
             self.speak(str(i))
             time.sleep(1)
         self.speak("Go!")
+
+    # ========================================================================
+    # PRACTICE REP & PHASE TRANSITION GUIDANCE
+    # ========================================================================
+
+    def announce_practice_rep(self, rep_number, total_practice_reps, form_score=0):
+        """Announce a practice rep (before counted reps begin)."""
+        status = "Good form!" if form_score >= 85 else ("Almost there." if form_score >= 70 else "Focus on your form.")
+        self.speak(f"Practice rep {rep_number} of {total_practice_reps}. {status}")
+
+    def give_atomic_command(self, command_name, priority=False):
+        """Give a short phase-transition command."""
+        COMMANDS = {
+            'start_descent': 'Lower down.',
+            'start_lowering': 'Lower down.',
+            'reached_bottom': 'Hold.',
+            'start_ascent': 'Push up.',
+            'start_rising': 'Rise up.',
+            'start_flexing': 'Curl up.',
+            'reached_top': 'Squeeze.',
+            'extending': 'Lower slowly.',
+            'start_extending': 'Extend.',
+            'straight': 'Lock out.',
+            'bent': 'Return.',
+            'flexing': 'Pull in.',
+            'hinging': 'Hinge at hips.',
+            'rising': 'Drive through heels.',
+            'lunge': 'Lower into lunge.',
+            'airborne': 'Land softly.',
+            'landing': 'Absorb the landing.',
+            'hopping': 'Stay light.',
+            'walking': 'Brace your core.',
+            'crawling': 'Keep hips level.',
+            'sprinting': 'Drive your arms.',
+            'decelerating': 'Decelerate under control.',
+            'loaded': 'Load the hips.',
+            'skip_right': 'Skip right.',
+            'skip_left': 'Skip left.',
+            'plank': 'Brace.',
+            'tapping': 'Control the tap.',
+            'elevated': 'Drop controlled.',
+        }
+        message = COMMANDS.get(command_name, 'Continue.')
+        self.speak(message, priority=priority)
+
+    def announce_phase_transition(self, from_practice_to_counted=False):
+        """Announce transition from practice reps to counted reps."""
+        if from_practice_to_counted:
+            self.speak("Great! Now counting your reps.")
+        else:
+            self.speak("Moving to next phase.")
+
+    def provide_ar_feedback(self, form_score):
+        """Provide voice feedback based on AR overlay form score."""
+        if form_score >= 85:
+            self.speak("Good form!")
+        elif form_score >= 70:
+            self.speak("Adjust your form slightly.")
+        elif form_score >= 55:
+            self.speak("Focus on your form.")
+        else:
+            self.speak("Stop and reset your form.", priority=True)
