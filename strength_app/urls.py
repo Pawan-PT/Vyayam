@@ -102,8 +102,8 @@ urlpatterns = [
     # LEGACY — re-enabled (templates reference these routes)
     # ========================================================================
     path('gate-testing/', views.gate_testing, name='gate_testing'),
-    # path('execute-gate-test/<int:family_index>/<int:level_index>/', views.execute_gate_test, name='execute_gate_test'),
-    # path('save-gate-test-result/', views.save_gate_test_result, name='save_gate_test_result'),
+    path('execute-gate-test/<int:family_index>/<int:level_index>/', views.execute_gate_test, name='execute_gate_test'),
+    path('save-gate-test-result/', views.save_gate_test_result, name='save_gate_test_result'),
     path('gate-test-results/', views.gate_test_results, name='gate_test_results'),
     path('prescription/', views.prescription, name='prescription'),
     path('daily-workout/', views.daily_workout, name='daily_workout'),
