@@ -71,6 +71,7 @@ urlpatterns = [
     path('v1/profile/',                                     views_progress.v1_profile,              name='v1_profile'),
     path('v1/test-exercises/',                              views_session.v1_test_list,             name='v1_test_list'),
     path('v1/test-exercise/<str:exercise_id>/',             views_session.v1_test_exercise,         name='v1_test_exercise'),
+    path('api/analyze-frame/',                              views.analyze_frame,                    name='analyze_frame'),
 
     # ========================================================================
     # COACH DASHBOARD

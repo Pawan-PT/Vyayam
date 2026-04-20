@@ -157,7 +157,7 @@ class TricepExtensionsV2:
         warnings = []
         
         # State machine
-        if self.phase == "bent" and angle > 60:
+        if self.phase == "bent" and angle > 70:
             self.phase = "extending"
             self.tempo_detector.start_phase('extending')
             voice.speak("Extend arms", priority=False)
