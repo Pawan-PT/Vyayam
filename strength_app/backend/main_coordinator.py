@@ -3,6 +3,8 @@ MAIN SYSTEM COORDINATOR
 Orchestrates all components for complete user journey
 """
 
+import logging
+
 from .database_schema import (
     PatientProfile, SystemState, ExerciseProgressionState,
     PrescriptionMode, ExerciseCategory, CapabilityLevel,
@@ -14,6 +16,8 @@ from .session_execution import SessionExecutor, DailyFeedbackLoop
 from .report_generator import ReportGenerator
 from typing import Dict, List
 from datetime import datetime, timedelta
+
+logger = logging.getLogger(__name__)
 
 
 class VyayamStrengthSystem:
@@ -82,7 +86,7 @@ class VyayamStrengthSystem:
         
         self.patients[patient_id] = system_state
         
-        print(f"✅ Patient created: {name} (ID: {patient_id})")
+        logger.debug(f"✅ Patient created: {name} (ID: {patient_id})")
         return patient_id
     
     
@@ -141,15 +145,15 @@ class VyayamStrengthSystem:
         """
         
         if patient_id not in self.patients:
-            print(f"❌ Patient {patient_id} not found")
+            logger.debug(f"❌ Patient {patient_id} not found")
             return False
         
         state = self.patients[patient_id]
         profile = state.patient_profile
         
-        print(f"\n{'='*70}")
-        print(f"GATE TESTING - {profile.name}")
-        print(f"{'='*70}\n")
+        logger.debug(f"\n{'='*70}")
+        logger.debug(f"GATE TESTING - {profile.name}")
+        logger.debug(f"{'='*70}\n")
         
         # In real system: interactive UI
         # For now: simulate gate test results based on age/lifestyle
@@ -157,7 +161,7 @@ class VyayamStrengthSystem:
         test_results = []
         
         # 1. Lower Body (Squat) Gate Test
-        print("1️⃣  LOWER BODY GATE TEST")
+        logger.debug("1️⃣  LOWER BODY GATE TEST")
         squat_result = self._simulate_gate_test(
             patient_id=patient_id,
             category=ExerciseCategory.LOWER_BODY,
@@ -167,7 +171,7 @@ class VyayamStrengthSystem:
         test_results.append(squat_result)
         
         # 2. Posterior Chain (Deadlift) Gate Test
-        print("\n2️⃣  POSTERIOR CHAIN GATE TEST")
+        logger.debug("\n2️⃣  POSTERIOR CHAIN GATE TEST")
         deadlift_result = self._simulate_gate_test(
             patient_id=patient_id,
             category=ExerciseCategory.POSTERIOR_CHAIN,
@@ -177,7 +181,7 @@ class VyayamStrengthSystem:
         test_results.append(deadlift_result)
         
         # 3. Upper Body (Row) Gate Test
-        print("\n3️⃣  UPPER BODY GATE TEST")
+        logger.debug("\n3️⃣  UPPER BODY GATE TEST")
         row_result = self._simulate_gate_test(
             patient_id=patient_id,
             category=ExerciseCategory.UPPER_BODY,
@@ -187,7 +191,7 @@ class VyayamStrengthSystem:
         test_results.append(row_result)
         
         # 4. Cardio Gate Test
-        print("\n4️⃣  CARDIO ENDURANCE TEST")
+        logger.debug("\n4️⃣  CARDIO ENDURANCE TEST")
         cardio_result = self._simulate_gate_test(
             patient_id=patient_id,
             category=ExerciseCategory.CARDIO,
@@ -211,9 +215,9 @@ class VyayamStrengthSystem:
         state.patient_profile = profile
         state.latest_gate_test = gate_session
         
-        print(f"\n✅ GATE TESTING COMPLETE")
-        print(f"   Overall Fitness: {gate_session.overall_fitness_level.upper()}")
-        print(f"   Ready for Prescription: {gate_session.ready_for_prescription}")
+        logger.debug(f"\n✅ GATE TESTING COMPLETE")
+        logger.debug(f"   Overall Fitness: {gate_session.overall_fitness_level.upper()}")
+        logger.debug(f"   Ready for Prescription: {gate_session.ready_for_prescription}")
         
         return gate_session.ready_for_prescription
     
@@ -249,8 +253,8 @@ class VyayamStrengthSystem:
             pain_during=1
         )
         
-        print(f"   {test_exercise}: {result.capability_level.value.upper()}")
-        print(f"   → Prescription: {result.starting_sets}×{result.starting_reps}")
+        logger.debug(f"   {test_exercise}: {result.capability_level.value.upper()}")
+        logger.debug(f"   → Prescription: {result.starting_sets}×{result.starting_reps}")
         
         return result
     
@@ -266,7 +270,7 @@ class VyayamStrengthSystem:
         """
         
         if patient_id not in self.patients:
-            print(f"❌ Patient {patient_id} not found")
+            logger.debug(f"❌ Patient {patient_id} not found")
             return {}
         
         state = self.patients[patient_id]
@@ -274,10 +278,10 @@ class VyayamStrengthSystem:
         
         if state.current_prescription_mode == PrescriptionMode.AI_AUTO:
             # AI auto-prescription
-            print(f"\n🤖 GENERATING AI AUTO-PRESCRIPTION (Week {week_number})")
+            logger.debug(f"\n🤖 GENERATING AI AUTO-PRESCRIPTION (Week {week_number})")
             
             if not state.latest_gate_test:
-                print("❌ No gate test results available")
+                logger.debug("❌ No gate test results available")
                 return {}
             
             prescription = self.prescription_engine.prescribe_ai_auto(
@@ -288,10 +292,10 @@ class VyayamStrengthSystem:
             
         else:
             # Therapist manual prescription
-            print(f"\n👨‍⚕️ USING THERAPIST MANUAL PRESCRIPTION (Week {week_number})")
+            logger.debug(f"\n👨‍⚕️ USING THERAPIST MANUAL PRESCRIPTION (Week {week_number})")
             
             if not state.current_therapist_prescription:
-                print("❌ No therapist prescription available")
+                logger.debug("❌ No therapist prescription available")
                 return {}
             
             prescription = self.prescription_engine.prescribe_therapist_manual(
@@ -419,16 +423,16 @@ class VyayamStrengthSystem:
 # ============================================================================
 
 if __name__ == "__main__":
-    print("\n" + "="*80)
-    print("VYAYAM STRENGTH TRAINING SYSTEM - COMPLETE DEMO")
-    print("="*80)
+    logger.debug("\n" + "="*80)
+    logger.debug("VYAYAM STRENGTH TRAINING SYSTEM - COMPLETE DEMO")
+    logger.debug("="*80)
     
     # Initialize system
     system = VyayamStrengthSystem()
     
     # PHASE 0: Create Patient
-    print("\n📝 PHASE 0: PATIENT REGISTRATION")
-    print("-"*80)
+    logger.debug("\n📝 PHASE 0: PATIENT REGISTRATION")
+    logger.debug("-"*80)
     
     patient_id = system.create_patient(
         name="Rahul Sharma",
@@ -443,69 +447,69 @@ if __name__ == "__main__":
     )
     
     # PHASE 1: Gate Testing
-    print("\n📊 PHASE 1: GATE TESTING")
-    print("-"*80)
+    logger.debug("\n📊 PHASE 1: GATE TESTING")
+    logger.debug("-"*80)
     
     ready = system.conduct_gate_testing(patient_id)
     
     if not ready:
-        print("❌ Gate testing incomplete")
+        logger.debug("❌ Gate testing incomplete")
         exit()
     
     # PHASE 2: Generate Prescription
-    print("\n📋 PHASE 2: PRESCRIPTION GENERATION")
-    print("-"*80)
+    logger.debug("\n📋 PHASE 2: PRESCRIPTION GENERATION")
+    logger.debug("-"*80)
     
     prescription = system.generate_prescription(patient_id, week_number=1)
     
-    print("\nPrescription Summary:")
-    print(f"  Stretching: {len(prescription['stretching'])} exercises")
-    print(f"  Strength: {len(prescription['strength'])} exercises")
-    print(f"  Cardio: {len(prescription['cardio'])} exercises")
+    logger.debug("\nPrescription Summary:")
+    logger.debug(f"  Stretching: {len(prescription['stretching'])} exercises")
+    logger.debug(f"  Strength: {len(prescription['strength'])} exercises")
+    logger.debug(f"  Cardio: {len(prescription['cardio'])} exercises")
     
     # PHASE 3: Execute Sessions (Week 1)
-    print("\n\n🏋️ PHASE 3: WEEK 1 EXECUTION")
-    print("-"*80)
+    logger.debug("\n\n🏋️ PHASE 3: WEEK 1 EXECUTION")
+    logger.debug("-"*80)
     
-    print("\nSimulating 5 sessions in Week 1...")
+    logger.debug("\nSimulating 5 sessions in Week 1...")
     
     for day in range(1, 6):
-        print(f"\n--- DAY {day} ---")
+        logger.debug(f"\n--- DAY {day} ---")
         system.execute_daily_session(patient_id, prescription)
     
     # PHASE 4: Weekly Check & Progression
-    print("\n\n📈 PHASE 4: WEEKLY PROGRESSION CHECK")
-    print("-"*80)
+    logger.debug("\n\n📈 PHASE 4: WEEKLY PROGRESSION CHECK")
+    logger.debug("-"*80)
     
     adjustments = system.check_weekly_progression(patient_id)
     
     if adjustments:
-        print("\nAdjustments needed:")
+        logger.debug("\nAdjustments needed:")
         for exercise, action in adjustments.items():
-            print(f"  • {exercise}: {action}")
+            logger.debug(f"  • {exercise}: {action}")
     else:
-        print("✅ No adjustments needed, continue current program")
+        logger.debug("✅ No adjustments needed, continue current program")
     
     # PHASE 5: Generate Report
-    print("\n\n📄 PHASE 5: PROGRESS REPORT GENERATION")
-    print("-"*80)
+    logger.debug("\n\n📄 PHASE 5: PROGRESS REPORT GENERATION")
+    logger.debug("-"*80)
     
     report = system.generate_weekly_report(patient_id, week_number=1)
     
     if report:
         report_text = system.report_generator.format_report_text(report)
-        print("\n" + report_text)
+        logger.debug("\n" + report_text)
     
-    print("\n\n" + "="*80)
-    print("✅ COMPLETE SYSTEM DEMO FINISHED!")
-    print("="*80)
-    print("\nAll components working:")
-    print("  ✅ Patient registration")
-    print("  ✅ Gate testing")
-    print("  ✅ AI prescription")
-    print("  ✅ Session execution")
-    print("  ✅ Form tracking")
-    print("  ✅ Daily feedback")
-    print("  ✅ Weekly progression")
-    print("  ✅ Report generation")
-    print("\n🎉 System ready for integration with exercise library!")
+    logger.debug("\n\n" + "="*80)
+    logger.debug("✅ COMPLETE SYSTEM DEMO FINISHED!")
+    logger.debug("="*80)
+    logger.debug("\nAll components working:")
+    logger.debug("  ✅ Patient registration")
+    logger.debug("  ✅ Gate testing")
+    logger.debug("  ✅ AI prescription")
+    logger.debug("  ✅ Session execution")
+    logger.debug("  ✅ Form tracking")
+    logger.debug("  ✅ Daily feedback")
+    logger.debug("  ✅ Weekly progression")
+    logger.debug("  ✅ Report generation")
+    logger.debug("\n🎉 System ready for integration with exercise library!")
