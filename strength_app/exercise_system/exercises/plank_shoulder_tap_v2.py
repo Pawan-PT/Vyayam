@@ -32,6 +32,13 @@ class PlankShoulderTapV2:
         self.tempo_detector = TempoDetector()
         self.voice = VoiceCoachV2()
         self.ar = AROverlayV2()
+        self._tap_side = None
+        self._TAP_ASYMMETRY_THRESHOLD = 0.05  # 5% of shoulder-to-hip dist (~2.5 cm); captures shallow taps
+        # Unilateral rep tracking for asymmetry detection (Agent 5 requirement)
+        self.left_rep_count = 0
+        self.right_rep_count = 0
+        self.form_scores_left = []
+        self.form_scores_right = []
 
     def calculate_angles(self, analyzer, results, shape):
         ls = analyzer.get_coords(results, analyzer.mp_pose.PoseLandmark.LEFT_SHOULDER, shape)
@@ -64,20 +71,66 @@ class PlankShoulderTapV2:
         return feedback
 
     def update_rep_counter(self, angle, feedback, voice):
+        """State machine for plank shoulder tap.
+
+        Phase "plank"   — both wrists approximately level (on the ground).
+        Phase "tapping" — one wrist is raised significantly above the other,
+                          indicating the shoulder-tap arm is lifted.
+
+        Transition plank → tapping : wrist Y-asymmetry exceeds threshold
+                                      (in image coordinates, a *lower* Y value
+                                       means *higher* in the frame, i.e. the
+                                       wrist is further from the ground).
+        Transition tapping → plank : wrist Y-asymmetry falls back below threshold.
+        Rep counted                 : on the tapping → plank transition (one
+                                      complete lift-and-return constitutes one rep).
+        """
         rep_done = False
         warnings = []
         angles_dict = angle if isinstance(angle, dict) else {}
-        avg_hip = angles_dict.get('avg_hip', 175)
-        if self.phase == "start" and avg_hip < 155:
-            self.phase = "active"
-            self.tempo_detector.start_phase('active')
-        elif self.phase == "active" and avg_hip >= 165:
-            rep_done = True
-            self.phase = "start"
-            form_score = self._calculate_rep_form_score()
-            self._handle_rep_completion(form_score, voice)
+
+        # Pull wrist coordinates from the joints_coords sub-dict if present.
+        # calculate_angles() stores them as pixel (x, y) tuples.
+        joints_coords = angles_dict.get('joints_coords', {})
+        lw = joints_coords.get('lw')
+        rw = joints_coords.get('rw')
+
+        if lw is not None and rw is not None:
+            # Y-coordinate: smaller value = higher in the image = wrist is lifted.
+            # Normalise the difference against a rough frame-height proxy using the
+            # shoulder–hip distance so the threshold is scale-independent.
+            ls = joints_coords.get('ls')
+            lh = joints_coords.get('lh')
+            if ls is not None and lh is not None:
+                ref_dist = abs(ls[1] - lh[1]) or 1  # pixels, never zero
+            else:
+                ref_dist = 100  # fallback pixels
+
+            wrist_y_diff = (rw[1] - lw[1]) / ref_dist  # positive → left wrist higher
+
+            left_raised  = wrist_y_diff >  self._TAP_ASYMMETRY_THRESHOLD
+            right_raised = wrist_y_diff < -self._TAP_ASYMMETRY_THRESHOLD
+
+            if self.phase == "plank":
+                if left_raised or right_raised:
+                    # One hand has left the ground — entering the tap phase
+                    self._tap_side = "left" if left_raised else "right"
+                    self.phase = "tapping"
+                    self.tempo_detector.start_phase("tapping")
+
+            elif self.phase == "tapping":
+                if not left_raised and not right_raised:
+                    # Both wrists are back near ground level — tap complete
+                    rep_done = True
+                    completed_side = self._tap_side
+                    self.phase = "plank"
+                    form_score = self._calculate_rep_form_score()
+                    self._handle_rep_completion(form_score, voice, side=completed_side)
+                    self._tap_side = None
+
         if self.phase != self.last_phase:
             self.last_phase = self.phase
+
         return rep_done, self.phase, warnings
 
     def _calculate_rep_form_score(self):
@@ -87,7 +140,7 @@ class PlankShoulderTapV2:
             return avg
         return 85.0
 
-    def _handle_rep_completion(self, form_score, voice):
+    def _handle_rep_completion(self, form_score, voice, side=None):
         if self.probation_mode:
             if form_score >= 85:
                 self.practice_reps_completed += 1
@@ -101,6 +154,13 @@ class PlankShoulderTapV2:
         else:
             self.rep_count += 1
             self.form_scores.append(form_score)
+            # Unilateral tracking for asymmetry detection
+            if side == 'left':
+                self.left_rep_count += 1
+                self.form_scores_left.append(form_score)
+            elif side == 'right':
+                self.right_rep_count += 1
+                self.form_scores_right.append(form_score)
             voice.announce_rep(self.rep_count, self.target_reps, form_score)
 
     def calculate_real_time_form_score(self, angles, joints_coords):
@@ -121,7 +181,25 @@ class PlankShoulderTapV2:
             frame = self.ar.draw_counted_mode(frame, joints_coords, form_score)
         return frame
 
+    def get_asymmetry(self):
+        total = self.left_rep_count + self.right_rep_count
+        if total == 0:
+            return 'none'
+        asymmetry_pct = abs(self.left_rep_count - self.right_rep_count) / total * 100
+        if asymmetry_pct > 20:
+            return 'significant'
+        elif asymmetry_pct > 10:
+            return 'mild'
+        return 'none'
+
     def get_summary(self):
         avg_form = sum(self.form_scores)/len(self.form_scores) if self.form_scores else 0
-        return {'rep_count':self.rep_count,'rejected_count':self.rejected_count,
-                'avg_form_score':round(avg_form,1),'target_reps':self.target_reps}
+        return {
+            'rep_count': self.rep_count,
+            'left_rep_count': self.left_rep_count,
+            'right_rep_count': self.right_rep_count,
+            'tap_asymmetry': self.get_asymmetry(),
+            'rejected_count': self.rejected_count,
+            'avg_form_score': round(avg_form, 1),
+            'target_reps': self.target_reps,
+        }
