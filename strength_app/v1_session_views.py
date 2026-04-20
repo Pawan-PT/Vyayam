@@ -750,14 +750,25 @@ def v1_session_complete(request):
         workout.xp_earned = xp_earned
         workout.save(update_fields=['xp_earned'])
 
-    # Rank-up detection (simplified: check if any pattern score improved)
+    # Rank-up detection — compare current vs previous StrengthProfile scores
     rank_up = None
-    if new_milestones:
-        rank_up = {
-            'pattern_name': new_milestones[0].get('name', 'Movement'),
-            'from_rank': 'Silver II',
-            'to_rank': 'Silver III',
-        }
+    try:
+        from .v1_gamification import RANK_MAP, PATTERN_FIELDS
+        profiles = list(patient.strength_profiles.order_by('assessed_at'))
+        if len(profiles) >= 2:
+            prev_p, curr_p = profiles[-2], profiles[-1]
+            for pattern_name, field in PATTERN_FIELDS:
+                prev_score = getattr(prev_p, field, 0)
+                curr_score = getattr(curr_p, field, 0)
+                if curr_score > prev_score:
+                    rank_up = {
+                        'pattern_name': pattern_name,
+                        'from_rank': RANK_MAP.get(prev_score, ('UNRANKED', 'unranked'))[0],
+                        'to_rank': RANK_MAP.get(curr_score, ('UNRANKED', 'unranked'))[0],
+                    }
+                    break  # show the first pattern that ranked up
+    except Exception:
+        pass
 
     context = {
         'patient':           patient,
