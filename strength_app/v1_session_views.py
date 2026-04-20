@@ -745,6 +745,11 @@ def v1_session_complete(request):
     xp_earned = compute_session_xp(exercise_results)
     streak_days = compute_streak_days(patient)
 
+    # Persist XP to WorkoutSession so compute_xp_and_level can sum real values
+    if workout and xp_earned:
+        workout.xp_earned = xp_earned
+        workout.save(update_fields=['xp_earned'])
+
     # Rank-up detection (simplified: check if any pattern score improved)
     rank_up = None
     if new_milestones:

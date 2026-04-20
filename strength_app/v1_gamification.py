@@ -29,8 +29,13 @@ LEVEL_TITLES = {
 
 def compute_xp_and_level(patient):
     """Return dict with total_xp, user_level, xp_current, xp_next_level, xp_percentage, level_title."""
-    total_sessions = WorkoutSession.objects.filter(patient=patient).count()
-    total_xp = total_sessions * XP_PER_SESSION
+    from django.db.models import Sum
+    qs = WorkoutSession.objects.filter(patient=patient)
+    total_sessions = qs.count()
+    # Sum persisted xp_earned; fall back to flat rate for legacy sessions with xp_earned=0
+    stored_xp = qs.aggregate(s=Sum('xp_earned'))['s'] or 0
+    legacy_sessions = qs.filter(xp_earned=0).count()
+    total_xp = stored_xp + legacy_sessions * XP_PER_SESSION
     user_level = min(MAX_LEVEL, total_xp // XP_PER_LEVEL + 1)
     xp_into_level = total_xp - (user_level - 1) * XP_PER_LEVEL
     xp_next = XP_PER_LEVEL
