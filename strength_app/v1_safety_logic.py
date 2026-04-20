@@ -266,20 +266,40 @@ def check_deload_needed(patient, periodisation_state=None):
     """
     Determine whether a deload week is warranted.
 
-    Checks:
-      - Weeks since last deload (DELOAD_CONFIG.max_weeks_before_deload)
-      - Consecutive red traffic lights (≥ 2)
-      - Pain reports in recent sessions
+    Mandatory 4-week rule: deload is non-negotiable once max_weeks of loading
+    has elapsed since the last deload, regardless of how the caller provides state.
+
+    Checks (in priority order):
+      1. weeks_since_deload via PeriodisationState (mandatory, cannot be bypassed)
+      2. Fallback: date arithmetic from last_deload_date if state missing
+      3. Consecutive red traffic lights (≥ 2)
+      4. Moderate/severe pain in recent sessions (≥ 2)
 
     Returns: (bool: needs_deload, str: reason)
     """
     from .v1_constants import DELOAD_CONFIG
+    from datetime import date, timedelta
 
     max_weeks = DELOAD_CONFIG.get('trigger_every_n_weeks', 4)
 
+    # 1. Use supplied periodisation_state
     if periodisation_state:
         if periodisation_state.weeks_since_deload >= max_weeks:
-            return True, f'Auto-deload after {max_weeks} weeks of progressive loading'
+            return True, f'Mandatory deload: {periodisation_state.weeks_since_deload} weeks of progressive loading (limit {max_weeks})'
+
+    # 2. Fallback: resolve state from patient directly if caller omitted it
+    else:
+        try:
+            state = patient.periodisation_state
+            if state.weeks_since_deload >= max_weeks:
+                return True, f'Mandatory deload: {state.weeks_since_deload} weeks of progressive loading (limit {max_weeks})'
+            # Also check by date in case weeks_since_deload counter drifted
+            if state.last_deload_date:
+                weeks_elapsed = (date.today() - state.last_deload_date).days // 7
+                if weeks_elapsed >= max_weeks:
+                    return True, f'Mandatory deload: {weeks_elapsed} weeks elapsed since last deload (limit {max_weeks})'
+        except Exception:
+            pass  # No periodisation state yet — new patient, skip time gate
 
     # Check recent session feedback
     recent_feedbacks = patient.session_feedbacks.order_by('-created_at')[:5]
