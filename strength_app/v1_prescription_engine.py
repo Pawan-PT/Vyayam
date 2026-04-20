@@ -1375,6 +1375,14 @@ def generate_v1_session(patient):
                 continue
             seen_patterns.add(pattern)
             capability = score_map.get(pattern, 2)
+            # Block progression when significant asymmetry exists (safety gate)
+            asym_rule = asymmetry_rules.get(pattern, {})
+            if asym_rule.get('asymmetry') == 'significant':
+                modifier_notes.append(
+                    f'{pattern.title()} progression BLOCKED: significant asymmetry — '
+                    f'resolve bilateral deficit before advancing.'
+                )
+                continue
             if capability < 5:
                 fc = patient.family_capabilities.filter(
                     family_id__startswith=pattern
