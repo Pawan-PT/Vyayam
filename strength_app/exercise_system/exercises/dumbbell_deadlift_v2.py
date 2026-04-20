@@ -90,7 +90,8 @@ class DeadliftDumbbellV2:
         left_hip = analyzer.calculate_angle(ls, lh, lk)
         right_hip = analyzer.calculate_angle(rs, rh, rk)
         
-        # Back angle (shoulder → hip → knee) - SAFETY CHECK
+        # Hip extension angle (shoulder → hip → knee) — measures hinge depth, NOT spinal alignment
+        # NOTE: True lumbar alignment is not measurable with MediaPipe's 33 landmarks; no mid-spine points exist.
         left_back = analyzer.calculate_angle(ls, lh, lk)
         right_back = analyzer.calculate_angle(rs, rh, rk)
         
