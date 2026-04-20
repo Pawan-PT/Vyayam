@@ -11,7 +11,7 @@ import dj_database_url  # ADDED
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
-SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-dev-fallback-change-in-production')
+SECRET_KEY = os.environ['DJANGO_SECRET_KEY']  # Fail-fast: must be set in environment; no insecure fallback allowed
 
 DEBUG = os.environ.get('DJANGO_DEBUG', 'False').lower() in ('true', '1', 'yes')
 
