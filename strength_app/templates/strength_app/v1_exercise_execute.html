@@ -148,13 +148,19 @@
         </span>
         {% endif %}
       </div>
+      {% if library_mode %}
+      <span style="display:inline-block;padding:2px 8px;border-radius:12px;background:rgba(255,200,0,.15);color:#ffd76a;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-top:2px;">Practice Mode</span>
+      {% else %}
       <div class="progress-text">Exercise {{ exercise_index|add:1 }} of {{ total_exercises }} · {{ exercise.movement_pattern|title }}</div>
+      {% endif %}
     </div>
+    {% if not library_mode %}
     <div style="flex:1;min-width:80px;">
       <div style="height:5px;border-radius:5px;background:rgba(255,255,255,.1);">
         <div style="height:100%;border-radius:5px;background:linear-gradient(90deg,#0c6c3f,#6bbf8a);width:{% widthratio exercise_index|add:1 total_exercises 100 %}%;"></div>
       </div>
     </div>
+    {% endif %}
   </div>
 
   <div class="main-layout">
@@ -348,7 +354,7 @@
       <!-- Submit -->
       <button class="submit-btn" id="submitBtn" onclick="saveAndNext()">
         <i class="fas fa-check me-2"></i>
-        {% if assessment_mode %}Score &amp; Next Test{% elif is_last_exercise %}Finish &amp; Cool Down{% else %}Next Exercise{% endif %}
+        {% if assessment_mode %}Score &amp; Next Test{% elif library_mode %}Finish Practice{% elif is_last_exercise %}Finish &amp; Cool Down{% else %}Next Exercise{% endif %}
       </button>
       <button class="skip-btn" onclick="skipExercise()">Skip this exercise</button>
 
@@ -384,6 +390,7 @@
   const EXERCISE_INDEX  = "{{ exercise_index }}";
   const TEMPO_PARTS     = ["{{ exercise.tempo_parts.0|default:3 }}, {{ exercise.tempo_parts.1|default:1 }}, {{ exercise.tempo_parts.2|default:2 }}, {{ exercise.tempo_parts.3|default:0 }}"];
   const IS_TEST_MODE = (window.location.pathname.indexOf('/test-exercise/') !== -1);
+  const LIBRARY_MODE = {{ library_mode|yesno:"true,false" }};
   const CAPABILITY_LEVEL = "{{ exercise.capability_level|default:2 }}";
   const EXERCISE_FORM_CUES = [{% for cue in exercise.form_cues %}"{{ cue|escapejs }}"{% if not forloop.last %},{% endif %}{% endfor %}];
   const MIND_MUSCLE_CUE = "{{ exercise.mind_muscle_cue.during|default:''|escapejs }}";
@@ -3942,6 +3949,21 @@ async function startCamera() {
     if (!type || !selectedLocation) { alert('Please complete all steps.'); return; }
     painReported = true;
 
+    if (LIBRARY_MODE) {
+      if (painAction === 'skip_exercise') {
+        document.getElementById('painProtocol').innerHTML =
+          `<div class="guidance-box guidance-skip_exercise"><p>${computeGuidance(type, severity).guidance}</p><p style="margin-top:8px;font-size:.78rem;opacity:.7;">Returning to exercise library in 3 seconds...</p></div>`;
+        setTimeout(() => { if (stream) stream.getTracks().forEach(t => t.stop()); window.location.href = '{% url "exercise_library" %}'; }, 3000);
+      } else if (painAction === 'reduce_volume') {
+        remainingSets = Math.max(1, remainingSets - 1);
+        document.getElementById('painProtocol').classList.remove('show');
+        togglePain();
+      } else {
+        document.getElementById('painProtocol').classList.remove('show');
+      }
+      return;
+    }
+
     fetch('{% url "v1_save_exercise_result" %}', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
@@ -4046,6 +4068,12 @@ async function startCamera() {
       return;
     }
 
+    if (LIBRARY_MODE) {
+      if (stream) stream.getTracks().forEach(t => t.stop());
+      window.location.href = '{% url "exercise_library" %}';
+      return;
+    }
+
     fetch('{% url "v1_save_exercise_result" %}', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrf() },
@@ -4093,6 +4121,11 @@ async function startCamera() {
     }
     if (IS_TEST_MODE) {
       window.location.href = '/v1/test-exercises/';
+      return;
+    }
+    if (LIBRARY_MODE) {
+      if (stream) stream.getTracks().forEach(t => t.stop());
+      window.location.href = '{% url "exercise_library" %}';
       return;
     }
     fetch('{% url "v1_save_exercise_result" %}', {
