@@ -60,6 +60,11 @@ def patient_login(request: HttpRequest):
                 has_profile = patient.strength_profiles.exists()
                 request.session['has_strength_profile'] = has_profile
 
+                # B2B2C: therapist-managed patients skip strength_app onboarding
+                # entirely and land on their therapist-driven session today page.
+                if patient.therapist_managed:
+                    return redirect('therapist_session_today')
+
                 if patient.gate_test_completed and has_profile:
                     return redirect('v1_dashboard')
 
