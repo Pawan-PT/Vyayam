@@ -417,7 +417,7 @@
   const ASSESSMENT_VARIANT  = "{{ assessment_variant|default:'' }}";
   const ASSESSMENT_SCORING  = {% if assessment_scoring_json %}{{ assessment_scoring_json|safe }}{% else %}{}{% endif %};
   const EXERCISE_INDEX  = "{{ exercise_index }}";
-  const TEMPO_PARTS     = ["{{ exercise.tempo_parts.0|default:3 }}, {{ exercise.tempo_parts.1|default:1 }}, {{ exercise.tempo_parts.2|default:2 }}, {{ exercise.tempo_parts.3|default:0 }}"];
+  const TEMPO_PARTS     = [{{ exercise.tempo_parts.0|default:3 }}, {{ exercise.tempo_parts.1|default:1 }}, {{ exercise.tempo_parts.2|default:2 }}, {{ exercise.tempo_parts.3|default:0 }}];
   const IS_TEST_MODE = (window.location.pathname.indexOf('/test-exercise/') !== -1);
   const LIBRARY_MODE = {{ library_mode|yesno:"true,false" }};
   const LIBRARY_RETURN_URL = "{{ library_return_url|default:'' }}";
@@ -4744,6 +4744,7 @@ async function startCamera() {
     //    below; nothing else needs to change.
     var VIDEO_MODE_EXERCISES = ['full_squats'];
     var VIDEO_MODE = VIDEO_MODE_EXERCISES.indexOf(EXERCISE_ID) !== -1;
+    window.VIDEO_MODE = VIDEO_MODE;  // expose to startRest/skipRest gates below
     if (VIDEO_MODE) {
       hasGhost = false;  // disable ghost rendering + rep counting entirely
       var _vrPip    = document.getElementById('videoRefPip');
@@ -4758,6 +4759,11 @@ async function startCamera() {
         _vrPlayer.play().catch(function(){ /* will retry on user interaction */ });
       }
       if (_vrBadge) _vrBadge.style.display = 'block';
+      // Begin tempo voice pacing immediately. Loops "Down... 2... 1... Hold...
+      // Up... 2... 1..." for the duration of the set. stopTempoVoice()
+      // is already called from completeSet() (line ~4994).
+      // Small delay to let SpeechSynthesis voices load on first call.
+      setTimeout(function(){ if (typeof startTempoVoice === 'function') startTempoVoice(); }, 800);
     }
 
     if (hasGhost) { initGhostAnimator(); }
@@ -5105,7 +5111,7 @@ async function startCamera() {
         clearInterval(restInterval);
         wrap.style.display = 'none';
         VoiceCoach.speak('Rest over. Next set.', true);
-        startTempoVoice();
+        if (window.VIDEO_MODE) startTempoVoice();
       }
     }, 1000);
     // Run visual tempo guide for current set
@@ -5116,7 +5122,7 @@ async function startCamera() {
     clearInterval(restInterval);
     document.getElementById('restTimerWrap').style.display = 'none';
     VoiceCoach.speak('Next set.', true);
-    startTempoVoice();
+    if (window.VIDEO_MODE) startTempoVoice();
   }
 
   // ---- Pain protocol ----
