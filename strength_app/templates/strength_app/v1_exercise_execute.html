@@ -4828,6 +4828,12 @@ async function startCamera() {
                            calcAngle(_vmRH, _vmRk, _vmRa)) / 2;
             if (window._videoModeRep.state === 'standing' && _vmKnee < 140) {
               window._videoModeRep.state = 'down';
+              // First-rep mind-muscle anchor — speak once per session
+              if (!window._videoModeRep._anchorSpoken &&
+                  typeof MIND_MUSCLE_CUE !== 'undefined' && MIND_MUSCLE_CUE) {
+                VoiceCoach.speak(MIND_MUSCLE_CUE, true);
+                window._videoModeRep._anchorSpoken = true;
+              }
             } else if (window._videoModeRep.state === 'down' && _vmKnee > 165) {
               window._videoModeRep.state = 'standing';
               window._videoModeRep.counted += 1;
@@ -5027,6 +5033,25 @@ async function startCamera() {
           [0,11,12,13,14,15,16,23,24,25,26,27,28].forEach(function(i){ _vfJointColor[i] = 'g'; });
 
           if (window.VIDEO_MODE && EXERCISE_ID === 'full_squats') {
+            // ── Per-exercise: which form_cues index maps to which form-detection event.
+            //    Looks up into EXERCISE_FORM_CUES (loaded at line ~396 from
+            //    exercise_content.py.form_cues). null = no clean physio
+            //    cue match → fall back to the hardcoded string below.
+            //    Add a row here when porting another exercise to VIDEO_MODE.
+            var FORM_CUE_INDEX_MAP = {
+              full_squats: { valgus: 1, depth: 0, trunk: null },
+            };
+            var _vfMap = FORM_CUE_INDEX_MAP[EXERCISE_ID] || {};
+            function _vfCue(eventKey, fallback) {
+              var idx = _vfMap[eventKey];
+              if (idx !== null && idx !== undefined &&
+                  typeof EXERCISE_FORM_CUES !== 'undefined' &&
+                  EXERCISE_FORM_CUES[idx]) {
+                return EXERCISE_FORM_CUES[idx];
+              }
+              return fallback;
+            }
+
             var _vfLH = lm[LM.leftHip],  _vfRH = lm[LM.rightHip];
             var _vfLK = lm[LM.leftKnee], _vfRK = lm[LM.rightKnee];
             var _vfLA = lm[LM.leftAnkle],_vfRA = lm[LM.rightAnkle];
@@ -5045,29 +5070,27 @@ async function startCamera() {
               var _vfHipSpan   = Math.abs(_vfLH.x - _vfRH.x);
               var _vfValgus    = (_vfHipSpan > 0.02) && (_vfKneeSpan < _vfHipSpan * 0.8);
 
-              // ── Check #1: VALGUS (critical, red) — only matters while squatting
+              // ── Check #1: VALGUS — speak physio cue from exercise_content.py
               if (_vfKnee < 160 && _vfValgus) {
                 _vfJointColor[25] = 'r'; _vfJointColor[26] = 'r';
                 if (Date.now() - VoiceCoach.lastSpokenTime > 4000) {
-                  VoiceCoach.speak('Push your knees out. Do not let them cave in.', true);
+                  VoiceCoach.speak(_vfCue('valgus', 'Push your knees out. Do not let them cave in.'), true);
                 }
               }
 
-              // ── Check #2: TRUNK LEAN (critical when severe, yellow when mild)
+              // ── Check #2: TRUNK LEAN — no physio cue match for full_squats; fallback
               if (_vfTrunk < 130) {
                 _vfJointColor[11] = 'r'; _vfJointColor[12] = 'r';
                 _vfJointColor[23] = 'r'; _vfJointColor[24] = 'r';
                 if (Date.now() - VoiceCoach.lastSpokenTime > 4000) {
-                  VoiceCoach.speak('Chest up. Stay upright.', false);
+                  VoiceCoach.speak(_vfCue('trunk', 'Chest up. Stay upright.'), false);
                 }
               } else if (_vfTrunk < 150) {
                 _vfJointColor[11] = 'y'; _vfJointColor[12] = 'y';
                 _vfJointColor[23] = 'y'; _vfJointColor[24] = 'y';
               }
 
-              // ── Check #3: DEPTH (yellow only) — fires only if patient appears
-              //    to be in the squat-down state (rep counter says 'down'),
-              //    and they've hovered shallow for 1.5+ seconds.
+              // ── Check #3: DEPTH — speak physio cue from exercise_content.py
               if (window._videoModeRep && window._videoModeRep.state === 'down'
                   && _vfKnee > 130) {
                 _vfJointColor[25] = (_vfJointColor[25] === 'r') ? 'r' : 'y';
@@ -5075,7 +5098,7 @@ async function startCamera() {
                 if (!window._vfShallowStart) window._vfShallowStart = Date.now();
                 if (Date.now() - window._vfShallowStart > 1500 &&
                     Date.now() - VoiceCoach.lastSpokenTime > 4000) {
-                  VoiceCoach.speak('Try to go a little deeper.', false);
+                  VoiceCoach.speak(_vfCue('depth', 'Try to go a little deeper.'), false);
                   window._vfShallowStart = null;
                 }
               } else {
