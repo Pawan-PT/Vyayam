@@ -2995,14 +2995,6 @@ async function startCamera() {
           ghostState.stallStartTime = Date.now();
           ghostState.stallBaseScore = matchScore;
           ghostState.matchFrames = 0;
-          // VIDEO_MODE: tempo voice begins exactly when the user enters
-          // the actual exercise phase. Guarded by _vmTempoStartedForSet
-          // so it fires only once per set, not every time we re-enter
-          // USER_FOLLOWS between reps.
-          if (window.VIDEO_MODE && !ghostState._vmTempoStartedForSet) {
-            ghostState._vmTempoStartedForSet = true;
-            if (typeof startTempoVoice === 'function') startTempoVoice();
-          }
         }
         break;
       }
@@ -3358,7 +3350,6 @@ async function startCamera() {
         if (repEl) repEl.textContent = ghostState.repCount + ' / ' + ghostState.targetReps;
         if (ghostState.repCount >= ghostState.targetReps) {
           ghostState.mode = 'SET_DONE';
-          ghostState._vmTempoStartedForSet = false;  // re-arm tempo trigger for the next set
           VoiceCoach.speak('Set complete! Well done.', true);
           var doneBtn = document.getElementById('completeSetBtn');
           if (doneBtn) doneBtn.style.display = 'block';
@@ -4134,11 +4125,6 @@ async function startCamera() {
   }
 
   function drawGhostTarget(ctx, targetPhase, matchScore, W, H, userLm) {
-    // In VIDEO_MODE the demonstration visual is the reference video PiP,
-    // not the ghost figure. Skip drawing entirely. updateGhostState() is
-    // still called from the main render loop, so voice cues and state
-    // transitions continue uninterrupted.
-    if (window.VIDEO_MODE) return;
     if (!targetPhase || !userLm) return;
 
     var elapsed  = Date.now() - ghostState.phaseStartTime;
@@ -4826,46 +4812,6 @@ async function startCamera() {
       if (results.poseLandmarks) {
         var lm = results.poseLandmarks;
 
-        // ── VIDEO_MODE simple rep counter (full_squats MVP) ──
-        //    Hysteresis on average knee flexion:
-        //      standing → down  when knee < 140°
-        //      down     → standing when knee > 165°  (counts 1 rep)
-        //    Uses the same calcAngle/LM helpers as the rest of the file.
-        //    Lives outside the hasGhost branch so it survives even if the
-        //    ghost system is later removed.
-        if (VIDEO_MODE) {
-          if (!window._videoModeRep) {
-            window._videoModeRep = { state: 'standing', counted: 0 };
-          }
-          var _vmLH = lm[LM.leftHip],  _vmLk = lm[LM.leftKnee],  _vmLa = lm[LM.leftAnkle];
-          var _vmRH = lm[LM.rightHip], _vmRk = lm[LM.rightKnee], _vmRa = lm[LM.rightAnkle];
-          if (_vmLH && _vmLk && _vmLa && _vmRH && _vmRk && _vmRa) {
-            var _vmKnee = (calcAngle(_vmLH, _vmLk, _vmLa) +
-                           calcAngle(_vmRH, _vmRk, _vmRa)) / 2;
-            if (window._videoModeRep.state === 'standing' && _vmKnee < 140) {
-              window._videoModeRep.state = 'down';
-              // First-rep mind-muscle anchor — speak once per session
-              if (!window._videoModeRep._anchorSpoken &&
-                  typeof MIND_MUSCLE_CUE !== 'undefined' && MIND_MUSCLE_CUE) {
-                VoiceCoach.speak(MIND_MUSCLE_CUE, true);
-                window._videoModeRep._anchorSpoken = true;
-              }
-            } else if (window._videoModeRep.state === 'down' && _vmKnee > 165) {
-              window._videoModeRep.state = 'standing';
-              window._videoModeRep.counted += 1;
-              if (typeof onRepCounted === 'function') {
-                onRepCounted(window._videoModeRep.counted);
-              }
-              // Show the Done button after the target reps are reached.
-              if (typeof PRESCRIBED_REPS !== 'undefined' &&
-                  window._videoModeRep.counted >= PRESCRIBED_REPS) {
-                var _vmDone = document.getElementById('completeSetBtn');
-                if (_vmDone) _vmDone.style.display = 'block';
-              }
-            }
-          }
-        }
-
         // --- CALIBRATION phase ---
         if (ghostState.mode === 'CALIBRATING') {
           var keyLMs = [11, 12, 23, 24, 25, 26, 27, 28];
@@ -5036,131 +4982,6 @@ async function startCamera() {
             }
           }
         }
-        if (window.VIDEO_MODE) {
-          // ── VIDEO_MODE form feedback: color-coded skeleton + voice cues.
-          //    Ported from the validate_form() pattern in
-          //    exercise_system/exercises/full_squats_v2.py — absolute
-          //    angle thresholds, not matchScore.
-          //    Joint colors:
-          //       GREEN  = passing all checks
-          //       YELLOW = minor issue (e.g. shallow depth during "down")
-          //       RED    = critical issue (knee valgus, severe forward lean)
-          var _vfJointColor = {};  // landmark index → 'g'|'y'|'r'
-          // Default everything green
-          [0,11,12,13,14,15,16,23,24,25,26,27,28].forEach(function(i){ _vfJointColor[i] = 'g'; });
-
-          if (window.VIDEO_MODE && EXERCISE_ID === 'full_squats') {
-            // ── Per-exercise: which form_cues index maps to which form-detection event.
-            //    Looks up into EXERCISE_FORM_CUES (loaded at line ~396 from
-            //    exercise_content.py.form_cues). null = no clean physio
-            //    cue match → fall back to the hardcoded string below.
-            //    Add a row here when porting another exercise to VIDEO_MODE.
-            var FORM_CUE_INDEX_MAP = {
-              full_squats: { valgus: 1, depth: 0, trunk: null },
-            };
-            var _vfMap = FORM_CUE_INDEX_MAP[EXERCISE_ID] || {};
-            function _vfCue(eventKey, fallback) {
-              var idx = _vfMap[eventKey];
-              if (idx !== null && idx !== undefined &&
-                  typeof EXERCISE_FORM_CUES !== 'undefined' &&
-                  EXERCISE_FORM_CUES[idx]) {
-                return EXERCISE_FORM_CUES[idx];
-              }
-              return fallback;
-            }
-
-            var _vfLH = lm[LM.leftHip],  _vfRH = lm[LM.rightHip];
-            var _vfLK = lm[LM.leftKnee], _vfRK = lm[LM.rightKnee];
-            var _vfLA = lm[LM.leftAnkle],_vfRA = lm[LM.rightAnkle];
-            var _vfLS = lm[LM.leftShoulder], _vfRS = lm[LM.rightShoulder];
-
-            if (_vfLH && _vfRH && _vfLK && _vfRK && _vfLA && _vfRA && _vfLS && _vfRS) {
-              // Knee flexion (avg)
-              var _vfLeftKnee  = calcAngle(_vfLH, _vfLK, _vfLA);
-              var _vfRightKnee = calcAngle(_vfRH, _vfRK, _vfRA);
-              var _vfKnee      = (_vfLeftKnee + _vfRightKnee) / 2;
-              // Trunk uprightness — shoulder-hip-knee
-              var _vfTrunk     = (calcAngle(_vfLS, _vfLH, _vfLK) +
-                                  calcAngle(_vfRS, _vfRH, _vfRK)) / 2;
-              // Valgus — normalized knee X-span vs hip X-span
-              var _vfKneeSpan  = Math.abs(_vfLK.x - _vfRK.x);
-              var _vfHipSpan   = Math.abs(_vfLH.x - _vfRH.x);
-              var _vfValgus    = (_vfHipSpan > 0.02) && (_vfKneeSpan < _vfHipSpan * 0.8);
-
-              // ── Check #1: VALGUS — speak physio cue from exercise_content.py
-              if (_vfKnee < 160 && _vfValgus) {
-                _vfJointColor[25] = 'r'; _vfJointColor[26] = 'r';
-                if (Date.now() - VoiceCoach.lastSpokenTime > 4000) {
-                  VoiceCoach.speak(_vfCue('valgus', 'Push your knees out. Do not let them cave in.'), true);
-                }
-              }
-
-              // ── Check #2: TRUNK LEAN — no physio cue match for full_squats; fallback
-              if (_vfTrunk < 130) {
-                _vfJointColor[11] = 'r'; _vfJointColor[12] = 'r';
-                _vfJointColor[23] = 'r'; _vfJointColor[24] = 'r';
-                if (Date.now() - VoiceCoach.lastSpokenTime > 4000) {
-                  VoiceCoach.speak(_vfCue('trunk', 'Chest up. Stay upright.'), false);
-                }
-              } else if (_vfTrunk < 150) {
-                _vfJointColor[11] = 'y'; _vfJointColor[12] = 'y';
-                _vfJointColor[23] = 'y'; _vfJointColor[24] = 'y';
-              }
-
-              // ── Check #3: DEPTH — speak physio cue from exercise_content.py
-              if (window._videoModeRep && window._videoModeRep.state === 'down'
-                  && _vfKnee > 130) {
-                _vfJointColor[25] = (_vfJointColor[25] === 'r') ? 'r' : 'y';
-                _vfJointColor[26] = (_vfJointColor[26] === 'r') ? 'r' : 'y';
-                if (!window._vfShallowStart) window._vfShallowStart = Date.now();
-                if (Date.now() - window._vfShallowStart > 1500 &&
-                    Date.now() - VoiceCoach.lastSpokenTime > 4000) {
-                  VoiceCoach.speak(_vfCue('depth', 'Try to go a little deeper.'), false);
-                  window._vfShallowStart = null;
-                }
-              } else {
-                window._vfShallowStart = null;
-              }
-            }
-          }
-
-          // Render skeleton with per-joint colors.
-          (function() {
-            var fb_conn = [
-              [11,12],[11,23],[12,24],[23,24],
-              [11,13],[13,15],[12,14],[14,16],
-              [23,25],[25,27],[24,26],[26,28],
-            ];
-            var COL = {
-              g: { stroke: 'rgba(34,197,94,.9)',  fill: 'rgba(34,197,94,.4)',  ring: '#22c55e' },
-              y: { stroke: 'rgba(245,158,11,.9)', fill: 'rgba(245,158,11,.4)', ring: '#f59e0b' },
-              r: { stroke: 'rgba(239,68,68,.95)', fill: 'rgba(239,68,68,.5)',  ring: '#ef4444' }
-            };
-            ctx.save();
-            ctx.lineWidth = 3; ctx.lineCap = 'round';
-            fb_conn.forEach(function(c) {
-              var a = lm[c[0]], b = lm[c[1]]; if (!a || !b) return;
-              // Edge color = worst of the two endpoints (r > y > g)
-              var ca = _vfJointColor[c[0]] || 'g';
-              var cb = _vfJointColor[c[1]] || 'g';
-              var rank = { g: 0, y: 1, r: 2 };
-              var col = (rank[ca] >= rank[cb]) ? ca : cb;
-              ctx.strokeStyle = COL[col].stroke;
-              ctx.beginPath(); ctx.moveTo(mx(a,W), a.y*H); ctx.lineTo(mx(b,W), b.y*H); ctx.stroke();
-            });
-            [0,11,12,13,14,15,16,23,24,25,26,27,28].forEach(function(idx) {
-              var p = lm[idx]; if (!p) return;
-              var col = COL[_vfJointColor[idx] || 'g'];
-              ctx.beginPath(); ctx.arc(mx(p,W), p.y*H, 5, 0, Math.PI*2);
-              ctx.fillStyle = col.fill; ctx.fill();
-              ctx.strokeStyle = col.ring; ctx.lineWidth = 2; ctx.stroke();
-            });
-            ctx.restore();
-          })();
-          var score = computeFormScore(lm);
-          formScores.push(score);
-          updateFormDisplay(score);
-        }
       }
     });
 
@@ -5259,7 +5080,6 @@ async function startCamera() {
         clearInterval(restInterval);
         wrap.style.display = 'none';
         VoiceCoach.speak('Rest over. Next set.', true);
-        if (window.VIDEO_MODE) startTempoVoice();
       }
     }, 1000);
     // Run visual tempo guide for current set
@@ -5270,7 +5090,6 @@ async function startCamera() {
     clearInterval(restInterval);
     document.getElementById('restTimerWrap').style.display = 'none';
     VoiceCoach.speak('Next set.', true);
-    if (window.VIDEO_MODE) startTempoVoice();
   }
 
   // ---- Pain protocol ----
