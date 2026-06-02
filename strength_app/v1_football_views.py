@@ -125,6 +125,9 @@ def football_assessment_execute(request, test_index):
 # ============================================================================
 
 def football_save_test_result(request):
+    # G4-2 fix: reject anonymous writes before touching the session.
+    if not request.session.get('patient_id'):
+        return JsonResponse({'error': 'Authentication required'}, status=401)
     if request.method != 'POST':
         return JsonResponse({'error': 'POST required'}, status=405)
 
@@ -351,11 +354,14 @@ def football_update_after_session(patient):
     except Exception:
         return
 
-    # Increment HSR week counter based on periodisation state
+    # Track weeks completed in the CURRENT HSR phase, anchored to phase start (SB-5b fix).
+    # Old `current_week % 4` capped this at 0-3 so the >=4 advance gate never fired.
     try:
         state = patient.periodisation
-        # Use current_week mod 4 to track weeks within an HSR phase
-        fp.hsr_weeks_completed = max(fp.hsr_weeks_completed, state.current_week % 4)
+        if not fp.hsr_phase_start_week:
+            fp.hsr_phase_start_week = state.current_week
+        weeks_in_phase = max(0, state.current_week - fp.hsr_phase_start_week)
+        fp.hsr_weeks_completed = max(fp.hsr_weeks_completed, weeks_in_phase)
     except Exception:
         pass
 
@@ -370,7 +376,7 @@ def football_update_after_session(patient):
     except Exception:
         pass
 
-    fp.save(update_fields=['hsr_weeks_completed', 'plyometric_cleared'])
+    fp.save(update_fields=['hsr_weeks_completed', 'hsr_phase_start_week', 'plyometric_cleared'])
 
 
 # ============================================================================

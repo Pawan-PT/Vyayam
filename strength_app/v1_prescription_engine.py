@@ -1123,7 +1123,12 @@ def _advance_hsr_phase(patient, fp):
     if fp.hsr_weeks_completed >= phase_weeks and current_idx < len(PHASE_ORDER) - 1:
         fp.hsr_current_phase = PHASE_ORDER[current_idx + 1]
         fp.hsr_weeks_completed = 0
-        fp.save(update_fields=['hsr_current_phase', 'hsr_weeks_completed'])
+        # Re-anchor phase-start so the next phase counts from zero (SB-5b).
+        try:
+            fp.hsr_phase_start_week = patient.periodisation.current_week
+        except Exception:
+            fp.hsr_phase_start_week = 0
+        fp.save(update_fields=['hsr_current_phase', 'hsr_weeks_completed', 'hsr_phase_start_week'])
         return True
     return False
 

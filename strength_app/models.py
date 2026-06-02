@@ -1183,6 +1183,7 @@ class FootballProfile(models.Model):
         default='none',
     )
     hsr_weeks_completed = models.IntegerField(default=0)
+    hsr_phase_start_week = models.IntegerField(default=0)  # macrocycle week the current HSR phase began (SB-5b)
     last_reassessment = models.DateTimeField(null=True, blank=True)
 
     class Meta:
