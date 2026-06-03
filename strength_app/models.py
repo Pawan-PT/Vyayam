@@ -1195,13 +1195,22 @@ class FootballProfile(models.Model):
     # ── Computation methods ──────────────────────────────────────────────────
 
     def compute_level(self):
-        """Weakest-link: football_level = min of all 6 test scores (floor 1)."""
+        """Composite: football_level = rounded average of completed test scores (1-5, floor 1).
+
+        This is the headline/overall tier shown to the athlete. It is NOT a safety
+        clearance - dangerous work (plyometrics, sprint) is gated separately by
+        check_plyometric_gate() on the specific tests (LSI, hop, Nordic, sprint).
+        The six per-quality scores stay on their own fields for per-domain dosing.
+        """
         scores = [
             self.hop_score, self.nordic_score, self.sprint_score,
             self.pogo_score, self.cod_score, self.ybalance_score,
         ]
         valid = [s for s in scores if s > 0]
-        self.football_level = max(1, min(valid)) if valid else 1
+        if valid:
+            self.football_level = max(1, min(5, round(sum(valid) / len(valid))))
+        else:
+            self.football_level = 1
         return self.football_level
 
     def compute_lsi(self):
@@ -1262,7 +1271,7 @@ class FootballProfile(models.Model):
         low = PLYOMETRIC_GATES['low_load']['requirements']
         if (
             self.football_level >= low['min_football_level']
-            and (self.hop_lsi_pct or 100) >= low['lsi_min_pct']
+            and (self.hop_lsi_pct or 0) >= low['lsi_min_pct']
             and self.hop_score >= low['hop_score_min']
             and pain_nrs <= low['pain_nrs_max']
         ):
@@ -1272,7 +1281,7 @@ class FootballProfile(models.Model):
         if (
             cleared == 'low_load'
             and self.football_level >= mod['min_football_level']
-            and (self.hop_lsi_pct or 100) >= mod['lsi_min_pct']
+            and (self.hop_lsi_pct or 0) >= mod['lsi_min_pct']
             and self.hop_score >= mod['hop_score_min']
             and self.nordic_score >= mod.get('nordic_score_min', 0)
             and pain_nrs <= mod['pain_nrs_max']
@@ -1283,7 +1292,7 @@ class FootballProfile(models.Model):
         if (
             cleared == 'moderate_load'
             and self.football_level >= hi['min_football_level']
-            and (self.hop_lsi_pct or 100) >= hi['lsi_min_pct']
+            and (self.hop_lsi_pct or 0) >= hi['lsi_min_pct']
             and self.hop_score >= hi['hop_score_min']
             and self.nordic_score >= hi.get('nordic_score_min', 0)
             and self.sprint_score >= hi.get('sprint_score_min', 0)
