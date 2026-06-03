@@ -51,6 +51,7 @@ urlpatterns = [
     path('football/assessment/<int:test_index>/',                      views_football.football_assessment_execute,     name='football_assessment_execute'),
     path('football/save-test-result/',                                 views_football.football_save_test_result,       name='football_save_test_result'),
     path('football/results/',                                          views_football.football_assessment_results,     name='football_assessment_results'),
+    path('football/nordic-camera-test/', views_football.football_nordic_camera_test, name='football_nordic_camera_test'),
     path('football/matches/',                                          views_football.match_calendar,                  name='match_calendar'),
     path('football/matches/add/',                                      views_football.match_add,                       name='match_add'),
     path('football/matches/delete/<int:match_id>/',                    views_football.match_delete,                    name='match_delete'),

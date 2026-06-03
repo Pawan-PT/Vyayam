@@ -446,3 +446,14 @@ def match_delete(request, match_id):
     from .models import MatchDate
     MatchDate.objects.filter(id=match_id, patient=patient).delete()
     return redirect('match_calendar')
+
+
+def football_nordic_camera_test(request):
+    """Standalone camera diagnostic for the Nordic break-point method.
+    Read-only: shows live trunk tilt, body straightness, fall speed, deepest
+    controlled tilt and a 1-5 score. Saves nothing. Login-gated.
+    """
+    patient, err = _get_patient(request)
+    if err:
+        return err
+    return render(request, 'strength_app/football_nordic_camera_test.html', {})

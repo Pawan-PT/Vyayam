@@ -1,0 +1,85 @@
+{% extends 'strength_app/base_gamified.html' %}
+{% block title %}Nordic Camera Test{% endblock %}
+{% block bottom_nav %}{% endblock %}
+
+{% block content %}
+<div style="max-width:640px;margin:0 auto;padding:12px;">
+  <h4 style="font-weight:800;margin-bottom:4px;">Nordic Break-Point — Camera Test</h4>
+  <p style="font-size:13px;color:#6b7280;margin-bottom:10px;">
+    Prop your phone side-on so it sees your whole body from the side. Kneel, ankles anchored, start
+    upright, lower forward slowly. This page only measures and shows numbers — it saves nothing.
+  </p>
+  <div style="position:relative;width:100%;background:#000;border-radius:12px;overflow:hidden;">
+    <video id="vid" playsinline muted style="display:none;"></video>
+    <canvas id="cv" style="width:100%;display:block;"></canvas>
+    <div id="pikeWarn" style="position:absolute;top:8px;left:8px;right:8px;display:none;background:rgba(229,57,53,.92);color:#fff;font-weight:700;font-size:13px;padding:6px 10px;border-radius:8px;text-align:center;">Keep your body straight — don't fold at the hips</div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;">
+    <div style="background:#f1f5f9;border-radius:10px;padding:10px;"><div style="font-size:11px;color:#64748b;">Tilt from upright</div><div id="tilt" style="font-size:22px;font-weight:800;">--°</div></div>
+    <div style="background:#f1f5f9;border-radius:10px;padding:10px;"><div style="font-size:11px;color:#64748b;">% of range</div><div id="pct" style="font-size:22px;font-weight:800;">--%</div></div>
+    <div style="background:#f1f5f9;border-radius:10px;padding:10px;"><div style="font-size:11px;color:#64748b;">Body straightness (hip)</div><div id="hip" style="font-size:22px;font-weight:800;">--°</div></div>
+    <div style="background:#f1f5f9;border-radius:10px;padding:10px;"><div style="font-size:11px;color:#64748b;">Fall speed (°/frame)</div><div id="vel" style="font-size:22px;font-weight:800;">--</div></div>
+  </div>
+  <div style="background:#0c6c3f;color:#fff;border-radius:12px;padding:14px;margin-top:10px;text-align:center;">
+    <div style="font-size:12px;opacity:.85;">State: <span id="state">waiting</span></div>
+    <div style="font-size:13px;margin-top:4px;">Deepest controlled tilt: <span id="best">--</span>°</div>
+    <div style="font-size:34px;font-weight:900;margin-top:2px;">Score <span id="score">--</span></div>
+  </div>
+  <div style="display:flex;gap:10px;margin-top:10px;">
+    <button id="startBtn" onclick="startCam()" style="flex:1;padding:12px;background:#0c6c3f;color:#fff;font-weight:700;border:none;border-radius:10px;">Start camera</button>
+    <button onclick="resetRep()" style="flex:1;padding:12px;background:#e2e8f0;color:#0f172a;font-weight:700;border:none;border-radius:10px;">Reset rep</button>
+  </div>
+  <p style="font-size:12px;color:#94a3b8;margin-top:8px;">Tuning: a high "fall speed" spike = the break point. Current break threshold: <span id="thr"></span>°/frame. Watch the numbers vs your real movement and tell Claude if it fires too early or too late.</p>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
+<script>
+(function(){
+  var LM = { leftShoulder:11, rightShoulder:12, leftHip:23, rightHip:24, leftKnee:25, rightKnee:26, leftAnkle:27, rightAnkle:28 };
+  function calcAngle(a,b,c){ if(!a||!b||!c) return 180; var rad=Math.atan2(c.y-b.y,c.x-b.x)-Math.atan2(a.y-b.y,a.x-b.x); var ang=Math.abs(rad*180/Math.PI); if(ang>180) ang=360-ang; return ang; }
+  function mid(p,q){ return { x:(p.x+q.x)/2, y:(p.y+q.y)/2 }; }
+  var BREAK_VEL = 7;
+  document.getElementById('thr').textContent = BREAK_VEL;
+  var video=document.getElementById('vid'), canvas=document.getElementById('cv'), ctx=canvas.getContext('2d');
+  var state='waiting', prevTilt=0, smoothVel=0, bestTilt=0, started=false;
+  function setText(id,v){ document.getElementById(id).textContent=v; }
+  function scoreFromPct(p){ if(p<20)return 1; if(p<40)return 2; if(p<60)return 3; if(p<80)return 4; return 5; }
+  window.resetRep=function(){ state='waiting'; bestTilt=0; prevTilt=0; smoothVel=0; setText('state','waiting'); setText('best','--'); setText('score','--'); };
+  function finish(){ var pct=Math.round(bestTilt/90*100); setText('state','broke at '+bestTilt.toFixed(0)+'°'); setText('best',bestTilt.toFixed(0)); setText('score',scoreFromPct(pct)); }
+  function onResults(res){
+    if(canvas.width!==video.videoWidth){ canvas.width=video.videoWidth; canvas.height=video.videoHeight; }
+    ctx.save(); ctx.clearRect(0,0,canvas.width,canvas.height); ctx.drawImage(res.image,0,0,canvas.width,canvas.height);
+    var lm=res.poseLandmarks;
+    if(lm){
+      if(window.drawConnectors && window.POSE_CONNECTIONS){ drawConnectors(ctx,lm,POSE_CONNECTIONS,{color:'#00C853',lineWidth:3}); drawLandmarks(ctx,lm,{color:'#fff',lineWidth:1,radius:3}); }
+      var sh=mid(lm[LM.leftShoulder],lm[LM.rightShoulder]), hp=mid(lm[LM.leftHip],lm[LM.rightHip]);
+      var dx=sh.x-hp.x, dy=sh.y-hp.y;
+      var tilt=Math.abs(Math.atan2(dx,-dy))*180/Math.PI; tilt=Math.max(0,Math.min(90,tilt));
+      var pct=Math.round(tilt/90*100);
+      var hipAng=(calcAngle(lm[LM.leftShoulder],lm[LM.leftHip],lm[LM.leftKnee])+calcAngle(lm[LM.rightShoulder],lm[LM.rightHip],lm[LM.rightKnee]))/2;
+      var vel=tilt-prevTilt; prevTilt=tilt; smoothVel=smoothVel*0.6+vel*0.4;
+      setText('tilt',tilt.toFixed(0)); setText('pct',pct); setText('hip',hipAng.toFixed(0)); setText('vel',smoothVel.toFixed(1));
+      document.getElementById('pikeWarn').style.display=(state==='descending'&&hipAng<150)?'block':'none';
+      if(state==='waiting'){ if(tilt>12&&hipAng>=150){ state='descending'; bestTilt=tilt; setText('state','descending'); } }
+      else if(state==='descending'){
+        if(hipAng>=150 && smoothVel<BREAK_VEL){ if(tilt>bestTilt) bestTilt=tilt; if(tilt>=88){ state='broken'; finish(); } }
+        if(smoothVel>=BREAK_VEL){ state='broken'; finish(); }
+      }
+    }
+    ctx.restore();
+  }
+  window.startCam=function(){
+    if(started) return; started=true; document.getElementById('startBtn').textContent='Camera running';
+    var pose=new Pose({ locateFile:function(f){ return 'https://cdn.jsdelivr.net/npm/@mediapipe/pose/'+f; }});
+    pose.setOptions({ modelComplexity:1, smoothLandmarks:true, minDetectionConfidence:0.6, minTrackingConfidence:0.6 });
+    pose.onResults(onResults);
+    var cam=new Camera(video,{ onFrame:async function(){ await pose.send({image:video}); }, width:640, height:480 });
+    cam.start();
+  };
+})();
+</script>
+{% endblock %}
