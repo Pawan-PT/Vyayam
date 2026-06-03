@@ -602,16 +602,6 @@ FOOTBALL_PERIODISATION_PHASES = {
         'volume_modifier': 0.6,
         'intensity_modifier': 0.7,
     },
-    'return_to_sport': {
-        'label': 'Return to Sport',
-        'name': 'Return-to-Sport Progression',
-        'weeks': 8,
-        'focus': 'Graded plyometric + sprint exposure; gate-based progression',
-        'sessions_per_week': 3,
-        'intensity': 'graded',
-        'volume_modifier': 0.8,
-        'intensity_modifier': 0.85,
-    },
 }
 
 # ============================================================================
