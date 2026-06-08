@@ -199,7 +199,7 @@ def coach_logout(request):
 @coach_required
 def coach_squad(request):
     links = CoachPatientLink.objects.filter(
-        coach=request.therapist, is_active=True
+        coach=request.therapist, is_active=True, patient__athlete_tier_eligible=True
     ).select_related('patient')
 
     athletes = []
