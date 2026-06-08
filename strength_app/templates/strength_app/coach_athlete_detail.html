@@ -7,11 +7,11 @@
 {% endblock %}
 
 {% block header_actions %}
-<a href="{% url 'coach_override_prescription' patient.patient_id %}" class="btn-coach btn-primary-c btn-sm-c me-2">
+<a href="{% url 'coach_override_prescription' patient.patient_id %}" class="btn-coach btn-primary-c btn-sm-c" style="margin-right:8px;">
   <i class="fas fa-edit"></i> Override Prescription
 </a>
 <button class="btn-coach btn-danger-c btn-sm-c" onclick="document.getElementById('flagModal').style.display='flex'">
-  <i class="fas fa-flag"></i> Flag
+  <i class="fas fa-flag"></i> Flag for Review
 </button>
 {% endblock %}
 
@@ -25,16 +25,30 @@
     border-bottom: 1px solid rgba(26,28,28,.07); font-size: .85rem; color: #1a1c1c; }
   .info-row:last-child { border-bottom: none; }
   .info-label { color: #3d4f42; opacity: .6; }
-  .rf-tag { display: inline-block; padding: 3px 10px; background: rgba(186,26,26,.1);
-    border: 1px solid rgba(186,26,26,.22); border-radius: 6px; font-size: .75rem;
-    color: #ba1a1a; margin: 3px; }
-  .eq-tag { display: inline-block; padding: 3px 10px; background: rgba(12,108,63,.1);
-    border: 1px solid rgba(12,108,63,.2); border-radius: 6px; font-size: .75rem;
-    color: #0c6c3f; margin: 3px; }
   .tl-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
   .tl-green  { background: #22c55e; }
   .tl-yellow { background: #f59e0b; }
   .tl-red    { background: #ef4444; }
+  .lsi-row { display: grid; grid-template-columns: 1fr 80px 24px; gap: 10px; align-items: center;
+    padding: 8px 0; border-bottom: 1px solid rgba(26,28,28,.06); font-size: .85rem; }
+  .lsi-row:last-child { border-bottom: none; }
+  .lsi-bar { height: 6px; background: rgba(26,28,28,.08); border-radius: 6px; overflow: hidden; position: relative; }
+  .lsi-fill { height: 100%; border-radius: 6px; background: linear-gradient(90deg,#0c6c3f,#6bbf8a); }
+  .lsi-fill.below { background: linear-gradient(90deg,#ba1a1a,#f87171); }
+  .lsi-target { position: absolute; top: 0; bottom: 0; width: 2px; background: rgba(26,28,28,.45); left: 90%; }
+  .gate-check { display: grid; grid-template-columns: 1fr auto auto; gap: 10px; align-items: center;
+    padding: 7px 0; font-size: .84rem; border-bottom: 1px solid rgba(26,28,28,.06); }
+  .gate-check:last-child { border-bottom: none; }
+  .check-ok  { color: #16a34a; font-weight: 700; }
+  .check-bad { color: #ba1a1a; font-weight: 700; }
+  .load-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .load-cell { background: #f4f7f5; border-radius: 10px; padding: 10px; text-align: center; }
+  .load-cell .wk { font-size: .65rem; color: #3d4f42; opacity: .65; text-transform: uppercase; letter-spacing: 1px; }
+  .load-cell .ses { font-size: 1.4rem; font-weight: 800; color: #0c6c3f; margin: 4px 0; }
+  .load-cell .rpe { font-size: .72rem; color: #3d4f42; opacity: .7; }
+  .match-row { display: flex; justify-content: space-between; padding: 6px 0;
+    font-size: .85rem; border-bottom: 1px solid rgba(26,28,28,.06); }
+  .match-row:last-child { border-bottom: none; }
   /* Flag modal */
   .modal-backdrop { display: none; position: fixed; inset: 0; background: rgba(26,28,28,.5);
     z-index: 100; align-items: center; justify-content: center; }
@@ -45,6 +59,7 @@
     border-radius: 10px; padding: 10px 14px; color: #1a1c1c; font-size: .85rem;
     min-height: 80px; resize: vertical; font-family: inherit; }
   .notes-textarea:focus { outline: none; border-color: #0c6c3f; }
+  .empty { color: #3d4f42; opacity: .55; font-size: .85rem; }
 </style>
 {% endblock %}
 
@@ -53,93 +68,213 @@
 <!-- Header stats -->
 <div class="three-col">
   <div class="stat-box">
-    <div class="val">{{ adherence }}%</div>
-    <div class="lbl">Adherence</div>
+    <div class="val">{% if football %}L{{ football.football_level }}{% else %}—{% endif %}</div>
+    <div class="lbl">Football Level</div>
   </div>
   <div class="stat-box">
-    <div class="val">{{ recent_sessions|length }}</div>
-    <div class="lbl">Recent Sessions</div>
+    <div class="val" style="font-size:1rem;margin-top:6px;">{% if football %}{{ football.get_hsr_current_phase_display }}{% else %}—{% endif %}</div>
+    <div class="lbl">{% if football %}Week {{ football.hsr_weeks_completed }} of phase{% else %}HSR Phase{% endif %}</div>
   </div>
-  <div class="stat-box" style="word-break:break-word;">
-    <div class="val" style="font-size:1rem;margin-top:6px;">{{ current_phase }}</div>
-    <div class="lbl">Current Phase</div>
+  <div class="stat-box">
+    <div class="val">{{ adherence }}%</div>
+    <div class="lbl">Adherence (this month)</div>
   </div>
 </div>
 
+{% if not football %}
+<div class="c-card" style="border-left:4px solid #f59e0b;background:rgba(245,158,11,.05);">
+  <div class="c-card-title" style="color:#b08800;">No football assessment yet</div>
+  <p style="font-size:.85rem;color:#3d4f42;margin:0;">
+    Ask the athlete to log in and complete the six-test battery so the dashboard can populate.
+  </p>
+</div>
+{% endif %}
+
 <div class="two-col">
 
-  <!-- Left column -->
+  <!-- LEFT COLUMN -->
   <div>
-    <!-- Radar chart -->
+
+    <!-- 1. Baseline battery -->
     <div class="c-card">
-      <div class="c-card-title">Capability Radar</div>
-      <div style="max-height:260px;position:relative;">
-        <canvas id="radarChart"></canvas>
+      <div class="c-card-title">Baseline Battery — Six Tests</div>
+      {% if battery %}
+      <table class="c-table">
+        <thead><tr><th>Test</th><th>Score</th><th>Raw</th></tr></thead>
+        <tbody>
+          {% for b in battery %}
+          <tr>
+            <td>{{ b.label }}</td>
+            <td>{{ b.score }}/5</td>
+            <td style="font-size:.8rem;color:#3d4f42;">{{ b.raw }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% if football.last_reassessment %}
+      <div style="font-size:.75rem;color:#3d4f42;opacity:.65;margin-top:10px;">
+        Last reassessment: {{ football.last_reassessment|date:"d M Y" }}
+      </div>
+      {% endif %}
+      {% else %}
+      <div class="empty">No assessment data yet.</div>
+      {% endif %}
+    </div>
+
+    <!-- 2. Strength / HSR progression -->
+    <div class="c-card">
+      <div class="c-card-title">Strength / HSR Progression</div>
+      {% if football %}
+        <div class="info-row">
+          <span class="info-label">Current HSR phase</span>
+          <span>{{ football.get_hsr_current_phase_display }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Weeks completed in phase</span>
+          <span>{{ football.hsr_weeks_completed }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">F-V tendency</span>
+          <span>{{ football.get_fv_tendency_display }}</span>
+        </div>
+      {% else %}
+        <div class="empty">No HSR data yet.</div>
+      {% endif %}
+    </div>
+
+    <!-- 3. Posterior chain -->
+    <div class="c-card">
+      <div class="c-card-title">Posterior Chain (Nordic)</div>
+      {% if football %}
+        <div class="info-row">
+          <span class="info-label">Nordic score</span>
+          <span>{{ football.nordic_score }}/5</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Raw value</span>
+          <span>{% if football.nordic_seconds %}{{ football.nordic_seconds }}{% else %}—{% endif %}</span>
+        </div>
+      {% else %}
+        <div class="empty">No Nordic data yet.</div>
+      {% endif %}
+    </div>
+
+    <!-- 4. Asymmetry -->
+    <div class="c-card">
+      <div class="c-card-title">Asymmetry — LSI Targets to Close (90 %)</div>
+      {% if asymmetry_panel %}
+        {% for row in asymmetry_panel %}
+        <div class="lsi-row">
+          <span>
+            {{ row.label }}
+            {% if row.below_threshold %}<i class="fas fa-exclamation-triangle" style="color:#ba1a1a;margin-left:6px;font-size:.75rem;"></i>{% endif %}
+          </span>
+          <div class="lsi-bar">
+            {% if row.pct is not None %}
+              <div class="lsi-fill {% if row.below_threshold %}below{% endif %}" style="width:{{ row.pct }}%;"></div>
+              <div class="lsi-target"></div>
+            {% endif %}
+          </div>
+          <span style="text-align:right;font-weight:700;{% if row.below_threshold %}color:#ba1a1a;{% endif %}">
+            {% if row.pct is not None %}{{ row.pct|floatformat:0 }}%{% else %}—{% endif %}
+          </span>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="empty">No bilateral data yet.</div>
+      {% endif %}
+    </div>
+
+    <!-- 5. Plyometric readiness gate -->
+    <div class="c-card">
+      <div class="c-card-title">Plyometric Readiness Gate</div>
+      {% if football %}
+        <div class="info-row">
+          <span class="info-label">Highest tier cleared</span>
+          <span>
+            {% if football.plyometric_cleared == 'none' %}
+              <span style="color:#ba1a1a;font-weight:700;">Not yet cleared</span>
+            {% else %}
+              <span style="color:#16a34a;font-weight:700;">{{ football.get_plyometric_cleared_display }}</span>
+            {% endif %}
+          </span>
+        </div>
+        {% if plyo_blockers %}
+        <div style="font-size:.78rem;color:#3d4f42;opacity:.75;margin-top:10px;margin-bottom:6px;">
+          To unlock <strong>{{ plyo_blockers.next_tier_label }}</strong>:
+        </div>
+        {% for c in plyo_blockers.checks %}
+        <div class="gate-check">
+          <span>{{ c.name }}</span>
+          <span style="font-size:.78rem;color:#3d4f42;">({{ c.current }})</span>
+          <span class="{% if c.ok %}check-ok{% else %}check-bad{% endif %}">
+            <i class="fas fa-{% if c.ok %}check{% else %}times{% endif %}"></i>
+          </span>
+        </div>
+        {% endfor %}
+        {% endif %}
+      {% else %}
+        <div class="empty">Run the battery to populate the gate.</div>
+      {% endif %}
+    </div>
+
+  </div>
+
+  <!-- RIGHT COLUMN -->
+  <div>
+
+    <!-- 6. Load + Calendar -->
+    <div class="c-card">
+      <div class="c-card-title">Week-on-Week Session Load</div>
+      <div class="load-grid">
+        {% for wk in weekly_load %}
+        <div class="load-cell">
+          <div class="wk">w/c {{ wk.week_start|date:"d M" }}</div>
+          <div class="ses">{{ wk.sessions }}</div>
+          <div class="rpe">{% if wk.avg_rpe is not None %}avg RPE {{ wk.avg_rpe }}{% else %}no RPE{% endif %}</div>
+        </div>
+        {% endfor %}
       </div>
     </div>
 
-    <!-- Pattern scores -->
-    {% if profile %}
     <div class="c-card">
-      <div class="c-card-title">Pattern Scores</div>
-      <table class="c-table">
-        <thead><tr>
-          <th>Pattern</th><th>Score</th><th>Asymmetry</th>
-        </tr></thead>
-        <tbody>
-          {% with scores=profile %}
-          <tr><td>Squat</td><td>{{ scores.squat_score }}/5</td><td>—</td></tr>
-          <tr><td>Hinge</td><td>{{ scores.hinge_score }}/5</td>
-            <td>{% if scores.hinge_asymmetry != 'none' %}{{ scores.hinge_asymmetry|title }} (weaker: {{ scores.weaker_side_hinge }}){% else %}—{% endif %}</td></tr>
-          <tr><td>Push</td><td>{{ scores.push_score }}/5</td><td>—</td></tr>
-          <tr><td>Pull</td><td>{{ scores.pull_score }}/5</td><td>—</td></tr>
-          <tr><td>Core</td><td>{{ scores.core_score }}/5</td><td>—</td></tr>
-          <tr><td>Rotate</td><td>{{ scores.rotate_score }}/5</td>
-            <td>{% if scores.rotate_asymmetry != 'none' %}{{ scores.rotate_asymmetry|title }}{% else %}—{% endif %}</td></tr>
-          <tr><td>Lunge</td><td>{{ scores.lunge_score }}/5</td>
-            <td>{% if scores.lunge_asymmetry != 'none' %}{{ scores.lunge_asymmetry|title }} (weaker: {{ scores.weaker_side_lunge }}){% else %}—{% endif %}</td></tr>
-          {% endwith %}
-        </tbody>
-      </table>
-    </div>
-    {% endif %}
-
-    <!-- Red flags + equipment -->
-    <div class="c-card">
-      <div class="c-card-title">Red Flags &amp; Contraindications</div>
-      {% if red_flags %}
-        {% for rf in red_flags %}<span class="rf-tag">{{ rf|replace_underscores|title }}</span>{% endfor %}
+      <div class="c-card-title">Upcoming Matches — Tapering Cues</div>
+      {% if upcoming_matches %}
+        {% for m in upcoming_matches %}
+        <div class="match-row">
+          <span>{{ m.match_date|date:"D, d M Y" }}</span>
+          <span style="color:#3d4f42;">{% if m.opponent %}vs {{ m.opponent }}{% else %}—{% endif %}</span>
+        </div>
+        {% endfor %}
       {% else %}
-        <span style="color:#3d4f42;opacity:.5;font-size:.85rem;">None recorded</span>
+        <div class="empty">No upcoming matches.</div>
       {% endif %}
-      <div class="c-card-title mt-3">Equipment Available</div>
-      {% for eq in equipment %}<span class="eq-tag">{{ eq|replace_underscores|title }}</span>{% endfor %}
-    </div>
-  </div>
-
-  <!-- Right column -->
-  <div>
-    <!-- Athlete info -->
-    <div class="c-card">
-      <div class="c-card-title">Athlete Profile</div>
-      <div class="info-row"><span class="info-label">Patient ID</span><span>{{ patient.patient_id }}</span></div>
-      <div class="info-row"><span class="info-label">Age</span><span>{{ patient.age }}</span></div>
-      <div class="info-row"><span class="info-label">Biological Sex</span><span>{{ patient.get_biological_sex_display }}</span></div>
-      <div class="info-row"><span class="info-label">Goal</span><span>{{ patient.get_goal_type_display }}</span></div>
-      <div class="info-row"><span class="info-label">Training History</span><span>{{ patient.get_training_history_display }}</span></div>
-      <div class="info-row"><span class="info-label">Sessions/Week</span><span>{{ patient.sessions_per_week }}</span></div>
-      <div class="info-row"><span class="info-label">Sleep</span><span>{{ patient.sleep_quality|default:"—" }}</span></div>
-      <div class="info-row"><span class="info-label">Stress</span><span>{{ patient.stress_level|default:"—" }}</span></div>
-      {% if patient.competition_date %}
-      <div class="info-row"><span class="info-label">Competition Date</span><span>{{ patient.competition_date }}</span></div>
-      {% endif %}
+      <form method="POST" action="{% url 'coach_set_competition' patient.patient_id %}" style="display:flex;gap:10px;align-items:center;margin-top:14px;">
+        {% csrf_token %}
+        <input type="date" name="competition_date" value="{{ patient.competition_date|default:'' }}"
+          style="background:#f4f7f5;border:1px solid rgba(26,28,28,.14);border-radius:8px;padding:8px 12px;color:#1a1c1c;font-size:.85rem;flex:1;font-family:inherit;">
+        <button type="submit" class="btn-coach btn-outline-c btn-sm-c">Set next match</button>
+      </form>
     </div>
 
-    <!-- Session history -->
+    <!-- 7. Adherence + form -->
     <div class="c-card">
-      <div class="c-card-title">Recent Sessions</div>
+      <div class="c-card-title">Adherence &amp; Form Quality</div>
+      <div class="info-row">
+        <span class="info-label">Adherence (this month)</span>
+        <span>{{ adherence }}%</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Avg form score (last 12)</span>
+        <span>{% if avg_form is not None %}{{ avg_form }}%{% else %}—{% endif %}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Sessions/week target</span>
+        <span>{{ patient.sessions_per_week|default:"—" }}</span>
+      </div>
+
       {% if recent_sessions %}
-      <table class="c-table">
+      <table class="c-table" style="margin-top:10px;">
         <thead><tr><th>Date</th><th>Exercises</th><th>Form</th><th>TL</th></tr></thead>
         <tbody>
           {% for s in recent_sessions %}
@@ -157,47 +292,34 @@
         </tbody>
       </table>
       {% else %}
-      <div style="color:#3d4f42;opacity:.5;font-size:.85rem;">No sessions yet.</div>
+      <div class="empty" style="margin-top:10px;">No sessions logged yet.</div>
       {% endif %}
     </div>
 
-    <!-- Pain history -->
-    {% if pain_history %}
+    <!-- Athlete info -->
     <div class="c-card">
-      <div class="c-card-title">Pain Incidents</div>
-      <table class="c-table">
-        <thead><tr><th>Date</th><th>Type</th><th>Location</th><th>Sev.</th></tr></thead>
-        <tbody>
-          {% for fb in pain_history %}
-          <tr>
-            <td>{{ fb.created_at|date:"d M" }}</td>
-            <td>{{ fb.pain_reported|replace_underscores|title }}</td>
-            <td>{{ fb.pain_location|default:"—" }}</td>
-            <td>{{ fb.pain_severity }}/10</td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+      <div class="c-card-title">Athlete Profile</div>
+      <div class="info-row"><span class="info-label">Athlete ID</span><span>{{ patient.patient_id }}</span></div>
+      <div class="info-row"><span class="info-label">Age</span><span>{{ patient.age }}</span></div>
+      <div class="info-row"><span class="info-label">Sport</span><span>{{ patient.athlete_sport|default:patient.sport_type|default:"—" }}</span></div>
+      {% if patient.raw_test_data_json.position %}
+      <div class="info-row"><span class="info-label">Position</span><span>{{ patient.raw_test_data_json.position }}</span></div>
+      {% endif %}
+      <div class="info-row"><span class="info-label">Phone</span><span>{{ patient.phone }}</span></div>
+      {% if football %}
+      <div class="info-row"><span class="info-label">Season phase</span><span>{{ football.get_season_phase_display }}</span></div>
+      {% endif %}
+      {% if patient.competition_date %}
+      <div class="info-row"><span class="info-label">Next match</span><span>{{ patient.competition_date }}</span></div>
+      {% endif %}
     </div>
-    {% endif %}
 
     <!-- Coach notes -->
     <div class="c-card">
       <div class="c-card-title">Coach Notes</div>
       <textarea class="notes-textarea" id="coachNotesArea" placeholder="Add notes about this athlete...">{{ coach_notes }}</textarea>
-      <button class="btn-coach btn-outline-c btn-sm-c mt-2" onclick="saveNotes()">Save Notes</button>
+      <button class="btn-coach btn-outline-c btn-sm-c" style="margin-top:8px;" onclick="saveNotes()">Save Notes</button>
       <span id="notesSaved" style="font-size:.75rem;color:#0c6c3f;margin-left:10px;display:none;">Saved ✓</span>
-    </div>
-
-    <!-- Set competition date -->
-    <div class="c-card">
-      <div class="c-card-title">Competition Date</div>
-      <form method="POST" action="{% url 'coach_set_competition' patient.patient_id %}" style="display:flex;gap:10px;align-items:center;">
-        {% csrf_token %}
-        <input type="date" name="competition_date" value="{{ patient.competition_date|default:'' }}"
-          style="background:#f4f7f5;border:1px solid rgba(26,28,28,.14);border-radius:8px;padding:8px 12px;color:#1a1c1c;font-size:.85rem;flex:1;font-family:inherit;">
-        <button type="submit" class="btn-coach btn-outline-c btn-sm-c">Set</button>
-      </form>
     </div>
 
     <!-- Active override -->
@@ -220,9 +342,9 @@
 <div class="modal-backdrop" id="flagModal">
   <div class="modal-box">
     <h6 style="margin-bottom:14px;font-size:.95rem;font-weight:700;color:#1a1c1c;">
-      <i class="fas fa-flag me-2" style="color:#ba1a1a;"></i>Flag {{ patient.name }} for Review
+      <i class="fas fa-flag" style="color:#ba1a1a;margin-right:8px;"></i>Flag {{ patient.name }} for Review
     </h6>
-    <textarea class="notes-textarea" id="flagNote" placeholder="Reason for flagging (e.g. knee pain, missed sessions)..."></textarea>
+    <textarea class="notes-textarea" id="flagNote" placeholder="Reason for flagging (e.g. tightness, missed sessions, technique concern)..."></textarea>
     <div style="display:flex;gap:10px;margin-top:14px;">
       <button class="btn-coach btn-danger-c" onclick="submitFlag()">Flag</button>
       <button class="btn-coach btn-outline-c" onclick="document.getElementById('flagModal').style.display='none'">Cancel</button>
@@ -233,42 +355,7 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
-const RADAR_LABELS = {{ radar_labels_json }};
-const RADAR_DATA   = {{ radar_data_json }};
-
-new Chart(document.getElementById('radarChart').getContext('2d'), {
-  type: 'radar',
-  data: {
-    labels: RADAR_LABELS,
-    datasets: [{
-      label: 'Capability',
-      data: RADAR_DATA,
-      backgroundColor: 'rgba(12,108,63,.15)',
-      borderColor: '#0c6c3f',
-      borderWidth: 2,
-      pointBackgroundColor: '#6bbf8a',
-      pointBorderColor: '#fff',
-      pointBorderWidth: 2,
-      pointRadius: 4,
-    }]
-  },
-  options: {
-    responsive: true, maintainAspectRatio: true,
-    scales: {
-      r: {
-        min: 0, max: 5,
-        ticks: { stepSize: 1, color: 'rgba(26,28,28,.35)', backdropColor: 'transparent', font: { size: 10 } },
-        grid: { color: 'rgba(26,28,28,.08)' },
-        pointLabels: { color: '#0c6c3f', font: { size: 11, weight: '700' } },
-        angleLines: { color: 'rgba(26,28,28,.08)' },
-      }
-    },
-    plugins: { legend: { display: false } }
-  }
-});
-
 function getCsrf() {
   const c = document.cookie.split(';').find(c => c.trim().startsWith('csrftoken='));
   return c ? c.split('=')[1] : '';
@@ -292,7 +379,7 @@ function submitFlag() {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRFToken': getCsrf() },
     body: `note=${encodeURIComponent(note)}`
-  }).then(() => { document.getElementById('flagModal').style.display = 'none'; });
+  }).then(() => { document.getElementById('flagModal').style.display = 'none'; location.reload(); });
 }
 </script>
 {% endblock %}

@@ -114,7 +114,11 @@
       "Bash(git rm *)",
       "Bash(echo '*.log')",
       "Bash(echo '=6.0')",
-      "Bash(DJANGO_SECRET_KEY=test-key DJANGO_DEBUG=True python *)"
+      "Bash(DJANGO_SECRET_KEY=test-key DJANGO_DEBUG=True python *)",
+      "Bash(pkill -f \"runserver 8765\")",
+      "Bash(DJANGO_DEBUG=true python *)",
+      "Read(//private/tmp/**)",
+      "Bash(rm -f coach_cookies.txt)"
     ]
   }
 }

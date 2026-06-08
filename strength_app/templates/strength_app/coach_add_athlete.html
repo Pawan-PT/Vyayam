@@ -1,42 +1,168 @@
 {% extends 'strength_app/coach_base.html' %}
 {% block title %}Add Athlete — VYAYAM Coach{% endblock %}
 {% block nav_add %}active{% endblock %}
-{% block page_title %}Add Athlete{% endblock %}
+{% block page_title %}Onboard Athlete{% endblock %}
+
+{% block extra_css %}
+<style>
+  .field-label { display: block; font-size: .78rem; font-weight: 700; color: #3d4f42;
+    margin-bottom: 5px; text-transform: uppercase; letter-spacing: .8px; }
+  .field-input, .field-select {
+    width: 100%; background: #f4f7f5; border: 1px solid rgba(26,28,28,.14);
+    border-radius: 10px; padding: 10px 14px; color: #1a1c1c; font-size: .9rem;
+    font-family: inherit; margin-bottom: 14px;
+  }
+  .field-input:focus, .field-select:focus { outline: none; border-color: #0c6c3f; }
+  .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media(max-width:600px){ .field-grid { grid-template-columns: 1fr; } }
+  .cred-box {
+    background: rgba(12,108,63,.06); border: 1px solid rgba(12,108,63,.25);
+    border-radius: 12px; padding: 16px 18px; margin-bottom: 14px;
+  }
+  .cred-box .lbl { font-size: .7rem; text-transform: uppercase; letter-spacing: 1px;
+    color: #0c6c3f; font-weight: 800; }
+  .cred-box .val { font-size: 1.05rem; font-weight: 700; color: #1a1c1c;
+    font-family: 'SFMono-Regular', Menlo, Consolas, monospace; }
+  .cred-row { display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 0; border-bottom: 1px solid rgba(12,108,63,.15); }
+  .cred-row:last-child { border-bottom: none; }
+  .copy-btn { background: transparent; border: 1px solid #0c6c3f; color: #0c6c3f;
+    padding: 3px 10px; border-radius: 6px; font-size: .72rem; font-weight: 700; cursor: pointer; }
+  .copy-btn:hover { background: rgba(12,108,63,.1); }
+</style>
+{% endblock %}
 
 {% block content %}
-<div style="max-width: 480px;">
+<div style="max-width: 640px;">
+
+{% if credentials %}
   <div class="c-card">
-    <div class="c-card-title">Link Athlete to Your Squad</div>
+    <div class="c-card-title" style="color:#0c6c3f;"><i class="fas fa-check-circle"></i> Athlete created</div>
+    <p style="font-size:.88rem;color:#3d4f42;margin-bottom:14px;line-height:1.5;">
+      Hand these credentials to <strong>{{ credentials.name }}</strong>. They log in at
+      <code>/login/</code> with the phone + temporary password below. After the first login,
+      ask them to run the football assessment so the dashboard populates.
+    </p>
+
+    <div class="cred-box">
+      <div class="cred-row">
+        <div><div class="lbl">Athlete ID</div><div class="val">{{ credentials.patient_id }}</div></div>
+      </div>
+      <div class="cred-row">
+        <div><div class="lbl">Phone (login username)</div><div class="val" id="credPhone">{{ credentials.phone }}</div></div>
+        <button type="button" class="copy-btn" onclick="copyText('credPhone', this)">Copy</button>
+      </div>
+      <div class="cred-row">
+        <div><div class="lbl">Temporary password</div><div class="val" id="credPw">{{ credentials.password }}</div></div>
+        <button type="button" class="copy-btn" onclick="copyText('credPw', this)">Copy</button>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+      <a href="{% url 'coach_squad' %}" class="btn-coach btn-primary-c">
+        <i class="fas fa-users"></i> Back to Squad
+      </a>
+      <a href="{% url 'coach_add_athlete' %}" class="btn-coach btn-outline-c">
+        <i class="fas fa-user-plus"></i> Onboard Another
+      </a>
+    </div>
+  </div>
+{% else %}
+
+  <div class="c-card">
+    <div class="c-card-title">Onboard new athlete</div>
     <p style="font-size:.85rem;color:#3d4f42;margin-bottom:20px;line-height:1.6;">
-      Enter the athlete's phone number they registered with.
-      Once linked, their progress will appear in your squad view.
+      You're the certified S&amp;C supervisor onboarding a new athlete into your squad.
+      VYAYAM generates the athlete's phone + temporary password — you hand those over.
+      The sport is set here; the athlete never picks it.
     </p>
 
     {% if error %}
     <div style="background:rgba(186,26,26,.08);border:1px solid rgba(186,26,26,.22);border-radius:10px;padding:12px 16px;font-size:.84rem;color:#ba1a1a;margin-bottom:16px;">
-      <i class="fas fa-exclamation-circle me-2"></i>{{ error }}
+      <i class="fas fa-exclamation-circle" style="margin-right:6px;"></i>{{ error }}
     </div>
     {% endif %}
 
     <form method="POST">
       {% csrf_token %}
-      <label style="display:block;font-size:.82rem;font-weight:600;color:#3d4f42;margin-bottom:6px;">Athlete's Phone Number</label>
-      <input type="tel" name="phone"
-        style="width:100%;background:#f4f7f5;border:1px solid rgba(26,28,28,.14);border-radius:10px;padding:11px 16px;color:#1a1c1c;font-size:.9rem;margin-bottom:6px;font-family:inherit;"
-        placeholder="10-digit phone number" required autofocus>
-      <small style="display:block;margin-bottom:16px;font-size:.78rem;color:#3d4f42;opacity:.7;">Enter the phone number the athlete registered with.</small>
+
+      <label class="field-label">Athlete name</label>
+      <input class="field-input" type="text" name="name" required autofocus placeholder="Full name">
+
+      <div class="field-grid">
+        <div>
+          <label class="field-label">Sport</label>
+          <select class="field-select" name="sport">
+            <option value="football" selected>Football</option>
+            <option value="basketball">Basketball</option>
+            <option value="rugby">Rugby</option>
+            <option value="cricket">Cricket</option>
+            <option value="hockey">Hockey</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div>
+          <label class="field-label">Position (optional)</label>
+          <input class="field-input" type="text" name="position" placeholder="e.g. Centre-back">
+        </div>
+      </div>
+
+      <div class="field-grid">
+        <div>
+          <label class="field-label">Age</label>
+          <input class="field-input" type="number" name="age" min="13" max="100" value="22">
+        </div>
+        <div>
+          <label class="field-label">Biological sex</label>
+          <select class="field-select" name="biological_sex">
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+            <option value="not_specified">Prefer not to say</option>
+          </select>
+        </div>
+      </div>
+
+      <label class="field-label">Starting season phase</label>
+      <select class="field-select" name="season_phase">
+        {% for key, label in season_phase_choices %}
+        <option value="{{ key }}" {% if key == 'in_season' %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+
+      <label class="field-label">First match date (optional)</label>
+      <input class="field-input" type="date" name="match_date">
+
       <button type="submit" class="btn-coach btn-primary-c" style="width:100%;justify-content:center;padding:12px;">
-        <i class="fas fa-link me-2"></i> Link Athlete
+        <i class="fas fa-user-plus"></i> Create Athlete &amp; Generate Login
       </button>
     </form>
   </div>
 
-  <div class="c-card" style="opacity:.75;">
-    <div class="c-card-title">How to find an athlete</div>
-    <ul style="font-size:.82rem;color:#3d4f42;line-height:2.2;padding-left:1.2rem;">
-      <li>Use the 10-digit phone number the athlete registered with</li>
-      <li>Ask the athlete to confirm their registered phone number if unsure</li>
+  <div class="c-card" style="opacity:.85;">
+    <div class="c-card-title">What happens on submit</div>
+    <ul style="font-size:.82rem;color:#3d4f42;line-height:2;padding-left:1.2rem;">
+      <li>A new athlete profile is created — flagged for the football tier.</li>
+      <li>A login phone number is generated in the coach-onboard block (9100010000+).</li>
+      <li>A temporary password is generated — store it now, it's shown only once.</li>
+      <li>The athlete is linked to your squad and immediately visible.</li>
+      <li>If you set a match date, it's added to their tapering calendar.</li>
     </ul>
   </div>
+
+{% endif %}
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function copyText(elId, btn) {
+  const el = document.getElementById(elId);
+  if (!el) return;
+  navigator.clipboard.writeText(el.textContent.trim()).then(() => {
+    const old = btn.textContent;
+    btn.textContent = 'Copied ✓';
+    setTimeout(() => { btn.textContent = old; }, 1500);
+  });
+}
+</script>
 {% endblock %}

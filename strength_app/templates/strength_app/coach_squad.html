@@ -1,7 +1,7 @@
 {% extends 'strength_app/coach_base.html' %}
 {% block title %}Squad — VYAYAM Coach{% endblock %}
 {% block nav_squad %}active{% endblock %}
-{% block page_title %}Squad View{% endblock %}
+{% block page_title %}Squad — Football S&amp;C{% endblock %}
 
 {% block header_actions %}
 <a href="{% url 'coach_add_athlete' %}" class="btn-coach btn-primary-c btn-sm-c">
@@ -13,24 +13,41 @@
 <style>
   .adherence-bar { height: 5px; border-radius: 5px; background: rgba(26,28,28,.1); overflow: hidden; min-width: 60px; }
   .adherence-fill { height: 100%; border-radius: 5px; background: linear-gradient(90deg,#0c6c3f,#6bbf8a); }
-  .pain-icon { color: #ba1a1a; font-size: .85rem; }
   .athlete-card {
     background: #fff; border-radius: 14px; border: 1px solid rgba(26,28,28,.08);
-    padding: 14px 16px; margin-bottom: 8px; display: flex; align-items: center;
-    gap: 14px; flex-wrap: wrap; transition: border-color .15s;
+    padding: 14px 16px; margin-bottom: 10px; display: grid;
+    grid-template-columns: 12px minmax(160px,1.4fr) minmax(120px,1fr) minmax(150px,1fr) minmax(140px,1fr) minmax(110px,.8fr) minmax(120px,.9fr) auto;
+    align-items: center; gap: 14px;
     box-shadow: 0 1px 4px rgba(26,28,28,.05);
+    transition: border-color .15s, transform .15s;
   }
   .athlete-card:hover { border-color: rgba(12,108,63,.25); }
-  .athlete-card.status-red    { border-left: 4px solid #ef4444; }
+  .athlete-card.status-red    { border-left: 4px solid #ef4444; background: rgba(239,68,68,.04); }
   .athlete-card.status-yellow { border-left: 4px solid #f59e0b; }
   .athlete-card.status-green  { border-left: 4px solid #22c55e; }
+  .athlete-card.attention { box-shadow: 0 2px 12px rgba(239,68,68,.18); }
   .athlete-name { font-weight: 700; font-size: .93rem; color: #1a1c1c; }
-  .athlete-meta { font-size: .76rem; color: #3d4f42; opacity: .7; }
-  .goal-badge {
-    display: inline-block; padding: 2px 8px; border-radius: 6px;
-    background: rgba(12,108,63,.1); color: #0c6c3f; font-size: .72rem; font-weight: 700;
+  .athlete-meta { font-size: .74rem; color: #3d4f42; opacity: .72; }
+  .pill {
+    display: inline-block; padding: 2px 8px; border-radius: 999px;
+    font-size: .68rem; font-weight: 700; letter-spacing: .3px;
+  }
+  .pill-level { background: rgba(12,108,63,.1); color: #0c6c3f; }
+  .pill-hsr   { background: rgba(212,168,37,.18); color: #b08800; }
+  .pill-warn  { background: rgba(186,26,26,.1); color: #ba1a1a; }
+  .pill-ok    { background: rgba(34,197,94,.12); color: #16a34a; }
+  .pill-grey  { background: rgba(26,28,28,.06); color: #3d4f42; }
+  .flag-strip {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: .72rem; color: #ba1a1a; font-weight: 700;
   }
   .hidden-athlete { display: none !important; }
+  .field-h { font-size: .62rem; font-weight: 800; letter-spacing: 1.2px;
+    text-transform: uppercase; color: #3d4f42; opacity: .55; margin-bottom: 3px; }
+  @media(max-width:1024px) {
+    .athlete-card { grid-template-columns: 12px 1fr 1fr; }
+    .col-hidden-md { display: none; }
+  }
 </style>
 {% endblock %}
 
@@ -47,15 +64,23 @@
     <div class="lbl">Need Attention</div>
   </div>
   <div class="stat-box">
-    <div class="val" style="color:#22c55e;">{{ on_track }}</div>
+    <div class="val" style="color:#b08800;">{{ monitor }}</div>
+    <div class="lbl">Monitor</div>
+  </div>
+  <div class="stat-box">
+    <div class="val" style="color:#16a34a;">{{ on_track }}</div>
     <div class="lbl">On Track</div>
+  </div>
+  <div class="stat-box">
+    <div class="val" style="color:#3d4f42;">{{ no_assessment }}</div>
+    <div class="lbl">No Assessment Yet</div>
   </div>
 </div>
 
 {% if not athletes %}
 <div class="c-card" style="text-align:center;padding:48px;">
   <i class="fas fa-users fa-3x" style="margin-bottom:16px;display:block;color:#0c6c3f;opacity:.25;"></i>
-  <p style="color:#3d4f42;font-size:.9rem;">No athletes linked yet. <a href="{% url 'coach_add_athlete' %}" style="color:#0c6c3f;font-weight:700;">Add your first athlete →</a></p>
+  <p style="color:#3d4f42;font-size:.9rem;">No athletes linked yet. <a href="{% url 'coach_add_athlete' %}" style="color:#0c6c3f;font-weight:700;">Onboard your first athlete →</a></p>
 </div>
 {% else %}
 
@@ -68,49 +93,79 @@
   <input class="search-input" type="text" id="searchInput" placeholder="Search by name..." oninput="searchAthletes(this.value)">
 </div>
 
-<!-- Athlete cards -->
+<!-- Athlete rows -->
 <div id="athleteList">
 {% for a in athletes %}
-<div class="athlete-card status-{{ a.status }}" data-status="{{ a.status }}" data-name="{{ a.patient.name|lower }}">
-  <span class="dot dot-{{ a.status }}" style="flex-shrink:0;"></span>
+<div class="athlete-card status-{{ a.status }} {% if a.status == 'red' %}attention{% endif %}"
+     data-status="{{ a.status }}" data-name="{{ a.patient.name|lower }}">
 
-  <div style="flex:1;min-width:140px;">
+  <span class="dot dot-{{ a.status }}"></span>
+
+  <div>
     <div class="athlete-name">{{ a.patient.name }}</div>
     <div class="athlete-meta">
-      {{ a.patient.age }}y · {{ a.patient.get_biological_sex_display }}
-      {% if a.patient.sport_type %} · {{ a.patient.sport_type }}{% endif %}
+      {{ a.sport|title }}{% if a.position %} · {{ a.position }}{% endif %}
+      {% if a.patient.age %} · {{ a.patient.age }}y{% endif %}
+    </div>
+    {% if a.flagged %}
+    <span class="flag-strip"><i class="fas fa-flag"></i> Flagged</span>
+    {% endif %}
+  </div>
+
+  <div>
+    <div class="field-h">Level / Season</div>
+    {% if a.football_level %}
+      <span class="pill pill-level">L{{ a.football_level }}</span>
+    {% else %}
+      <span class="pill pill-grey">No assessment</span>
+    {% endif %}
+    <div class="athlete-meta" style="margin-top:4px;">{{ a.season_phase_display }}</div>
+  </div>
+
+  <div class="col-hidden-md">
+    <div class="field-h">HSR Phase</div>
+    {% if a.has_assessment %}
+      <span class="pill pill-hsr">{{ a.hsr_phase_display }}</span>
+    {% else %}
+      <span class="pill pill-grey">—</span>
+    {% endif %}
+  </div>
+
+  <div class="col-hidden-md">
+    <div class="field-h">Gates</div>
+    {% if a.lsi_flag %}
+      <span class="pill pill-warn"><i class="fas fa-exclamation-triangle"></i> LSI &lt;90%</span>
+    {% else %}
+      <span class="pill pill-ok">LSI OK</span>
+    {% endif %}
+    <div style="margin-top:4px;">
+      {% if a.plyometric_cleared == 'none' %}
+        <span class="pill pill-warn">Plyo: not cleared</span>
+      {% else %}
+        <span class="pill pill-ok">Plyo: {{ a.plyometric_cleared_display }}</span>
+      {% endif %}
     </div>
   </div>
 
-  <div style="min-width:120px;">
-    <span class="goal-badge">{{ a.patient.get_goal_type_display }}</span>
-    <div class="athlete-meta mt-1">{{ a.current_phase }}</div>
-  </div>
-
-  <div style="min-width:100px;font-size:.8rem;color:#1a1c1c;">
+  <div class="col-hidden-md">
+    <div class="field-h">Last Session</div>
     {% if a.last_session_date %}
-      <div>{{ a.last_session_date|date:"d M" }}</div>
+      <div style="font-size:.82rem;color:#1a1c1c;">{{ a.last_session_date|date:"d M" }}</div>
       <div class="athlete-meta">
-        {% if a.days_since == 999 %}Never{% elif a.days_since == 0 %}Today{% elif a.days_since == 1 %}Yesterday{% else %}{{ a.days_since }}d ago{% endif %}
+        {% if a.days_since == 0 %}Today
+        {% elif a.days_since == 1 %}Yesterday
+        {% elif a.days_since >= 999 %}Never
+        {% else %}{{ a.days_since }}d ago{% endif %}
       </div>
     {% else %}
       <div class="athlete-meta">No sessions</div>
     {% endif %}
   </div>
 
-  <div style="min-width:80px;">
-    <div style="font-size:.72rem;color:#3d4f42;opacity:.7;margin-bottom:4px;">{{ a.adherence }}%</div>
-    <div class="adherence-bar"><div class="adherence-fill" style="width:{{ a.adherence }}%;"></div></div>
-  </div>
-
-  <div style="text-align:center;min-width:40px;">
-    <span class="dot dot-{{ a.traffic_light }}" style="width:12px;height:12px;"></span>
-  </div>
-
-  <div style="min-width:30px;text-align:center;">
-    {% if a.has_pain_flag %}
-    <i class="fas fa-exclamation-triangle pain-icon" title="Recent pain: {{ a.pain_location }}"></i>
-    {% endif %}
+  <div class="col-hidden-md">
+    <div class="field-h">Adherence</div>
+    <div style="font-size:.82rem;color:#1a1c1c;">{{ a.adherence }}%</div>
+    <div class="adherence-bar" style="margin-top:4px;"><div class="adherence-fill" style="width:{{ a.adherence }}%;"></div></div>
   </div>
 
   <a href="{% url 'coach_athlete_detail' a.patient.patient_id %}" class="btn-coach btn-outline-c btn-sm-c">
