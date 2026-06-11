@@ -81,7 +81,9 @@ def django_to_backend_category(django_category_str):
         'posterior_chain': BackendExerciseCategory.POSTERIOR_CHAIN,
         'upper_body': BackendExerciseCategory.UPPER_BODY,
         'cardio': BackendExerciseCategory.CARDIO,
-        'stretching': BackendExerciseCategory.STRETCHING
+        'stretching': BackendExerciseCategory.STRETCHING,
+        # DA-P4: balance previously fell through to LOWER_BODY
+        'balance': BackendExerciseCategory.BALANCE,
     }
     return mapping.get(django_category_str, BackendExerciseCategory.LOWER_BODY)
 
@@ -216,15 +218,19 @@ def conduct_gate_testing(patient):
 
 
 def _simulate_performance(patient, category):
+    # DA-P4: deterministic per patient — unseeded random made gate-test
+    # simulations unreproducible (flaky tests, irreproducible
+    # prescriptions). Seed from the stable patient_id.
+    rng = random.Random(f'{patient.patient_id}:{category}')
     """Simulate gate test performance based on patient age/lifestyle"""
     if patient.age < 30 and patient.lifestyle == 'active':
-        return random.randint(10, 15), random.uniform(75, 90), random.randint(1, 3)
+        return rng.randint(10, 15), rng.uniform(75, 90), rng.randint(1, 3)
     elif patient.age < 40 and patient.lifestyle == 'sedentary':
-        return random.randint(5, 8), random.uniform(45, 60), random.randint(3, 5)
+        return rng.randint(5, 8), rng.uniform(45, 60), rng.randint(3, 5)
     elif patient.age >= 60:
-        return random.randint(2, 4), random.uniform(25, 40), random.randint(5, 7)
+        return rng.randint(2, 4), rng.uniform(25, 40), rng.randint(5, 7)
     else:
-        return random.randint(6, 10), random.uniform(50, 70), random.randint(3, 5)
+        return rng.randint(6, 10), rng.uniform(50, 70), rng.randint(3, 5)
 
 
 # ============================================================================
@@ -391,7 +397,11 @@ def generate_prescription(patient):
                         'new_exercise': ex_id,
                     })
                     pfc.progression_history_json = hist
-                    pfc.save()
+                    # DA-P4: atomic write — concurrent prescriptions for
+                    # the same patient must not double-advance the ladder.
+                    from django.db import transaction
+                    with transaction.atomic():
+                        pfc.save()
 
         elif fid in tested_families:
             # Fallback: gate test result record
@@ -401,6 +411,17 @@ def generate_prescription(patient):
             cap_string   = gate.capability_level
             lvl_index    = gate.level_index
             ex_id        = gate.prescribed_exercise_id or gate.test_exercise
+            # DA-P4: legacy backend gate tests store their own exercise
+            # vocabulary ('partial_squat' singular, 'hip_hinge', ...);
+            # normalise to the chain-canonical IDs so the level lookup
+            # below actually matches instead of silently falling through.
+            _GATE_ID_ALIASES = {
+                'partial_squat': 'partial_squats',
+                'hip_hinge': 'glute_bridge',
+                'bent_over_row': 'tricep_extensions',
+                'walking': 'marching_on_spot',
+            }
+            ex_id        = _GATE_ID_ALIASES.get(ex_id, ex_id)
             ex_name      = gate.prescribed_exercise_name or ex_id.replace('_', ' ').title()
 
         else:

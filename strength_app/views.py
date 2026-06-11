@@ -962,12 +962,29 @@ def workout_complete(request: HttpRequest):
 # Legacy CV functions removed — all pose analysis is now client-side via MediaPipe JS
 session_analyzers = {}
 
+# DA-P4: analyzers hold MediaPipe graphs (~0.5-1 MB each). The cleanup
+# endpoint is best-effort (clients can vanish), so entries idle longer
+# than this are evicted on the next access.
+_ANALYZER_IDLE_TTL_SECONDS = 30 * 60
+
+
+def _evict_idle_analyzers():
+    now = time.time()
+    stale = [
+        sid for sid, entry in session_analyzers.items()
+        if now - entry.get('last_used', now) > _ANALYZER_IDLE_TTL_SECONDS
+    ]
+    for sid in stale:
+        session_analyzers.pop(sid, None)
+
 
 def get_or_create_analyzer(session_id):
     """Get or create analyzer for this session"""
     if not CV_AVAILABLE:
         return None
-    
+
+    _evict_idle_analyzers()
+
     if session_id not in session_analyzers:
         session_analyzers[session_id] = {
             'pose_analyzer': PoseAnalyzer(),
@@ -977,6 +994,7 @@ def get_or_create_analyzer(session_id):
             'rep_started': False,
             'last_angles': {}
         }
+    session_analyzers[session_id]['last_used'] = time.time()
     return session_analyzers[session_id]
 
 
@@ -1013,9 +1031,14 @@ def analyze_frame(request: HttpRequest):
             'joints': {}
         })
     
+    # DA-P4: cap the payload before decoding — a 100 MB base64 frame
+    # would balloon to 300+ MB through b64decode + cv2.imdecode.
+    if len(request.body) > 5 * 1024 * 1024:
+        return JsonResponse({'success': False, 'error': 'Frame too large'}, status=413)
+
     try:
         data = json.loads(request.body)
-        
+
         # Decode frame
         frame_data = data.get('frame', '').split(',')[-1]
         frame_bytes = base64.b64decode(frame_data)

@@ -353,7 +353,9 @@ class VyayamStrengthSystem:
         state.current_week_sessions.append(session)
         
         # Update adherence
-        profile.adherence_rate = len(state.all_sessions) / (profile.current_week * 7) * 100
+        # DA-P4: guard current_week 0 (new patient) — division by zero
+        weeks = max(1, profile.current_week or 1)
+        profile.adherence_rate = len(state.all_sessions) / (weeks * 7) * 100
         
         return True
     

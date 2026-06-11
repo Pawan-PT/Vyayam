@@ -447,6 +447,46 @@ def coach_override_prescription(request, patient_id):
         except json.JSONDecodeError:
             exercises = []
 
+        # DA-P4 (Phase 4 row 5): validate the override payload — every
+        # item must reference a known exercise and carry sane dosage.
+        # Invalid payloads re-render with an inline error instead of
+        # writing junk into TherapistPrescription.
+        from .validation import safe_int
+        from .exercise_system.exercise_registry_v2 import EXERCISE_METADATA
+        from .exercise_content import EXERCISE_CONTENT
+        from .exercise_content_gap_fill import EXERCISE_CONTENT_GAP_FILL
+        known_ids = (set(EXERCISE_METADATA) | set(EXERCISE_CONTENT)
+                     | set(EXERCISE_CONTENT_GAP_FILL))
+
+        if not isinstance(exercises, list):
+            exercises = []
+        validated, invalid = [], []
+        for item in exercises:
+            if not isinstance(item, dict) or not item.get('exercise_id'):
+                invalid.append(str(item)[:60])
+                continue
+            ex_id = str(item['exercise_id'])[:100]
+            action = item.get('action', 'add')
+            if action not in ('add', 'remove'):
+                action = 'add'
+            if action == 'add' and ex_id not in known_ids:
+                invalid.append(ex_id)
+                continue
+            validated.append({
+                'exercise_id': ex_id,
+                'action': action,
+                'sets': safe_int(item.get('sets', 3), 3, 1, 10),
+                'reps': safe_int(item.get('reps', 10), 10, 1, 100),
+                'movement_pattern': str(item.get('movement_pattern', ''))[:50],
+            })
+        if invalid:
+            return render(request, 'strength_app/coach_override.html', {
+                'patient': patient,
+                'error': 'Unknown or malformed exercises in override: '
+                         + ', '.join(invalid[:5]),
+            })
+        exercises = validated
+
         prescription_id = (
             f"TP-{request.therapist.therapist_id}-{patient_id}-{date.today().isoformat()}"
         )
@@ -460,7 +500,7 @@ def coach_override_prescription(request, patient_id):
             patient=patient,
             therapist=request.therapist,
             exercises_json=exercises,
-            duration_weeks=int(request.POST.get('duration_weeks', 4)),
+            duration_weeks=safe_int(request.POST.get('duration_weeks'), 4, 1, 16),  # DA-P4
             frequency_per_week=patient.sessions_per_week or 3,
             clinical_reasoning=request.POST.get('clinical_reasoning', ''),
             special_instructions=request.POST.get('special_instructions', ''),
@@ -542,7 +582,7 @@ def coach_add_athlete(request):
                 age = int(age_str) if age_str else 22
             except ValueError:
                 age = 22
-            if age < 13 or age > 100:
+            if age < 18 or age > 100:  # DA-P4: V1 is 18+ (Appendix B)
                 age = 22
 
             phone = _generate_athlete_phone()

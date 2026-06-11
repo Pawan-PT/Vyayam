@@ -112,7 +112,9 @@ urlpatterns = [
     path('prescription/', views.prescription, name='prescription'),
     path('daily-workout/', views.daily_workout, name='daily_workout'),
     path('execute-exercise/<int:exercise_index>/', views.execute_exercise, name='execute_exercise'),
-    # path('save-exercise-results/', views.save_exercise_results, name='save_exercise_results'),
+    # DA-P4: restored — exercise_execute.html actively POSTs here; with the
+    # route commented out every legacy workout save returned 404.
+    path('save-exercise-results/', views.save_exercise_results, name='save_exercise_results'),
     path('workout-complete/', views.workout_complete, name='workout_complete'),
     path('progress-reports/', views.progress_reports, name='progress_reports'),
     path('generate-report/', views.generate_report, name='generate_report'),

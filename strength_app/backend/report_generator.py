@@ -159,8 +159,10 @@ class ReportGenerator:
             report.prescribed_by = f"Therapist ID: {patient.assigned_therapist_id}"
         
         # Initial vs current fitness levels
+        # DA-P4: fitness_level values can be CapabilityLevel enums OR plain
+        # strings (Django JSON round-trips store strings) — handle both.
         report.initial_fitness_levels = {
-            category: level.value
+            category: (level.value if hasattr(level, 'value') else str(level))
             for category, level in patient.fitness_level.items()
         }
         
@@ -275,7 +277,7 @@ class ReportGenerator:
         lines.append("INITIAL ASSESSMENT")
         lines.append("-" * 80)
         for category, level in report.initial_fitness_levels.items():
-            lines.append(f"  • {category.replace('_', ' ').title()}: {level.upper()}")
+            lines.append(f"  • {category.replace('_', ' ').title()}: {str(level).upper()}")
         lines.append("")
         
         # Overall Outcomes

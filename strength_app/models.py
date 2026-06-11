@@ -30,7 +30,10 @@ class PatientProfile(models.Model):
     
     # 8 CLUSTERAL DIMENSIONS
     # 1. Age
-    age = models.IntegerField(validators=[MinValueValidator(13), MaxValueValidator(100)])
+    # DA-P4 (Appendix B standing decision): V1 is 18+ — model validator
+    # aligned to the onboarding rule (was 13, letting B2B2C flows create
+    # patients the self-serve flow would reject).
+    age = models.IntegerField(validators=[MinValueValidator(18), MaxValueValidator(100)])
 
     # Biological Context
     BIOLOGICAL_SEX_CHOICES = [
@@ -653,6 +656,11 @@ class ExerciseExecution(models.Model):
         ('upper_body', 'Upper Body'),
         ('cardio', 'Cardio'),
         ('stretching', 'Stretching'),
+        # DA-P4: engine patterns core/power/balance previously had no
+        # honest category and were silently recorded as lower_body.
+        ('core', 'Core'),
+        ('power', 'Power / Plyometric'),
+        ('balance', 'Balance'),
     ]
     category = models.CharField(max_length=20, choices=CATEGORY_CHOICES)
     
@@ -1237,7 +1245,12 @@ class FootballProfile(models.Model):
         default='none',
     )
     hsr_weeks_completed = models.IntegerField(default=0)
-    hsr_phase_start_week = models.IntegerField(default=0)  # macrocycle week the current HSR phase began (SB-5b)
+    # Macrocycle week the current HSR phase began (SB-5b). DA-P4: NULL =
+    # not yet anchored. The old default=0 plus a falsy 'if not
+    # fp.hsr_phase_start_week' check re-anchored every session whenever the
+    # phase legitimately began at week 0, so weeks_in_phase never grew and
+    # the >=4-week HSR advance gate never fired.
+    hsr_phase_start_week = models.IntegerField(null=True, blank=True, default=None)
     last_reassessment = models.DateTimeField(null=True, blank=True)
 
     class Meta:

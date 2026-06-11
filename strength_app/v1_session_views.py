@@ -140,11 +140,20 @@ def _get_or_refresh_session_data(request, patient):
 
 
 def _pattern_to_category(pattern):
-    """Map movement pattern to ExerciseExecution.category value."""
+    """Map movement pattern to ExerciseExecution.category value.
+
+    DA-P4: previously only 7 patterns were mapped — core/power/
+    plyometric/balance/cardio/stretching/mobility all fell through to
+    'lower_body', corrupting category-based reporting.
+    """
     mapping = {
         'squat': 'lower_body', 'lunge': 'lower_body', 'hinge': 'posterior_chain',
         'push': 'upper_body', 'pull': 'upper_body',
-        'rotate': 'upper_body', 'carry': 'upper_body',
+        'rotate': 'core', 'carry': 'core', 'core': 'core',
+        'power': 'power', 'plyometric': 'power',
+        'balance': 'balance',
+        'cardio': 'cardio',
+        'stretching': 'stretching', 'mobility': 'stretching',
     }
     return mapping.get(pattern, 'lower_body')
 

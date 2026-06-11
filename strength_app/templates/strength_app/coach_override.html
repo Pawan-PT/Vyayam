@@ -28,6 +28,11 @@
 {% block content %}
 <form method="POST">
   {% csrf_token %}
+  {% if error %}
+  <div class="c-card" style="border-color:#ba1a1a;color:#ba1a1a;font-weight:600;padding:12px;margin-bottom:12px;">
+    {{ error }}
+  </div>
+  {% endif %}
   <input type="hidden" name="exercises_json" id="exercisesJson" value="[]">
 
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">

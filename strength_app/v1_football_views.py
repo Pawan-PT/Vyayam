@@ -136,9 +136,12 @@ def football_save_test_result(request):
     except Exception:
         data = {k: v for k, v in request.POST.items()}
 
-    test_index = int(data.get('test_index', 0))
-    raw_value = data.get('raw_value', '')
-    score = int(data.get('score', 0))
+    from .validation import safe_int
+    # DA-P4: clamp — junk must not 500; negative index would silently
+    # read FOOTBALL_ASSESSMENT_TESTS[-1].
+    test_index = safe_int(data.get('test_index', 0), 0, 0, len(FOOTBALL_ASSESSMENT_TESTS) - 1)
+    raw_value = str(data.get('raw_value', ''))[:100]
+    score = safe_int(data.get('score', 0), 0, 0, 5)
     side = str(data.get('side', ''))
 
     if 'football_test_results' not in request.session:
@@ -358,7 +361,10 @@ def football_update_after_session(patient):
     # Old `current_week % 4` capped this at 0-3 so the >=4 advance gate never fired.
     try:
         state = patient.periodisation
-        if not fp.hsr_phase_start_week:
+        # DA-P4: 'is None' semantics — the falsy check re-anchored every
+        # session when the phase began at week 0, freezing weeks_in_phase
+        # at 0 so the >=4-week HSR advance gate never fired.
+        if fp.hsr_phase_start_week is None:
             fp.hsr_phase_start_week = state.current_week
         weeks_in_phase = max(0, state.current_week - fp.hsr_phase_start_week)
         fp.hsr_weeks_completed = max(fp.hsr_weeks_completed, weeks_in_phase)

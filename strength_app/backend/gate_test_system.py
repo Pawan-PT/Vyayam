@@ -343,7 +343,11 @@ class GateTestCoordinator:
         
         # Update difficulty tolerance (Parameter #5)
         # Take average difficulty reported across all tests
-        avg_difficulty = sum(r.difficulty_reported for r in gate_session.tests_completed) / len(gate_session.tests_completed)
+        # DA-P4: empty gate-test list must not crash
+        if gate_session.tests_completed:
+            avg_difficulty = sum(r.difficulty_reported for r in gate_session.tests_completed) / len(gate_session.tests_completed)
+        else:
+            avg_difficulty = 3.0
         patient.difficulty_tolerance = int(avg_difficulty)
         
         return patient

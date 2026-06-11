@@ -422,7 +422,8 @@ def onboarding_identity(request):
 
         # Age validation
         try:
-            age = int(request.POST.get('age') or 25)
+            from .validation import safe_int
+            age = safe_int(request.POST.get('age'), 25, 1, 120)  # DA-P4: junk-proof
             if age < 18 or age > 120:
                 raise ValueError
         except (ValueError, TypeError):
@@ -735,8 +736,11 @@ def onboarding_save_test_result(request):
     except Exception:
         data = {k: v for k, v in request.POST.items()}
 
-    test_index = int(data.get('test_index', 0))
-    score      = int(data.get('score', 3))
+    from .validation import safe_int
+    # DA-P4: clamp — junk must not 500; score is a 1-5 scale; index must
+    # stay inside the test battery (it was used unbounded below).
+    test_index = safe_int(data.get('test_index', 0), 0, 0, len(V1_STRENGTH_TESTS) - 1)
+    score      = safe_int(data.get('score', 3), 3, 1, 5)
     side       = str(data.get('side', ''))
     variant    = str(data.get('variant', ''))
 
@@ -830,34 +834,40 @@ def onboarding_asymmetry(request):
                 return min(v.get('left', 3), v.get('right', 3))
             return int(v) if v else 3
 
-        profile = StrengthProfile.objects.create(
+        # DA-P4: update_or_create keyed on (patient, assessment_number=1)
+        # — back-navigating through onboarding and resubmitting this step
+        # used to create DUPLICATE baseline StrengthProfile rows,
+        # corrupting assessment history and the radar chart.
+        profile, _created = StrengthProfile.objects.update_or_create(
             patient=patient,
             assessment_number=1,
-            squat_score=get_score('squat_test'),
-            hinge_score=min(hinge_left, hinge_right),
-            push_score=get_score('push_test'),
-            pull_score=get_score('pull_test'),
-            core_score=get_score('core_test'),
-            rotate_score=min(rotate_left, rotate_right),
-            lunge_score=min(lunge_left, lunge_right),
+            defaults=dict(
+                squat_score=get_score('squat_test'),
+                hinge_score=min(hinge_left, hinge_right),
+                push_score=get_score('push_test'),
+                pull_score=get_score('pull_test'),
+                core_score=get_score('core_test'),
+                rotate_score=min(rotate_left, rotate_right),
+                lunge_score=min(lunge_left, lunge_right),
 
-            hinge_left=hinge_left,   hinge_right=hinge_right,
-            lunge_left=lunge_left,   lunge_right=lunge_right,
-            rotate_left=rotate_left, rotate_right=rotate_right,
+                hinge_left=hinge_left,   hinge_right=hinge_right,
+                lunge_left=lunge_left,   lunge_right=lunge_right,
+                rotate_left=rotate_left, rotate_right=rotate_right,
 
-            hinge_asymmetry=auto['hinge_asymmetry'],
-            lunge_asymmetry=auto['lunge_asymmetry'],
-            rotate_asymmetry=auto['rotate_asymmetry'],
+                hinge_asymmetry=auto['hinge_asymmetry'],
+                lunge_asymmetry=auto['lunge_asymmetry'],
+                rotate_asymmetry=auto['rotate_asymmetry'],
 
-            weaker_side_hinge=_weaker_side(hinge_left, hinge_right),
-            weaker_side_lunge=_weaker_side(lunge_left, lunge_right),
-            weaker_side_rotate=_weaker_side(rotate_left, rotate_right),
+                weaker_side_hinge=_weaker_side(hinge_left, hinge_right),
+                weaker_side_lunge=_weaker_side(lunge_left, lunge_right),
+                weaker_side_rotate=_weaker_side(rotate_left, rotate_right),
 
-            fat_asymmetry_visible=request.POST.get('fat_asymmetry_visible', 'none'),
-            fat_asymmetry_location=request.POST.get('fat_asymmetry_location', ''),
-            fat_asymmetry_side=request.POST.get('fat_asymmetry_side', ''),
+                fat_asymmetry_visible=request.POST.get('fat_asymmetry_visible', 'none'),
+                fat_asymmetry_location=request.POST.get('fat_asymmetry_location', ''),
+                fat_asymmetry_side=request.POST.get('fat_asymmetry_side', ''),
 
-            raw_test_data_json=test_results,
+                raw_test_data_json=test_results,
+            ),
         )
         priorities = compute_pattern_priorities(patient, profile)
         profile.pattern_priority_json = {p: i for i, p in enumerate(priorities)}
@@ -948,8 +958,10 @@ def onboarding_equipment(request):
     if request.method == 'POST':
         patient.equipment_available_json   = request.POST.getlist('equipment')
         patient.training_location          = request.POST.get('training_location', 'home_none')
-        patient.session_duration_minutes   = int(request.POST.get('session_duration_minutes') or 45)
-        patient.sessions_per_week          = int(request.POST.get('sessions_per_week') or 3)
+        from .validation import safe_int
+        # DA-P4: clamp — 0 sessions/week breaks week advancement maths
+        patient.session_duration_minutes   = safe_int(request.POST.get('session_duration_minutes'), 45, 15, 180)
+        patient.sessions_per_week          = safe_int(request.POST.get('sessions_per_week'), 3, 1, 7)
         patient.save()
         if patient.biological_sex == 'female':
             return redirect('onboarding_hormonal')
@@ -986,7 +998,8 @@ def onboarding_hormonal(request):
         cl = request.POST.get('cycle_length_days', '')
         if cl:
             try:
-                patient.cycle_length_days = int(cl)
+                from .validation import safe_int
+                patient.cycle_length_days = safe_int(cl, 28, 20, 45)  # DA-P4: physiological range
             except ValueError:
                 pass
 
@@ -1167,7 +1180,8 @@ def onboarding_lifestyle(request):
         patient.nutrition_quality  = request.POST.get('nutrition_quality', 'regular')
         patient.lifestyle          = request.POST.get('lifestyle', 'moderately_active')
         try:
-            patient.daily_sitting_hours = int(request.POST.get('daily_sitting_hours') or 6)
+            from .validation import safe_int
+            patient.daily_sitting_hours = safe_int(request.POST.get('daily_sitting_hours'), 6, 0, 24)  # DA-P4
         except ValueError:
             patient.daily_sitting_hours = 6
         patient.save()

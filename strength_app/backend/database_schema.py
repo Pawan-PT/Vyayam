@@ -41,6 +41,7 @@ class ExerciseCategory(Enum):
     UPPER_BODY = "upper_body"  # Rows
     CARDIO = "cardio"  # Endurance work
     STRETCHING = "stretching"  # Mobility/flexibility
+    BALANCE = "balance"  # DA-P4: balance work previously misclassified as lower_body
 
 
 # ============================================================================

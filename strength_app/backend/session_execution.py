@@ -189,7 +189,11 @@ class SessionExecutor:
                 exercise_data.overall_form_score = sum(all_form_scores) / len(all_form_scores)
         
         prescribed_total = exercise_data.prescribed_sets * exercise_data.prescribed_reps
-        exercise_data.completion_percentage = (exercise_data.total_green_reps / prescribed_total) * 100
+        # DA-P4: zero sets/reps (hold-based or malformed prescriptions) must not crash
+        if prescribed_total > 0:
+            exercise_data.completion_percentage = (exercise_data.total_green_reps / prescribed_total) * 100
+        else:
+            exercise_data.completion_percentage = 100.0 if exercise_data.total_green_reps else 0.0
         
         print(f"\n   📊 Exercise Summary:")
         print(f"      🟢 Green reps: {exercise_data.total_green_reps}/{prescribed_total}")

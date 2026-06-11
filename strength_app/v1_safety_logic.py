@@ -387,9 +387,14 @@ def compute_traffic_light(session_feedback):
     GREEN otherwise.
     """
     fb = session_feedback
+    severity = getattr(fb, 'pain_severity', 0) or 0
 
     # --- RED ---
     if fb.pain_reported == 'severe':
+        return 'red'
+    # DA-P4 (Phase 4 row 8): the numeric severity scale must triage too —
+    # a patient can answer 'mild' categorically while rating pain 8/10.
+    if severity >= 7:
         return 'red'
     if fb.perceived_difficulty == 'too_hard' and fb.pain_reported not in ('none', 'mild'):
         return 'red'
@@ -400,6 +405,8 @@ def compute_traffic_light(session_feedback):
     if fb.perceived_difficulty == 'too_hard':
         return 'yellow'
     if fb.pain_reported == 'moderate':
+        return 'yellow'
+    if 4 <= severity <= 6:
         return 'yellow'
     if fb.sleep_last_night in ('under_5', '5_to_6'):
         return 'yellow'

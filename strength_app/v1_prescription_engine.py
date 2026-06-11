@@ -48,6 +48,7 @@ from .v1_progression_chains import V1_PROGRESSION_CHAINS
 from .v1_safety_logic import (
     build_patient_context,
     filter_exercises_for_patient,
+    get_alternative_for_excluded,
     limit_new_exercises,
     apply_female_acl_prevention,
     get_asymmetry_rules,
@@ -1077,7 +1078,8 @@ def _advance_hsr_phase(patient, fp):
         try:
             fp.hsr_phase_start_week = patient.periodisation.current_week
         except Exception:
-            fp.hsr_phase_start_week = 0
+            # DA-P4: None (not 0) = unanchored; re-anchors on next session
+            fp.hsr_phase_start_week = None
         fp.save(update_fields=['hsr_current_phase', 'hsr_weeks_completed', 'hsr_phase_start_week'])
         return True
     return False
@@ -1252,7 +1254,23 @@ def generate_v1_session(patient):
 
         exercise_ids = _select_exercises_for_pattern(pattern, capability, patient, age_limits)
         if not exercise_ids:
-            continue
+            # DA-P4-2 (wires Phase-6 item 6): every exercise for this
+            # pattern was excluded (red flags / equipment). Instead of
+            # silently dropping the pattern, try the red-flag map's safe
+            # alternative; if none, surface the drop in the notes.
+            alt = get_alternative_for_excluded(patient, '', pattern)
+            if alt and filter_exercises_for_patient(patient, [alt]):
+                exercise_ids = [alt]
+                modifier_notes.append(
+                    f'{pattern.title()} swapped to a safer alternative '
+                    f'based on your screening.'
+                )
+            else:
+                modifier_notes.append(
+                    f'{pattern.title()} work skipped today — no safe '
+                    f'exercise available for your current screening/equipment.'
+                )
+                continue
 
         # How many exercises per pattern
         num_to_pick = 2 if priority == 'high' else 1
@@ -1464,9 +1482,23 @@ def generate_v1_session(patient):
         football_extras = _apply_football_principles(
             patient, working_sets, meta, modifier_notes, vol_modifier
         )
-        for fx in football_extras:
-            fx = _attach_content(fx)
-            working_sets.append(fx)
+        # DA-P4-1: football extras (HSR / plyo contrast pairs) must respect
+        # red-flag and equipment exclusions like every other exercise — a
+        # flagged athlete must not get excluded plyometrics injected.
+        if football_extras:
+            extra_ids = [fx['exercise_id'] for fx in football_extras]
+            safe_extra_ids = set(filter_exercises_for_patient(patient, extra_ids))
+            dropped = [eid for eid in extra_ids if eid not in safe_extra_ids]
+            if dropped:
+                modifier_notes.append(
+                    'Removed for safety based on your screening: '
+                    + ', '.join(d.replace('_', ' ') for d in dropped)
+                )
+            for fx in football_extras:
+                if fx['exercise_id'] not in safe_extra_ids:
+                    continue
+                fx = _attach_content(fx)
+                working_sets.append(fx)
 
         # Competition periodisation — adjust volume if competition date is set
         fb_phase_key, fb_phase_cfg = _get_football_periodisation_phase(patient)
