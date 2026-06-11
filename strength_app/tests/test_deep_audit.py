@@ -92,6 +92,49 @@ class TestDAC2DeloadFallback(TestCase):
         self.assertTrue(needed)
 
 
+class TestDAC4AcwrRemoved(TestCase):
+    """C4 — ACWR (discredited metric, standing decision R2) fully removed."""
+
+    def test_da_c4_engine_has_no_acwr(self):
+        import strength_app.v1_prescription_engine as engine
+        self.assertFalse(hasattr(engine, '_compute_acwr'))
+
+    def test_da_c4_athlete_session_generates_without_acwr_meta(self):
+        from strength_app.models import FootballProfile, StrengthProfile
+        from strength_app.v1_prescription_engine import generate_v1_session
+
+        patient = PatientProfile.objects.create(
+            patient_id='DAATH1',
+            name='Audit Athlete',
+            phone='9100000099',
+            age=22,
+            goals='Coach-onboarded football athlete',
+            goal_type='athletic',
+            sport_type='football',
+            training_history='intermediate',
+            sessions_per_week=4,
+            gate_test_completed=True,
+            athlete_tier_eligible=True,
+            athlete_tier_active=True,
+            athlete_sport='football',
+        )
+        StrengthProfile.objects.create(
+            patient=patient, assessment_number=1,
+            squat_score=3, hinge_score=3, push_score=3,
+            pull_score=3, core_score=3, rotate_score=3, lunge_score=3,
+        )
+        FootballProfile.objects.create(patient=patient)
+
+        data = generate_v1_session(patient)
+        self.assertIsInstance(data, dict)
+        meta = data.get('meta', {})
+        for key in meta:
+            self.assertNotIn('acwr', key.lower())
+        notes = ' '.join(meta.get('modifier_notes', []) or [])
+        self.assertNotIn('ACWR', notes)
+        self.assertNotIn('P31', notes)
+
+
 class TestDAC3SquatFormScoring(TestCase):
     """C3 — correct deep squats must not be penalized by hip-flexion targets."""
 

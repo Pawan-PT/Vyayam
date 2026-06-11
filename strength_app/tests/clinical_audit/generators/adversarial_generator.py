@@ -134,7 +134,7 @@ class _ThresholdVisitor(ast.NodeVisitor):
                 })
         self.generic_visit(node)
 
-    # ── Compare nodes: e.g. age < 18, acwr <= 1.3 ───────────────────────────
+    # ── Compare nodes: e.g. age < 18, rpe <= 7 ──────────────────────────────
     def visit_Compare(self, node):
         for comparator in node.comparators:
             if isinstance(comparator, ast.Constant) and isinstance(comparator.value, (int, float)):
@@ -285,11 +285,8 @@ def _build_boundary_cases(rng: random.Random, thresholds: list[dict]) -> list[Sy
         elif "age" == name.lower() or ("age" in name.lower() and "bracket" not in name.lower()):
             kwargs["age"] = max(10, min(120, int(bv)))
 
-        elif "acwr" in name.lower():
-            # Embed ACWR hint in football inputs
-            fball = _standard_football_inputs()
-            fball["_hint_acwr"] = float(bv)
-            kwargs["football_raw_inputs"] = fball
+        # (ACWR hints removed — metric excluded by standing decision R2;
+        # the engine no longer computes it, so no boundary exists to probe.)
 
         elif "weeks_to_comp" in name.lower() or "weeks" == name.lower():
             surgery_wks = max(1, min(52, int(bv)))

@@ -1047,62 +1047,6 @@ def _get_microcycle_day(patient):
         return days_to, 'standard'
 
 
-def _compute_acwr(patient):
-    """
-    P31: Acute:Chronic Workload Ratio.
-    Session Load = duration_minutes × session_rpe.
-    Acute = sum of last 7 days. Chronic = 28-day weekly average.
-    Returns (acwr, acute, chronic, status).
-    Status: 'undertrained', 'sweet_spot', 'caution', 'danger', 'insufficient_data'.
-    """
-    from .models import WorkoutSession, SessionFeedback
-
-    today = date.today()
-    cutoff_28 = today - timedelta(days=28)
-    cutoff_7 = today - timedelta(days=7)
-
-    sessions_28 = WorkoutSession.objects.filter(
-        patient=patient,
-        session_date__date__gte=cutoff_28
-    ).select_related('feedback')
-
-    loads = []
-    for s in sessions_28:
-        try:
-            fb = s.feedback
-            rpe = fb.session_rpe if fb.session_rpe else 5
-        except Exception:
-            rpe = 5
-        duration = s.total_duration_minutes or 30
-        loads.append({
-            'date': s.session_date.date() if hasattr(s.session_date, 'date') else s.session_date,
-            'load': duration * rpe
-        })
-
-    if len(loads) < 4:
-        return 1.0, 0, 0, 'insufficient_data'
-
-    acute = sum(l['load'] for l in loads if l['date'] >= cutoff_7)
-    chronic_total = sum(l['load'] for l in loads)
-    chronic = chronic_total / 4.0
-
-    if chronic == 0:
-        return 1.0, acute, 0, 'insufficient_data'
-
-    acwr = acute / chronic
-
-    if acwr < 0.8:
-        status = 'undertrained'
-    elif acwr <= 1.3:
-        status = 'sweet_spot'
-    elif acwr <= 1.5:
-        status = 'caution'
-    else:
-        status = 'danger'
-
-    return round(acwr, 2), round(acute, 1), round(chronic, 1), status
-
-
 def _advance_hsr_phase(patient, fp):
     """
     Auto-advance HSR phase after 4 weeks of completion.
@@ -1439,6 +1383,12 @@ def generate_v1_session(patient):
                 ex['notes'] = (existing + ' | ' if existing else '') + acl_notes[0]
                 break
 
+    # Session meta — created BEFORE the football block, which writes into it
+    # (microcycle/HSR/periodisation keys). It previously didn't exist until
+    # after this block, so every active football athlete crashed with
+    # UnboundLocalError and silently got no session (DA-C4 follow-on find).
+    meta = {}
+
     # ── 13b. Football P21-P26 integration ─────────────────────────────────
     if (hasattr(patient, 'athlete_tier_active') and patient.athlete_tier_active
             and patient.athlete_sport == 'football' and _FOOTBALL_AVAILABLE):
@@ -1499,27 +1449,10 @@ def generate_v1_session(patient):
         elif microcycle_type == 'strength':
             modifier_notes.append('P29: Strength day (MD-4) — full loading')
 
-        # ── P31: ACWR check ──────────────────────────────────────────────
-        acwr_val, acwr_acute, acwr_chronic, acwr_status = _compute_acwr(patient)
-        meta['acwr'] = acwr_val
-        meta['acwr_status'] = acwr_status
-
-        if acwr_status == 'danger':
-            # Auto-reduce volume 30%
-            vol_modifier *= 0.7
-            for ex in working_sets:
-                ex['sets'] = max(1, round(ex['sets'] * 0.7))
-            modifier_notes.append(
-                f'P31: ACWR {acwr_val} (DANGER — spike detected). Volume auto-reduced 30%.'
-            )
-        elif acwr_status == 'undertrained':
-            modifier_notes.append(
-                f'P31: ACWR {acwr_val} (undertrained). Gradual ramp-up recommended.'
-            )
-        elif acwr_status == 'caution':
-            modifier_notes.append(
-                f'P31: ACWR {acwr_val} (caution). Load rising — monitoring.'
-            )
+        # P31 (ACWR) removed by standing decision R2 (2026-06 deep audit):
+        # ACWR is a discredited composite injury-risk metric and must not be
+        # computed or surfaced anywhere. session_rpe capture stays (useful
+        # for load/recovery trends). Do not reintroduce a replacement score.
 
         # ── Apply football principles P21-P26 ────────────────────────────
         football_extras = _apply_football_principles(
@@ -1581,7 +1514,9 @@ def generate_v1_session(patient):
     patterns_trained = list({ex['movement_pattern'] for ex in working_sets})
     doms_warning = new_count_final > 0 and NEW_EXERCISE_RULES.get('doms_warning', True)
 
-    meta = {
+    # update(), not assignment — the football block above already wrote
+    # microcycle/HSR keys into meta and they must survive.
+    meta.update({
         'patient_id': patient.patient_id,
         'patient_name': patient.name,
         'goal_type': goal_type,
@@ -1595,7 +1530,7 @@ def generate_v1_session(patient):
         'estimated_duration_minutes': estimated_duration,
         'patterns_today': patterns_today,
         'hormonal_phase': hormonal_phase or '',
-    }
+    })
 
     rest_modifier_secs = (
         age_limits.get('rest_modifier', 0)

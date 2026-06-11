@@ -612,11 +612,11 @@ class SessionFeedback(models.Model):
     energy_level = models.CharField(max_length=10, choices=ENERGY_CHOICES, blank=True, default='')
     hormonal_phase = models.CharField(max_length=20, blank=True, default='')
 
-    # Session RPE for ACWR calculation (P31)
+    # Session RPE — used for load and recovery trends
     session_rpe = models.IntegerField(
         default=5,
         validators=[MinValueValidator(1), MaxValueValidator(10)],
-        help_text='Session RPE 1-10: How hard was this session overall?'
+        help_text='Session RPE 1-10 — used for load and recovery trends'
     )
 
     TRAFFIC_LIGHT_CHOICES = [
