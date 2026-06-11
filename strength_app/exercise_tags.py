@@ -4,6 +4,13 @@ VYAYAM EXERCISE TAGS & PROGRESSIVE LOADING SYSTEM
 
 Central tagging registry for all 68 exercises.
 
+SCOPE (DA-P3B, 2026-06 deep audit): this layer is consumed ONLY by the
+legacy gate-test dosage path (utils.py / views.py). The V1 prescription
+engine does NOT read EXERCISE_TAGS — it uses EXERCISE_METADATA
+categories, HOLD_EXERCISE_IDS (v1_constants), red_flag_map and
+equipment_routing. Do not add V1 chain exercises here expecting the V1
+engine to honour them; derive from EXERCISE_METADATA instead.
+
 Each exercise tag contains:
   - category       : broad movement category
   - family_id      : which progression chain it belongs to
