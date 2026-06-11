@@ -411,6 +411,83 @@ class TestDAC13InputValidation(TestCase):
         self.assertIsNone(self.patient.competition_date)
 
 
+class TestDAP3DataIntegrity(TestCase):
+    """Phase 3 — content/equipment coverage for every prescribable ID."""
+
+    @staticmethod
+    def _content_keys():
+        import strength_app.exercise_content_gap_fill as gmod
+        from strength_app.exercise_content import EXERCISE_CONTENT
+        return set(EXERCISE_CONTENT) | set(gmod.EXERCISE_CONTENT_GAP_FILL)
+
+    @staticmethod
+    def _chain_ids():
+        from strength_app.v1_progression_chains import V1_PROGRESSION_CHAINS
+        return {
+            e for cfg in V1_PROGRESSION_CHAINS.values()
+            for lvl in cfg['levels'] for e in lvl.get('exercises', [])
+        }
+
+    def test_da_p3_every_chain_id_has_content(self):
+        missing = sorted(self._chain_ids() - self._content_keys())
+        self.assertEqual(missing, [],
+                         f'prescribable IDs with a blank execute page: {missing}')
+
+    def test_da_p3_every_chain_id_has_equipment_mapping(self):
+        from strength_app.equipment_routing import EXERCISE_EQUIPMENT_REQUIRED
+        missing = sorted(self._chain_ids() - set(EXERCISE_EQUIPMENT_REQUIRED))
+        self.assertEqual(
+            missing, [],
+            'absent equipment keys are treated as bodyweight — a '
+            f'bodyweight-only patient could be prescribed these: {missing}',
+        )
+
+    def test_da_p3_legacy_gate_chain_ids_have_content(self):
+        from strength_app.exercise_progressions import PROGRESSION_CHAINS
+        legacy_ids = {
+            lvl['exercise_id'] for cfg in PROGRESSION_CHAINS.values()
+            for lvl in (cfg.get('levels') or [])
+            if isinstance(lvl, dict) and lvl.get('exercise_id')
+        }
+        missing = sorted(legacy_ids - self._content_keys())
+        self.assertEqual(missing, [])
+
+    def test_da_p3_hold_exercises_dosed_as_holds(self):
+        from strength_app.v1_prescription_engine import _calculate_dosage
+
+        dosage = _calculate_dosage(
+            'wall_sit', capability=3, pattern='squat', priority='normal',
+            phase='strength', goal_type='general_strength', sex_adj={},
+            hormonal_mods={}, recovery_vol_mod=1.0,
+            age_limits={'max_sets': 5}, is_unilateral=False,
+            is_deload=False, patient_sex='male',
+        )
+        self.assertGreater(dosage['hold_duration'], 0)
+        self.assertEqual(dosage['reps'], 0)
+
+    def test_da_p3_warmup_respects_red_flags(self):
+        from strength_app.v1_prescription_engine import _build_warmup
+
+        patient = _make_patient(pid='DAP301', phone='9000009931')
+        patient.red_flags_json = ['ankle_sprain_acute', 'hernia']
+        patient.save(update_fields=['red_flags_json'])
+
+        from strength_app.red_flag_map import get_excluded_exercises
+        excluded = set(get_excluded_exercises(patient.red_flags_json))
+
+        warmup = _build_warmup(['squat'], [], {}, patient=patient)
+        for phase_name, items in warmup['phases'].items():
+            for item in items:
+                wid = item.get('id', item.get('exercise_id', ''))
+                base = wid.removesuffix('_light')
+                self.assertNotIn(
+                    wid, excluded,
+                    f'{phase_name} injects excluded {wid}')
+                self.assertNotIn(
+                    base, excluded,
+                    f'{phase_name} injects excluded-variant {wid}')
+
+
 class TestDAH2IdealTrajectoryInvariant(TestCase):
     """H2 — every registered exercise survives its own ideal trajectory.
 

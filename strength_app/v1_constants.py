@@ -174,6 +174,19 @@ DOSAGE_UNILATERAL_STRENGTH = {
     5: {'sets': 3, 'reps': 12, 'tempo': '2-0-2-0', 'rest': 60},
 }
 
+# Isometric / timed exercises (DA-P2 item 6): prescribed as a HOLD
+# (duration), never as reps. The engine previously only selected the
+# hold dosage table via the AA-phase override, so a wall sit prescribed
+# in the strength phase got "3 x 8 reps" and the UI showed a rep counter.
+HOLD_EXERCISE_IDS = {
+    'wall_sit', 'planks', 'side_plank', 'side_plank_hip_dip',
+    'side_plank_rotation', 'copenhagen_plank', 'hollow_body_hold',
+    'superman_hold', 'handstand_wall_hold', 'single_arm_plank',
+    'single_arm_single_leg_plank', 'pallof_press_isometric',
+    'farmer_carry', 'suitcase_carry', 'waiter_carry',
+    'single_arm_farmer_heavy', 'waiter_farmer_combined',
+}
+
 DOSAGE_ISOMETRIC_HOLD = {
     1: None,
     2: {'sets': 3, 'reps': 1, 'hold': 30, 'rest': 45},

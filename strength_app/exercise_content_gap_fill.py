@@ -3595,4 +3595,400 @@ EXERCISE_CONTENT_GAP_FILL = {
         'language_athlete': 'FIFA 11+ bounding drill. Develops reactive strength and stride power.',
     },
 
+    # ── DA-P3A: chain IDs that were prescribable with a BLANK execute page ──
+
+    'deadlift_dumbbell': {
+        'display_name': 'Dumbbell Deadlift',
+        'movement_pattern': 'hinge',
+        'level': 'intermediate',
+        'target_muscles': ['Hamstrings', 'Glutes', 'Spinal Erectors', 'Grip'],
+        'instructions': [
+            'Stand with feet hip-width, a dumbbell in each hand in front of your thighs.',
+            'Push your hips back and let the dumbbells slide down the front of your legs.',
+            'Lower until you feel a strong hamstring stretch — roughly mid-shin.',
+            'Drive your hips forward to stand tall. Squeeze your glutes at the top.',
+        ],
+        'form_cues': [
+            'Hips move back first — this is a hinge, not a squat.',
+            'Keep the dumbbells close to your legs the whole way.',
+            'Chest stays proud; do not let the weight pull your shoulders forward.',
+            'Stand up by pushing the floor away, not by pulling with your back.',
+        ],
+        'common_mistakes': [
+            'Squatting the weight down instead of hinging at the hips.',
+            'Dumbbells drifting forward away from the legs.',
+            'Jerking the weight up — drive smoothly through the hips.',
+        ],
+        'language_beginner': 'A hip hinge with light dumbbells — learn to load your hips and hamstrings, not your back.',
+        'language_experienced': 'Dumbbell RDL pattern: hinge to mid-shin, lats packed, smooth hip drive.',
+        'language_athlete': 'Posterior-chain strength base. Controlled eccentric, powerful concentric hip extension.',
+    },
+
+    'dragon_flag_progression': {
+        'display_name': 'Dragon Flag Progression',
+        'movement_pattern': 'core',
+        'level': 'advanced',
+        'target_muscles': ['Rectus Abdominis', 'Obliques', 'Hip Flexors', 'Lats'],
+        'instructions': [
+            'Lie on a bench or the floor and grip a sturdy anchor behind your head.',
+            'Press your whole body up so only your shoulders touch the surface.',
+            'Keep your body in one rigid line from shoulders to toes.',
+            'Lower as slowly as you can without your lower back arching, then return up. Bend your knees (tuck) to make it easier.',
+        ],
+        'form_cues': [
+            'Body stays in one straight line — do not pike at the hips.',
+            'Lower only as far as you can keep your lower back from arching.',
+            'Start with the tucked (knees bent) version and earn the straight-leg one.',
+        ],
+        'common_mistakes': [
+            'Sagging at the hips — that shifts the work away from the core.',
+            'Dropping too fast — the slow eccentric IS the exercise.',
+            'Holding breath — exhale steadily through the descent.',
+        ],
+        'language_beginner': 'A very advanced core drill — start with the tucked version and short ranges.',
+        'language_experienced': 'Full-body rigidity under eccentric load. Tuck → straddle → full progressions.',
+        'language_athlete': 'Anti-extension core strength at long lever — controlled negatives, no lumbar arch.',
+    },
+
+    'dumbbell_rowing': {
+        'display_name': 'Dumbbell Row',
+        'movement_pattern': 'pull',
+        'level': 'intermediate',
+        'target_muscles': ['Lats', 'Rhomboids', 'Rear Deltoids', 'Biceps'],
+        'instructions': [
+            'Hinge forward with a flat back, one hand braced on a bench or your thigh.',
+            'Let the dumbbell hang straight down at arm\'s length.',
+            'Pull the dumbbell to your lower ribs, elbow staying close to your body.',
+            'Lower under control over 2–3 seconds. Complete all reps, then switch sides.',
+        ],
+        'form_cues': [
+            'Start each rep by pulling the shoulder blade back, then the elbow.',
+            'Torso stays still — no twisting to heave the weight up.',
+            'Elbow finishes near your hip, not flared out wide.',
+        ],
+        'common_mistakes': [
+            'Using torso rotation for momentum.',
+            'Pulling to the chest with a flared elbow instead of to the ribs.',
+            'Letting the shoulder roll forward at the bottom.',
+        ],
+        'language_beginner': 'A supported one-arm row — pull with your back, not just your arm.',
+        'language_experienced': 'Strict single-arm row: scapular retraction first, elbow to hip, controlled negative.',
+        'language_athlete': 'Unilateral horizontal pull — anti-rotation demand plus lat strength.',
+    },
+
+    'hollow_body_rock': {
+        'display_name': 'Hollow Body Rock',
+        'movement_pattern': 'core',
+        'level': 'intermediate',
+        'target_muscles': ['Rectus Abdominis', 'Hip Flexors', 'Deep Core'],
+        'instructions': [
+            'Lie on your back. Press your lower back into the floor.',
+            'Raise your shoulders and legs off the floor, arms extended overhead — a shallow banana shape.',
+            'Keeping that exact shape, rock gently from shoulders to hips.',
+            'If your lower back lifts off the floor, bend your knees or bring your arms forward.',
+        ],
+        'form_cues': [
+            'Lower back glued to the floor at all times.',
+            'The body shape never changes — the rocking comes from momentum, not bending.',
+            'Ribs pulled down toward your hips.',
+        ],
+        'common_mistakes': [
+            'Arching the lower back — regress the shape immediately.',
+            'Bending and straightening at the hips to create the rock.',
+            'Chin jammed to chest — keep the neck long.',
+        ],
+        'language_beginner': 'Hold a banana shape and rock gently — your core keeps the shape rigid.',
+        'language_experienced': 'Hollow position under dynamic perturbation — fixed shape, lower back pinned.',
+        'language_athlete': 'Gymnastic core stiffness drill — rigidity maintained through movement.',
+    },
+
+    'nordic_curl_partner': {
+        'display_name': 'Nordic Curl (Partner Assisted)',
+        'movement_pattern': 'hinge',
+        'level': 'advanced',
+        'target_muscles': ['Hamstrings (eccentric)', 'Glutes', 'Core'],
+        'instructions': [
+            'Kneel on a pad while a partner holds your ankles down firmly.',
+            'Keep hips fully extended — straight line from knees to head.',
+            'Lower your torso toward the floor as slowly as possible.',
+            'Catch yourself with your hands and push back up to start.',
+        ],
+        'form_cues': [
+            'Hips stay extended — do not fold at the waist.',
+            'Fight the descent for as long as possible — 3–6 seconds.',
+            'Partner grip must be secure before you begin each rep.',
+        ],
+        'common_mistakes': [
+            'Hinging at the hips, which unloads the hamstrings.',
+            'Free-falling the last half of the range.',
+            'Holding breath instead of exhaling through the descent.',
+        ],
+        'language_beginner': 'A partner anchors your ankles while you lower yourself slowly — the lowering is the exercise.',
+        'language_experienced': 'Maximal eccentric hamstring work — extend the braking range each session.',
+        'language_athlete': 'Gold-standard eccentric hamstring loading for sprint injury resilience.',
+    },
+
+    'single_arm_pull_up_prog': {
+        'display_name': 'Single Arm Pull-Up Progression',
+        'movement_pattern': 'pull',
+        'level': 'advanced',
+        'target_muscles': ['Lats', 'Biceps', 'Forearms', 'Core'],
+        'instructions': [
+            'Start with archer pull-ups or one arm gripping, the other hand on the wrist.',
+            'Pull explosively toward the working side, the assisting arm helping as little as possible.',
+            'Lower slowly (4–6 seconds) emphasising the working arm.',
+            'Progress by moving the assisting hand from wrist to forearm to nothing.',
+        ],
+        'form_cues': [
+            'Shoulder packed before the pull — no dead-hanging on a single shoulder.',
+            'Minimal body swing; the core keeps you square.',
+            'Slow negatives build the strength for the full movement.',
+        ],
+        'common_mistakes': [
+            'Progressing before owning 10+ strict two-arm pull-ups.',
+            'Kipping through the sticking point.',
+            'Ignoring elbow pain — this movement is heavy on the elbow tendons; back off if it complains.',
+        ],
+        'language_experienced': 'Assisted single-arm work: archer holds, wrist-assist pulls, slow negatives.',
+        'language_athlete': 'Maximal unilateral pulling strength — long progression, respect the elbow tendons.',
+    },
+
+    'single_arm_push_up_prog': {
+        'display_name': 'Single Arm Push-Up Progression',
+        'movement_pattern': 'push',
+        'level': 'advanced',
+        'target_muscles': ['Chest', 'Triceps', 'Anterior Deltoid', 'Core (anti-rotation)'],
+        'instructions': [
+            'Start elevated: one hand on a bench, feet wide for balance.',
+            'Working hand under your shoulder, other hand behind your back.',
+            'Lower under control keeping shoulders and hips square to the floor.',
+            'Press back up. Lower the surface height as you get stronger.',
+        ],
+        'form_cues': [
+            'Feet wide — the wider the stance, the easier the balance.',
+            'Hips and shoulders stay level; no twisting toward the free side.',
+            'Elbow tracks back at ~45°, not flared to the side.',
+        ],
+        'common_mistakes': [
+            'Twisting the torso to shorten the lever.',
+            'Starting from the floor before owning the elevated version.',
+            'Letting the working shoulder shrug toward the ear.',
+        ],
+        'language_experienced': 'Elevated single-arm press-ups, square hips, progressive surface lowering.',
+        'language_athlete': 'Unilateral pressing with maximal anti-rotation demand.',
+    },
+
+    'single_arm_single_leg_plank': {
+        'display_name': 'Single Arm + Single Leg Plank',
+        'movement_pattern': 'core',
+        'level': 'advanced',
+        'target_muscles': ['Deep Core', 'Glutes', 'Shoulder Stabilisers'],
+        'instructions': [
+            'Set a strong plank — straight line, hands under shoulders.',
+            'Raise one arm forward and the OPPOSITE leg off the floor.',
+            'Hold while keeping your hips perfectly level.',
+            'Switch sides each hold. Widen your stance to make it easier.',
+        ],
+        'form_cues': [
+            'Hips level — imagine balancing a cup of water on your lower back.',
+            'Reach the arm and heel away from each other; grow long.',
+            'Breathe steadily — bracing is not breath-holding.',
+        ],
+        'common_mistakes': [
+            'Hips rotating open toward the lifted side.',
+            'Sagging through the lower back as fatigue sets in.',
+            'Rushing the transitions between sides.',
+        ],
+        'language_beginner': 'A plank with opposite arm and leg lifted — keep your hips dead level.',
+        'language_experienced': 'Two-point plank: anti-rotation and anti-extension at once.',
+        'language_athlete': 'Two-point contact plank — maximal core stiffness with minimal base of support.',
+    },
+
+    # ── DA-P3D: legacy gate-test chain IDs without content (12) ──
+    # No alias existed in the content layer — these are genuinely missing
+    # basics (cardio / balance / simple strength) used by the re-enabled
+    # legacy gate-test flow.
+
+    'butt_kicks': {
+        'display_name': 'Butt Kicks',
+        'movement_pattern': 'cardio',
+        'level': 'beginner',
+        'target_muscles': ['Hamstrings', 'Calves', 'Hip Flexors'],
+        'instructions': [
+            'Jog on the spot, kicking each heel up toward your glutes.',
+            'Stay light on the balls of your feet.',
+            'Keep a steady rhythm; pump your arms naturally.',
+        ],
+        'form_cues': ['Heel to glute, knee pointing down', 'Tall posture — no leaning back', 'Soft, quiet landings'],
+        'common_mistakes': ['Leaning forward and shuffling', 'Landing flat-footed and heavy'],
+        'language_beginner': 'A gentle jog on the spot, flicking your heels up behind you.',
+    },
+
+    'clock_reaches': {
+        'display_name': 'Clock Reaches',
+        'movement_pattern': 'balance',
+        'level': 'beginner',
+        'target_muscles': ['Ankle Stabilisers', 'Glutes', 'Core'],
+        'instructions': [
+            'Stand on one leg, imagining a clock face on the floor around you.',
+            'Reach the free foot toward 12, 3, 6 and 9 o\'clock, tapping lightly.',
+            'Return to centre between reaches. Switch legs halfway.',
+        ],
+        'form_cues': ['Stance knee softly bent and tracking over the toes', 'Hips level throughout', 'Reach only as far as you can control'],
+        'common_mistakes': ['Putting weight on the reaching foot', 'Letting the stance knee collapse inward'],
+        'language_beginner': 'Balance on one leg and tap the floor around you like the hours of a clock.',
+    },
+
+    'double_leg_balance': {
+        'display_name': 'Double Leg Balance (Eyes Closed)',
+        'movement_pattern': 'balance',
+        'level': 'beginner',
+        'target_muscles': ['Ankle Stabilisers', 'Deep Core'],
+        'instructions': [
+            'Stand with feet hip-width apart near a wall or support.',
+            'Close your eyes and hold steady for the prescribed time.',
+            'Open your eyes the moment you feel unsteady.',
+        ],
+        'form_cues': ['Weight even across both feet', 'Soft knees — do not lock out', 'Breathe normally'],
+        'common_mistakes': ['Locking the knees', 'Standing too far from a support to catch yourself'],
+        'language_beginner': 'Stand still with eyes closed — your balance system does the work.',
+    },
+
+    'high_knees': {
+        'display_name': 'High Knees',
+        'movement_pattern': 'cardio',
+        'level': 'beginner',
+        'target_muscles': ['Hip Flexors', 'Calves', 'Core'],
+        'instructions': [
+            'Jog on the spot, driving each knee up toward hip height.',
+            'Pump your arms in rhythm.',
+            'Stay tall — do not lean back as the knees rise.',
+        ],
+        'form_cues': ['Knee to hip height', 'Land on the ball of the foot', 'Quick, light contacts'],
+        'common_mistakes': ['Leaning back to lift the knees', 'Slowing to a march when prescribed a run'],
+        'language_beginner': 'Run on the spot lifting your knees toward your hips.',
+    },
+
+    'jumping_jacks': {
+        'display_name': 'Jumping Jacks',
+        'movement_pattern': 'cardio',
+        'level': 'beginner',
+        'target_muscles': ['Calves', 'Shoulders', 'Hip Abductors'],
+        'instructions': [
+            'Start with feet together, arms at your sides.',
+            'Jump the feet wide while raising the arms overhead.',
+            'Jump back to the start. Keep a smooth rhythm.',
+        ],
+        'form_cues': ['Land softly with bent knees', 'Full arm swing — hands meet overhead', 'Steady breathing'],
+        'common_mistakes': ['Stiff-leg landings', 'Half arm swings as fatigue builds'],
+        'language_beginner': 'The classic — jump feet wide as your arms swing overhead, and back.',
+    },
+
+    'lateral_gait_training': {
+        'display_name': 'Lateral Gait Training',
+        'movement_pattern': 'balance',
+        'level': 'beginner',
+        'target_muscles': ['Hip Abductors', 'Glute Medius', 'Ankle Stabilisers'],
+        'instructions': [
+            'Stand tall and step sideways with control, leading with one foot.',
+            'Bring the trailing foot to meet it — do not cross your feet.',
+            'Continue for the prescribed distance, then lead with the other side.',
+        ],
+        'form_cues': ['Toes pointing forward the whole time', 'Stay level — no bobbing up and down', 'Push off the trailing leg'],
+        'common_mistakes': ['Crossing the feet', 'Turning the toes out to cheat the hip muscles'],
+        'language_beginner': 'Controlled side-stepping — wakes up the hip muscles that keep you stable.',
+    },
+
+    'marching_on_spot': {
+        'display_name': 'Marching on the Spot',
+        'movement_pattern': 'cardio',
+        'level': 'beginner',
+        'target_muscles': ['Hip Flexors', 'Calves', 'Core'],
+        'instructions': [
+            'March in place, lifting each knee to a comfortable height.',
+            'Swing the opposite arm with each step.',
+            'Keep an upright posture throughout.',
+        ],
+        'form_cues': ['Tall spine, eyes forward', 'Controlled, rhythmic steps', 'Land through the whole foot'],
+        'common_mistakes': ['Shuffling without lifting the knees', 'Holding the breath'],
+        'language_beginner': 'A steady march in place — the gentlest way to raise your heart rate.',
+    },
+
+    'mountain_climbers': {
+        'display_name': 'Mountain Climbers',
+        'movement_pattern': 'cardio',
+        'level': 'intermediate',
+        'target_muscles': ['Core', 'Hip Flexors', 'Shoulders'],
+        'instructions': [
+            'Start in a strong push-up plank, hands under shoulders.',
+            'Drive one knee toward your chest, then switch legs in a running motion.',
+            'Keep your hips level with your shoulders throughout.',
+        ],
+        'form_cues': ['Hips stay down — no piking', 'Shoulders stacked over wrists', 'Smooth alternating rhythm'],
+        'common_mistakes': ['Bouncing the hips upward', 'Hands drifting forward of the shoulders'],
+        'language_beginner': 'Run your knees toward your chest while holding a plank.',
+        'language_athlete': 'Plank-position running — core stiffness under cyclical hip drive.',
+    },
+
+    'planks': {
+        'display_name': 'Plank',
+        'movement_pattern': 'core',
+        'level': 'beginner',
+        'target_muscles': ['Deep Core', 'Glutes', 'Shoulders'],
+        'instructions': [
+            'Forearms on the floor, elbows under shoulders, legs extended.',
+            'Form one straight line from head to heels.',
+            'Hold for the prescribed time, breathing steadily.',
+        ],
+        'form_cues': ['Squeeze glutes and brace your abdomen', 'Do not let the hips sag or pike', 'Neck long — look at the floor'],
+        'common_mistakes': ['Hips sagging as fatigue builds', 'Holding the breath', 'Head dropping or craning up'],
+        'language_beginner': 'Hold your body in one straight line — quality beats duration.',
+        'language_experienced': 'Ribcage down, glutes on, full-body tension for the entire hold.',
+    },
+
+    'single_leg_balance': {
+        'display_name': 'Single Leg Balance',
+        'movement_pattern': 'balance',
+        'level': 'beginner',
+        'target_muscles': ['Ankle Stabilisers', 'Glute Medius', 'Core'],
+        'instructions': [
+            'Stand on one leg, the other foot just off the floor.',
+            'Hold steady for the prescribed time, near a support if needed.',
+            'Switch legs and repeat.',
+        ],
+        'form_cues': ['Hips level — do not lean over the stance leg', 'Soft knee, weight through the mid-foot', 'Fix your eyes on a point ahead'],
+        'common_mistakes': ['Resting the free foot against the stance leg', 'Gripping the floor with locked toes'],
+        'language_beginner': 'Simply stand on one leg — the foundation of all single-leg strength.',
+    },
+
+    'tandem_walking': {
+        'display_name': 'Tandem Walking',
+        'movement_pattern': 'balance',
+        'level': 'beginner',
+        'target_muscles': ['Ankle Stabilisers', 'Core'],
+        'instructions': [
+            'Walk in a straight line placing the heel of one foot directly in front of the toes of the other.',
+            'Use your arms out to the sides for balance.',
+            'Walk the prescribed distance, turn carefully, and return.',
+        ],
+        'form_cues': ['Heel touches toe each step', 'Eyes ahead, not at your feet', 'Slow and controlled beats fast and wobbly'],
+        'common_mistakes': ['Leaving a gap between the feet', 'Staring at the floor'],
+        'language_beginner': 'Walk a straight line heel-to-toe, like a tightrope on the floor.',
+    },
+
+    'tricep_extensions': {
+        'display_name': 'Tricep Extensions',
+        'movement_pattern': 'push',
+        'level': 'beginner',
+        'target_muscles': ['Triceps'],
+        'instructions': [
+            'Hold a light weight (or none) overhead with both hands.',
+            'Bend your elbows to lower the hands behind your head.',
+            'Straighten the arms back overhead without moving the upper arms.',
+        ],
+        'form_cues': ['Upper arms stay still — only the forearms move', 'Elbows point forward, not flared wide', 'Control the lowering phase'],
+        'common_mistakes': ['Flaring the elbows outward', 'Arching the lower back as the weight goes overhead'],
+        'language_beginner': 'Bend and straighten your elbows overhead to work the back of the arms.',
+    },
+
 }

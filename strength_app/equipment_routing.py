@@ -255,6 +255,58 @@ EXERCISE_EQUIPMENT_REQUIRED = {
     'kettlebell_farmer_carry': ['kettlebell'],
 
     # ------------------------------------------------------------------
+    # DA-P3C: 45 chain IDs previously ABSENT from this map — absent keys
+    # were treated as bodyweight by filter_exercises_for_patient, so a
+    # bodyweight-only patient could be prescribed dumbbell/bar work.
+    # ------------------------------------------------------------------
+    # Bodyweight (explicitly mapped so the coverage test can assert)
+    'bear_crawl_with_reach': [],
+    'change_of_direction': [],
+    'close_grip_push_up': [],
+    'curtsy_lunge': [],
+    'decline_squats': [],
+    'handstand_wall_hold': [],
+    'heel_elevated_squat': [],     # heel wedge improvised (book/plate)
+    'hip_hinge_wall': [],
+    'knee_push_up': [],
+    'lateral_bear_crawl': [],
+    'lateral_bound': [],
+    'nordic_curl_partner': [],     # partner-anchored — no equipment
+    'plyometric_lunge': [],
+    'prone_hip_extension': [],
+    'side_plank_hip_dip': [],
+    'side_plank_rotation': [],
+    'single_arm_plank': [],
+    'single_arm_push_up_prog': [],  # starts elevated on any sturdy surface
+    'single_arm_single_leg_plank': [],
+    'single_arm_towel_row': [],     # household towel + door, like towel_row
+    'single_leg_dead_bug': [],
+    'single_leg_landing': [],
+    'single_leg_slider_curl': [],   # improvised slider (towel/sock on floor)
+    'split_squat_static': [],
+    'sumo_squat': [],
+    'walking_lunge': [],
+    'wall_handstand_push_up': [],
+    'wall_push_up': [],
+    'wide_grip_push_up': [],
+    'copenhagen_with_movement': ['bench'],
+    'box_push_up': ['bench'],
+    'depth_jump': ['bench'],
+    'dragon_flag_progression': ['bench'],
+    'incline_push_up': ['bench'],
+    'pike_push_up_elevated': ['bench'],
+    'side_step_ups': ['bench'],
+    'single_leg_hip_thrust': ['bench'],
+    'single_leg_squat_to_box': ['bench'],
+    'deadlift_dumbbell': ['dumbbells'],
+    'dumbbell_rowing': ['dumbbells'],
+    'nordic_curl_weighted': ['dumbbells'],
+    'single_arm_farmer_heavy': ['dumbbells'],
+    'waiter_farmer_combined': ['dumbbells'],
+    'spanish_squat': ['bands'],
+    'single_arm_pull_up_prog': ['pullup_bar'],
+
+    # ------------------------------------------------------------------
     # GYMNASTIC RINGS required
     # ------------------------------------------------------------------
     'ring_push_up': ['rings'],

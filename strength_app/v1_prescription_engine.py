@@ -8,6 +8,8 @@ Implements the full prescription formula:
   per-pattern dosage → all 12 modifier layers → warm-up → cool-down
 """
 
+import logging
+
 from datetime import date, timedelta
 
 # ── Football module imports (P21-P26) ────────────────────────────────────────
@@ -103,6 +105,10 @@ def _get_base_dosage_key(exercise_id, is_unilateral, goal_emphasis, phase):
         category = meta.get('category', '') if isinstance(meta, dict) else ''
     except Exception:
         category = ''
+
+    from .v1_constants import HOLD_EXERCISE_IDS
+    if exercise_id in HOLD_EXERCISE_IDS:
+        return 'isometric_hold'  # DA-P2 item 6: holds are timed, not repped
 
     if category == 'cardio':
         return 'cardio'
@@ -489,18 +495,38 @@ def _build_warmup(patterns_today, working_sets, hormonal_mods, patient=None):
 
     day_type = _determine_day_type(patterns_today)
 
+    # DA-P3F: warm-up items must respect the patient's red-flag
+    # exclusions too — a flagged patient must not get excluded movement
+    # patterns injected via the warm-up ('jumping_jacks_light' is the
+    # same movement as the excluded 'jumping_jacks').
+    red_flag_excluded = set()
+    if patient is not None:
+        try:
+            from .red_flag_map import get_excluded_exercises
+            red_flag_excluded = set(get_excluded_exercises(patient.red_flags_json or []))
+        except Exception:
+            logging.getLogger(__name__).warning(
+                'red-flag warmup filter unavailable', exc_info=True)
+
+    def _warmup_ok(item):
+        wid = item.get('id', '')
+        return wid not in red_flag_excluded and wid.removesuffix('_light') not in red_flag_excluded
+
     # Phase 1: Elevate — first 3 exercises, skip high-impact if plyometric not cleared
     plyometric_ok = hormonal_mods.get('plyometric_clearance', True)
     elevate = []
     for ex in ELEVATE_EXERCISES:
         if not plyometric_ok and ex.get('id') in ('jumping_jacks_light', 'star_jumps_light'):
             continue
+        if not _warmup_ok(ex):
+            continue
         elevate.append(ex)
         if len(elevate) >= 3:
             break
 
     # Phase 2: Mobilise
-    mobilise = list(MOBILISE_EXERCISES.get(day_type, MOBILISE_EXERCISES.get('squat_day', [])))
+    mobilise = [m for m in MOBILISE_EXERCISES.get(day_type, MOBILISE_EXERCISES.get('squat_day', []))
+                if _warmup_ok(m)]
     if hormonal_mods.get('warmup_extended'):
         extra = [m for m in mobilise[:2]]
         mobilise = mobilise + extra
@@ -514,6 +540,7 @@ def _build_warmup(patterns_today, working_sets, hormonal_mods, patient=None):
     if any(p in patterns_today for p in ('push', 'pull')):
         activate.extend(ACTIVATE_EXERCISES.get('scapular_activation', []))
     activate.extend(ACTIVATE_EXERCISES.get('deep_core_activation', []))
+    activate = [a for a in activate if _warmup_ok(a)]
 
     # Phase 4: Prime — first working exercise at 30% effort
     prime = []
