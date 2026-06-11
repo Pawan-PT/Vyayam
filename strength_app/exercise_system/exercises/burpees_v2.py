@@ -218,7 +218,7 @@ class BurpeesV2:
         
         return feedback
     
-    def update_rep_counter(self, angle, feedback, voice):
+    def update_rep_counter(self, angles, feedback, voice):
         """
         Update rep counter for burpees
         
@@ -227,9 +227,9 @@ class BurpeesV2:
         rep_done = False
         warnings = []
         
-        body_pos = angle.get('body_position', '')
-        hands_ground = angle.get('hands_on_ground', False)
-        hands_overhead = angle.get('hands_overhead', False)
+        body_pos = angles.get('body_position', '')
+        hands_ground = angles.get('hands_on_ground', False)
+        hands_overhead = angles.get('hands_overhead', False)
         
         # State machine through burpee phases
         if self.phase == "standing":

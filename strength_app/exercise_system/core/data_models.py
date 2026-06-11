@@ -15,13 +15,27 @@ class FormStatus(Enum):
     # aliasing keeps the value space unchanged for downstream comparisons.
     GOOD = "correct"
     WARNING = "adjustment"
+    INFO = "correct"
 
 
 @dataclass
 class JointFeedback:
-    status: FormStatus
-    angle: float
-    message: str
+    status: FormStatus = None
+    angle: float = 0.0
+    message: str = ""
+    joint: str = ""
+
+    def __post_init__(self):
+        # Convention shim (DA-EX-core): 38 modules construct with
+        # joint=/status=/message= keywords (crashed: unexpected kwarg) and
+        # 29 pass (joint_name, FormStatus, message) positionally (silently
+        # put the joint STRING into .status, breaking AR color mapping).
+        # Detect the joint-first positional form and reshuffle so .status
+        # is always a FormStatus.
+        if isinstance(self.status, str) and isinstance(self.angle, FormStatus):
+            self.joint = self.status
+            self.status = self.angle
+            self.angle = 0.0
 
 
 @dataclass

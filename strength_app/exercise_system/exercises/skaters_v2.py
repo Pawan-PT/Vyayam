@@ -196,7 +196,7 @@ class SkatersV2:
         
         return feedback
     
-    def update_rep_counter(self, angle, feedback, voice):
+    def update_rep_counter(self, angles, feedback, voice):
         """
         Update rep counter for skaters
         
@@ -205,8 +205,8 @@ class SkatersV2:
         rep_done = False
         warnings = []
         
-        weight_bearing = angle.get('weight_bearing', '')
-        displacement = angle.get('displacement', 0)
+        weight_bearing = angles.get('weight_bearing', '')
+        displacement = angles.get('displacement', 0)
         
         # State machine
         if self.phase == "left_stance":

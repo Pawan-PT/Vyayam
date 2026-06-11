@@ -185,7 +185,7 @@ class SideToSideHopsV2:
         
         return feedback
     
-    def update_rep_counter(self, angle, feedback, voice):
+    def update_rep_counter(self, angles, feedback, voice):
         """
         Update rep counter for side-to-side hops
         
@@ -194,7 +194,7 @@ class SideToSideHopsV2:
         rep_done = False
         warnings = []
         
-        position = angle.get('position', 'center')
+        position = angles.get('position', 'center')
         
         # State machine
         if self.phase == "center":

@@ -75,6 +75,9 @@ class ArcherPushUpV2:
         return {
             'start':  {'working_arm': 170, 'assist_arm': 170, 'tolerance': 10},
             'down':   {'working_arm': 90,  'assist_arm': 165, 'tolerance': 15},
+            # DA-EX-phases: state machine reaches 'bottom'; it was missing
+            # from the scored targets (KeyError on every rep at depth).
+            'bottom': {'working_arm': 90,  'assist_arm': 165, 'tolerance': 15},
             'up':     {'working_arm': 170, 'assist_arm': 170, 'tolerance': 10},
         }
 

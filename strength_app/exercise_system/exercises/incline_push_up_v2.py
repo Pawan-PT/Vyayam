@@ -74,6 +74,9 @@ class InclinePushUpV2:
         return {
             'start':  {'avg_elbow': 170, 'hip_angle': 175, 'tolerance': 10},
             'down':   {'avg_elbow': 90,  'hip_angle': 175, 'tolerance': 15},
+            # DA-EX-phases: state machine reaches 'bottom'; it was missing
+            # from the scored targets (KeyError on every rep at depth).
+            'bottom': {'avg_elbow': 90,  'hip_angle': 175, 'tolerance': 15},
             'up':     {'avg_elbow': 170, 'hip_angle': 175, 'tolerance': 10},
         }
 

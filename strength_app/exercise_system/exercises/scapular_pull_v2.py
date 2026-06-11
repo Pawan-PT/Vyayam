@@ -72,8 +72,12 @@ class ScapularPullV2:
     def get_target_poses(self):
         return {
             'hang':     {'avg_elbow': 175, 'shoulder_pos': 175, 'tolerance': 10},
+            # DA-EX-phases: initial phase 'start' was missing from targets.
+            'start': {'avg_elbow': 175, 'shoulder_pos': 175, 'tolerance': 10},
             'retract':  {'avg_elbow': 175, 'shoulder_pos': 155, 'tolerance': 15},
             'depress':  {'avg_elbow': 175, 'shoulder_pos': 145, 'tolerance': 15},
+            # DA-EX-phases: moving return to hang — band target.
+            'release': {'avg_elbow': 175, 'shoulder_pos': (145, 175), 'tolerance': 15},
         }
 
     def validate_form(self, angles, phase):

@@ -192,7 +192,7 @@ class TuckJumpsV2:
         
         return feedback
     
-    def update_rep_counter(self, angle, feedback, voice):
+    def update_rep_counter(self, angles, feedback, voice):
         """
         Update rep counter for tuck jumps
         
@@ -201,11 +201,11 @@ class TuckJumpsV2:
         rep_done = False
         warnings = []
         
-        in_air = angle.get('in_air', False)
-        is_tucked = angle.get('is_tucked', False)
-        vert_disp = angle.get('vertical_displacement', 0)
-        avg_knee = angle.get('avg_knee', 180)
-        avg_hip_flex = angle.get('avg_hip_flexion', 180)
+        in_air = angles.get('in_air', False)
+        is_tucked = angles.get('is_tucked', False)
+        vert_disp = angles.get('vertical_displacement', 0)
+        avg_knee = angles.get('avg_knee', 180)
+        avg_hip_flex = angles.get('avg_hip_flexion', 180)
         
         # State machine
         if self.phase == "standing":
@@ -224,7 +224,7 @@ class TuckJumpsV2:
             # Look for tuck
             if is_tucked or avg_hip_flex < 120:
                 self.phase = "tucked"
-                # Track best tuck angle
+                # Track best tuck angles
                 if avg_hip_flex < self.max_tuck_angle:
                     self.max_tuck_angle = avg_hip_flex
         

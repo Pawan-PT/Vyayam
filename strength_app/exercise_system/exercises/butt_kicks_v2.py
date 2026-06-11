@@ -179,7 +179,7 @@ class ButtKicksV2:
         
         return feedback
     
-    def update_rep_counter(self, angle, feedback, voice):
+    def update_rep_counter(self, angles, feedback, voice):
         """
         Update rep counter for butt kicks
         
@@ -188,8 +188,8 @@ class ButtKicksV2:
         rep_done = False
         warnings = []
         
-        working_knee = angle.get('working_knee_angle', 180)
-        working_leg = angle.get('working_leg')
+        working_knee = angles.get('working_knee_angle', 180)
+        working_leg = angles.get('working_leg')
         
         # State machine for one kick
         if self.phase == "extended":

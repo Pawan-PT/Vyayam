@@ -222,7 +222,7 @@ class BoxJumpsV2:
         
         return feedback
     
-    def update_rep_counter(self, angle, feedback, voice):
+    def update_rep_counter(self, angles, feedback, voice):
         """
         Update rep counter for box jumps
         
@@ -231,8 +231,8 @@ class BoxJumpsV2:
         rep_done = False
         warnings = []
         
-        position = angle.get('position_level', '')
-        avg_knee = angle.get('avg_knee', 180)
+        position = angles.get('position_level', '')
+        avg_knee = angles.get('avg_knee', 180)
         
         # State machine
         if self.phase == "ground_stance":

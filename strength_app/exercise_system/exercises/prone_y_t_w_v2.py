@@ -72,6 +72,9 @@ class ProneYTWV2:
     def get_target_poses(self):
         return {
             'start': {'avg_elevation': 20, 'tolerance': 15},
+            # DA-EX-phases: moving phases — band targets.
+            'lift': {'avg_elevation': (20, 90), 'tolerance': 15},
+            'lower': {'avg_elevation': (20, 90), 'tolerance': 15},
             'hold':  {'avg_elevation': 90, 'tolerance': 15},
         }
 

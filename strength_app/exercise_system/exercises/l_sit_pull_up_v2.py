@@ -76,8 +76,12 @@ class LSitPullUpV2:
     def get_target_poses(self):
         return {
             'hang':  {'avg_elbow': 175, 'hip_angle': 90, 'tolerance': 10},
+            # DA-EX-phases: initial phase 'start' was missing from targets.
+            'start': {'avg_elbow': 175, 'hip_angle': 90, 'tolerance': 10},
             'pull':  {'avg_elbow': 100, 'hip_angle': 90, 'tolerance': 15},
             'top':   {'avg_elbow': 60,  'hip_angle': 90, 'chin_clear': 1, 'tolerance': 15},
+            # DA-EX-phases: moving descent — band target (DA-C3 convention).
+            'lower': {'avg_elbow': (60, 175), 'tolerance': 15},
         }
 
     def validate_form(self, angles, phase):

@@ -75,6 +75,8 @@ class FullPullUpV2:
     def get_target_poses(self):
         return {
             'hang':  {'avg_elbow': 175, 'tolerance': 10},
+            # DA-EX-phases: initial phase 'start' was missing from targets.
+            'start': {'avg_elbow': 175, 'tolerance': 10},
             'pull':  {'avg_elbow': 100, 'tolerance': 15},
             'top':   {'avg_elbow': 60,  'chin_clear': 1, 'tolerance': 15},
             'lower': {'avg_elbow': 130, 'tolerance': 15},

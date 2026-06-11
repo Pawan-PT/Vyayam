@@ -73,6 +73,9 @@ class DeclinePushUpV2:
         return {
             'start':  {'avg_elbow': 170, 'shoulder_angle': 75, 'tolerance': 10},
             'down':   {'avg_elbow': 90,  'shoulder_angle': 90, 'tolerance': 15},
+            # DA-EX-phases: state machine reaches 'bottom'; it was missing
+            # from the scored targets (KeyError on every rep at depth).
+            'bottom': {'avg_elbow': 90,  'shoulder_angle': 90, 'tolerance': 15},
             'up':     {'avg_elbow': 170, 'shoulder_angle': 75, 'tolerance': 10},
         }
 

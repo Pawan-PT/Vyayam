@@ -74,7 +74,13 @@ class BandAssistedPullUpV2:
     def get_target_poses(self):
         return {
             'hang': {'avg_elbow': 175, 'chin_clear': 0, 'tolerance': 10},
+            # DA-EX-phases: initial phase 'start' was missing from targets.
+            'start': {'avg_elbow': 175, 'chin_clear': 0, 'tolerance': 10},
+            # DA-EX-phases: moving ascent — band target.
+            'pull': {'avg_elbow': (60, 175), 'tolerance': 15},
             'top':  {'avg_elbow': 60,  'chin_clear': 1, 'tolerance': 15},
+            # DA-EX-phases: moving descent — band target (DA-C3 convention).
+            'lower': {'avg_elbow': (60, 175), 'tolerance': 15},
         }
 
     def validate_form(self, angles, phase):

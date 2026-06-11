@@ -72,6 +72,8 @@ class NegativePullUpV2:
     def get_target_poses(self):
         return {
             'top':     {'avg_elbow': 60,  'tolerance': 15},
+            # DA-EX-phases: initial phase 'start' was missing; negatives start at the top.
+            'start': {'avg_elbow': 60,  'tolerance': 15},
             'descend': {'avg_elbow': 120, 'tolerance': 15},
             'bottom':  {'avg_elbow': 175, 'tolerance': 10},
         }

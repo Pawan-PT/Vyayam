@@ -189,7 +189,7 @@ class MountainClimbersV2:
         
         return feedback
     
-    def update_rep_counter(self, angle, feedback, voice):
+    def update_rep_counter(self, angles, feedback, voice):
         """
         Update rep counter for mountain climbers
         
@@ -198,8 +198,8 @@ class MountainClimbersV2:
         rep_done = False
         warnings = []
         
-        working_leg = angle.get('working_leg')
-        working_flex = angle.get('working_hip_flexion', 180)
+        working_leg = angles.get('working_leg')
+        working_flex = angles.get('working_hip_flexion', 180)
         
         # State machine for one knee drive
         if self.phase == "plank":

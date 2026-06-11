@@ -74,6 +74,10 @@ class ElevatedTableRowV2:
         return {
             'start': {'avg_elbow': 170, 'body_angle': 175, 'tolerance': 10},
             'pull':  {'avg_elbow': 90,  'body_angle': 175, 'tolerance': 15},
+            # DA-EX-phases: 'top' and 'lower' were reachable by the state
+            # machine but missing from targets (KeyError mid-rep).
+            'top': {'avg_elbow': 90,  'body_angle': 175, 'tolerance': 15},
+            'lower': {'avg_elbow': (90, 170), 'tolerance': 15},
         }
 
     def validate_form(self, angles, phase):

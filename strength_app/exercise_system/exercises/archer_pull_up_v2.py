@@ -71,8 +71,12 @@ class ArcherPullUpV2:
     def get_target_poses(self):
         return {
             'hang':   {'working_arm': 175, 'assist_arm': 175, 'tolerance': 10},
+            # DA-EX-phases: initial phase 'start' was missing from targets.
+            'start': {'working_arm': 175, 'assist_arm': 175, 'tolerance': 10},
             'pull':   {'working_arm': 90,  'assist_arm': 155, 'tolerance': 15},
             'top':    {'working_arm': 55,  'assist_arm': 150, 'tolerance': 15},
+            # DA-EX-phases: moving descent — band target (DA-C3 convention).
+            'lower': {'avg_elbow': (60, 175), 'tolerance': 15},
         }
 
     def validate_form(self, angles, phase):
