@@ -411,6 +411,46 @@ class TestDAC13InputValidation(TestCase):
         self.assertIsNone(self.patient.competition_date)
 
 
+class TestDAC14RedFlagMapIntegrity(TestCase):
+    """C14 — test_red_flag_map_integrity: replacements must be usable."""
+
+    def test_red_flag_map_integrity(self):
+        """Every replace_with target must (a) not be excluded by the same
+        flag, (b) exist in the content or tag layer, and (c) no exclusion
+        list may contain case-variant duplicates."""
+        import strength_app.exercise_content_gap_fill as gap_mod
+        from strength_app.exercise_content import EXERCISE_CONTENT
+        from strength_app.exercise_tags import EXERCISE_TAGS
+        from strength_app.red_flag_map import RED_FLAG_EXERCISE_MAP
+
+        gap = next(
+            (v for v in vars(gap_mod).values()
+             if isinstance(v, dict) and v
+             and all(isinstance(x, dict) for x in list(v.values())[:3])),
+            {},
+        )
+        known = set(EXERCISE_CONTENT) | set(EXERCISE_TAGS) | set(gap)
+
+        for flag, cfg in RED_FLAG_EXERCISE_MAP.items():
+            excluded = cfg.get('exclude_exercises', [])
+            lowered = [e.lower() for e in excluded]
+            self.assertEqual(
+                len(lowered), len(set(lowered)),
+                f'{flag}: case-variant duplicate in exclude_exercises',
+            )
+            for pattern, target in (cfg.get('replace_with') or {}).items():
+                self.assertNotIn(
+                    target, excluded,
+                    f'{flag}: replacement {pattern}->{target} is excluded '
+                    f'by the same flag',
+                )
+                self.assertIn(
+                    target, known,
+                    f'{flag}: replacement {pattern}->{target} unknown to '
+                    f'content/tag layers',
+                )
+
+
 class TestDAC12RepQualityHonesty(TestCase):
     """C12 — derived rep colors are labeled, never presented as CV data."""
 

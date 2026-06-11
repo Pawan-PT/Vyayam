@@ -9,7 +9,7 @@ RED_FLAG_EXERCISE_MAP = {
         'exclude_exercises': [
             'jump_squats', 'depth_jump', 'lateral_bound', 'single_leg_landing',
             'change_of_direction', 'plyometric_lunge', 'tuck_jumps', 'box_jumps',
-            'skaters', 'lateral_hops', 'lateral_Hops', 'side_to_side_hops',
+            'skaters', 'lateral_hops', 'side_to_side_hops',
         ],
         'exclude_patterns_above_level': {'lunge': 3},  # No lunge exercises above level 3
         'replace_with': {
@@ -28,9 +28,13 @@ RED_FLAG_EXERCISE_MAP = {
         'replace_with': {
             'squat': 'terminal_knee_extension',
             'lunge': 'reverse_lunges',
-            'step': 'step_ups',  # Low box only
+            # DA-C14: was 'step_ups' — excluded by this same flag, an
+            # internal contradiction. wall_sit is PFP-safe (isometric,
+            # patient-controllable knee angle <90°).
+            'step': 'wall_sit',
         },
-        'notes': 'Avoid deep knee flexion > 90 degrees under load.',
+        'notes': ('Avoid deep knee flexion > 90 degrees under load. '
+                  'Low-box step-ups allowed under supervision.'),
     },
 
     'hernia': {
@@ -112,7 +116,7 @@ RED_FLAG_EXERCISE_MAP = {
 
     'ankle_sprain_acute': {
         'exclude_exercises': [
-            'jump_squats', 'lateral_hops', 'lateral_Hops', 'side_to_side_hops',
+            'jump_squats', 'lateral_hops', 'side_to_side_hops',
             'skaters', 'lateral_bound', 'change_of_direction', 'plyometric_lunge',
             'single_leg_balance', 'tandem_walking', 'lateral_lunges',
         ],
