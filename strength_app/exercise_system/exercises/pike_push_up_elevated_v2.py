@@ -94,10 +94,10 @@ class PikePushUpElevatedV2:
                 'Raise feet higher for steeper pressing angle')
         return feedback
 
-    def update_rep_counter(self, angle, feedback, voice):
+    def update_rep_counter(self, angles, feedback, voice):
         rep_done = False
         warnings = []
-        avg_elbow = angle.get('avg_elbow', 180) if isinstance(angle, dict) else angle
+        avg_elbow = angles.get('avg_elbow', 180) if isinstance(angles, dict) else angles
 
         if self.phase == 'start' and avg_elbow < 150:
             self.phase = 'down'

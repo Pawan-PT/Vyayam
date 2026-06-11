@@ -89,10 +89,10 @@ class ProneYTWV2:
                 'Hold — retract scapulae fully')
         return feedback
 
-    def update_rep_counter(self, angle, feedback, voice):
+    def update_rep_counter(self, angles, feedback, voice):
         rep_done = False
         warnings = []
-        ae = angle.get('avg_elevation', 0) if isinstance(angle, dict) else angle
+        ae = angles.get('avg_elevation', 0) if isinstance(angles, dict) else angles
 
         if self.phase == 'start' and ae > 60:
             self.phase = 'lift'

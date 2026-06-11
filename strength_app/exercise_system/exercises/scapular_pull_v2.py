@@ -93,10 +93,10 @@ class ScapularPullV2:
                 'Retract shoulder blades — pull down and back')
         return feedback
 
-    def update_rep_counter(self, angle, feedback, voice):
+    def update_rep_counter(self, angles, feedback, voice):
         rep_done = False
         warnings = []
-        sp = angle.get('shoulder_pos', 175) if isinstance(angle, dict) else 175
+        sp = angles.get('shoulder_pos', 175) if isinstance(angles, dict) else 175
 
         if self.phase == 'hang' and sp < 160:
             self.phase = 'retract'

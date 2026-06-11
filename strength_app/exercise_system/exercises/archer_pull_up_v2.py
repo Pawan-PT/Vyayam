@@ -92,10 +92,10 @@ class ArcherPullUpV2:
                 'Pull higher on working arm')
         return feedback
 
-    def update_rep_counter(self, angle, feedback, voice):
+    def update_rep_counter(self, angles, feedback, voice):
         rep_done = False
         warnings = []
-        working = angle.get('working_arm', 180) if isinstance(angle, dict) else angle
+        working = angles.get('working_arm', 180) if isinstance(angles, dict) else angles
 
         if self.phase == 'hang' and working < 140:
             self.phase = 'pull'
