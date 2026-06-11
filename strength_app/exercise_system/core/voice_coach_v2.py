@@ -157,14 +157,26 @@ class VoiceCoachV2:
     # REP COUNTING GUIDANCE
     # ========================================================================
     
-    def announce_rep(self, rep_number, form_quality):
-        """Announce rep completion with quality feedback"""
-        if form_quality == "green":
-            self.speak(f"Rep {rep_number}. Good form.")
-        elif form_quality == "yellow":
-            self.speak(f"Rep {rep_number}. Watch your form.")
-        else:  # red
-            self.speak(f"Rep {rep_number}. Poor form. Adjust.")
+    def announce_rep(self, rep_number, target_reps=None, form_score=None):
+        """Announce rep completion with quality feedback.
+
+        Every exercise module calls this as (rep_count, target_reps,
+        form_score) with a NUMERIC score — the old (rep, 'green'|'yellow')
+        2-arg form crashed all 234 modules with a TypeError on the first
+        counted rep (DA-C3 follow-on find). Numeric scores map to quality
+        bands: ≥85 green, ≥70 yellow, else red.
+        """
+        quality = form_score
+        if isinstance(quality, (int, float)):
+            quality = 'green' if quality >= 85 else ('yellow' if quality >= 70 else 'red')
+
+        suffix = f" of {target_reps}" if target_reps else ""
+        if quality == "green":
+            self.speak(f"Rep {rep_number}{suffix}. Good form.")
+        elif quality == "yellow":
+            self.speak(f"Rep {rep_number}{suffix}. Watch your form.")
+        else:  # red / unknown
+            self.speak(f"Rep {rep_number}{suffix}. Poor form. Adjust.")
     
     def announce_set_complete(self, set_number, green_reps, total_reps):
         """Announce set completion"""
