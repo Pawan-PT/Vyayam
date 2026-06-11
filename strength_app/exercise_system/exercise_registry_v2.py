@@ -743,7 +743,9 @@ EXERCISE_METADATA = {
         'new_in_v2': True,
         'movement_pattern': 'squat',
     },
-    'lateral_Hops': {
+    'lateral_hops': {  # DA-H3: canonical lower-case ID (was 'lateral_Hops')
+    # tag/red-flag layers always used lateral_hops; the registry was the outlier.
+
         'class': LateralHopsV2,
         'category': 'cardio',
         'subcategory': 'high_intensity',

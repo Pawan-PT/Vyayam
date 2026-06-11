@@ -411,6 +411,112 @@ class TestDAC13InputValidation(TestCase):
         self.assertIsNone(self.patient.competition_date)
 
 
+class TestDAH2IdealTrajectoryInvariant(TestCase):
+    """H2 — every registered exercise survives its own ideal trajectory.
+
+    Invariants:
+      (a) NO module raises through 5 full cycles (hard assertion).
+      (c) the green set (mean score ≥ 85) only grows — ratchet floor.
+
+    Full per-module results are written to
+    tests/clinical_audit/reports/H2_RESULTS.md for the audit report.
+    """
+
+    # Ratchet floor at the end of the 2026-06 deep audit. 47/223 modules
+    # were green when the harness first ran; raising this is good,
+    # lowering it is a regression.
+    GREEN_FLOOR = 165
+    SCORED_MODULES = 220  # modules expected to produce scores
+
+    def test_da_h2_ideal_trajectory_all_modules(self):
+        try:
+            from strength_app.tests.clinical_audit.generators.trajectory_generator import (
+                run_all,
+            )
+            results = run_all()
+        except ImportError:
+            self.skipTest('CV stack (mediapipe/cv2) not available')
+
+        errors = [r for r in results if r['status'] == 'error']
+        self.assertEqual(
+            errors, [],
+            'Modules crashed on their own ideal trajectory: '
+            + ', '.join(f"{r['id']} ({r['error'][:60]})" for r in errors),
+        )
+
+        scored = [r for r in results if r['status'] == 'ok'
+                  and r['mean_score'] is not None]
+        green = [r for r in scored if r['mean_score'] >= 85]
+        self.assertGreaterEqual(len(scored), self.SCORED_MODULES)
+        self.assertGreaterEqual(
+            len(green), self.GREEN_FLOOR,
+            'Green-module ratchet broken — a target/scoring change has '
+            'regressed previously-green modules.',
+        )
+
+        self._write_report(results)
+
+    @staticmethod
+    def _write_report(results):
+        import os
+        path = os.path.join(
+            os.path.dirname(__file__), 'clinical_audit', 'reports',
+            'H2_RESULTS.md',
+        )
+        lines = [
+            '# DA-H2 — Ideal-Trajectory Invariant Results',
+            '',
+            '| exercise | status | mean | min | reps |',
+            '|---|---|---|---|---|',
+        ]
+        for r in sorted(results, key=lambda x: (x['status'], -(x['mean_score'] or 0))):
+            lines.append(
+                f"| {r['id']} | {r['status']} | {r['mean_score'] if r['mean_score'] is not None else '—'} "
+                f"| {r['min_score'] if r['min_score'] is not None else '—'} | {r['reps']} |"
+            )
+        with open(path, 'w') as f:
+            f.write('\n'.join(lines) + '\n')
+
+
+class TestDAH3RegistryIntegrity(TestCase):
+    """H3 — every registry ID instantiates; no case/plural duplicates."""
+
+    def test_da_h3_every_id_instantiates(self):
+        try:
+            from strength_app.exercise_system.exercise_registry_v2 import (
+                EXERCISE_METADATA,
+            )
+        except ImportError:
+            self.skipTest('CV stack (mediapipe/cv2) not available')
+
+        failures = []
+        for ex_id, meta in EXERCISE_METADATA.items():
+            try:
+                meta['class']()
+            except Exception as exc:  # noqa: BLE001
+                failures.append(f'{ex_id}: {type(exc).__name__}: {exc}')
+        self.assertEqual(failures, [])
+
+    def test_da_h3_no_case_duplicates(self):
+        try:
+            from strength_app.exercise_system.exercise_registry_v2 import (
+                EXERCISE_METADATA,
+            )
+        except ImportError:
+            self.skipTest('CV stack (mediapipe/cv2) not available')
+
+        lowered = {}
+        for ex_id in EXERCISE_METADATA:
+            key = ex_id.lower()
+            self.assertEqual(
+                ex_id, key,
+                f'registry ID not lower-case: {ex_id}',
+            )
+            if key in lowered:
+                self.fail(f'case-duplicate IDs: {lowered[key]} vs {ex_id}')
+            lowered[key] = ex_id
+
+
 class TestDAH1FormCalculatorToleranceCurve(TestCase):
     """H1 — angle accuracy is parameterized by the exercise's tolerance."""
 
