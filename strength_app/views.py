@@ -925,6 +925,9 @@ def workout_complete(request: HttpRequest):
                     total_green_reps=result.get('green_reps', 0),
                     total_yellow_reps=result.get('yellow_reps', 0),
                     total_red_reps=result.get('red_reps', 0),
+                    # Legacy CV flow: per-rep colors come from real
+                    # analyze_frame classification in the browser (DA-C12).
+                    rep_quality_source='cv',
                     overall_form_score=result.get('form_score', 0),
                     completion_percentage=100 if result.get('green_reps', 0) >= exercise['reps'] else 0
                 )

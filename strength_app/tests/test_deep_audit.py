@@ -329,6 +329,50 @@ class TestDAC7RealReportNumbers(TestCase):
         self.assertNotEqual(report.total_sessions_prescribed, 20)
 
 
+class TestDAC12RepQualityHonesty(TestCase):
+    """C12 — derived rep colors are labeled, never presented as CV data."""
+
+    def test_da_c12_self_serve_flow_marks_derived(self):
+        from django.urls import reverse
+        from strength_app.models import ExerciseExecution
+
+        patient = _make_patient(pid='DAC1201', phone='9000009901')
+        session = self.client.session
+        session['patient_id'] = patient.patient_id
+        session['v1_exercise_results'] = [{
+            'exercise_id': 'partial_squats',
+            'exercise_name': 'Partial Squats',
+            'movement_pattern': 'squat',
+            'prescribed_sets': 3,
+            'prescribed_reps': 10,
+            'completed_sets': 3,
+            'completed_reps_per_set': [10, 10, 10],
+            'form_score': 80,
+        }]
+        session.save()
+
+        resp = self.client.post(reverse('v1_post_session_feedback'), data={
+            'perceived_difficulty': 'just_right',
+            'sleep_last_night': '7_to_8',
+            'pain_reported': 'none',
+            'energy_level': 'good',
+            'session_rpe': '5',
+        })
+        self.assertIn(resp.status_code, (200, 302))
+        execution = ExerciseExecution.objects.get(exercise_id='partial_squats')
+        self.assertEqual(execution.rep_quality_source, 'derived')
+        # Derived split must still sum to the actual rep total
+        self.assertEqual(
+            execution.total_green_reps + execution.total_yellow_reps
+            + execution.total_red_reps, 30,
+        )
+
+    def test_da_c12_model_default_is_derived(self):
+        from strength_app.models import ExerciseExecution
+        field = ExerciseExecution._meta.get_field('rep_quality_source')
+        self.assertEqual(field.default, 'derived')
+
+
 class TestDAC10NutritionSetupState(TestCase):
     """C10 — missing nutrition targets is a setup state, not a red light."""
 

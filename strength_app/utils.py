@@ -559,6 +559,9 @@ def execute_workout_session(patient, prescription_data):
             total_green_reps=backend_ex.total_green_reps,
             total_yellow_reps=backend_ex.total_yellow_reps,
             total_red_reps=backend_ex.total_red_reps,
+            # Backend bridge simulates execution — counts are not real CV
+            # classifications (DA-C12).
+            rep_quality_source='derived',
             overall_form_score=backend_ex.overall_form_score,
             completion_percentage=backend_ex.completion_percentage,
             practice_mode_entered=backend_ex.practice_mode_entered,

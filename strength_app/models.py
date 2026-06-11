@@ -666,7 +666,19 @@ class ExerciseExecution(models.Model):
     total_green_reps = models.IntegerField(default=0)
     total_yellow_reps = models.IntegerField(default=0)
     total_red_reps = models.IntegerField(default=0)
-    
+
+    # DA-C12: where the green/yellow/red counts came from. 'cv' = real
+    # per-rep CV classification; 'derived' = estimated from the aggregate
+    # form score. Any UI/report rendering derived counts must say
+    # "estimated from form score" — never present them as measured.
+    REP_QUALITY_SOURCE_CHOICES = [
+        ('cv', 'CV-classified per rep'),
+        ('derived', 'Estimated from form score'),
+    ]
+    rep_quality_source = models.CharField(
+        max_length=10, choices=REP_QUALITY_SOURCE_CHOICES, default='derived',
+    )
+
     # Metrics
     overall_form_score = models.FloatField(default=0.0)
     completion_percentage = models.FloatField(default=0.0)

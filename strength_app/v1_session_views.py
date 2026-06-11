@@ -715,6 +715,11 @@ def v1_post_session_feedback(request):
                 min(100, (res.get('completed_sets', 0) / max(1, prescribed_sets)) * 100)
             )
             form_score = float(res.get('form_score', 75))
+            # DA-C12: the self-serve client sends only the aggregate form
+            # score — these counts are ESTIMATES derived from it, not CV
+            # per-rep classifications. rep_quality_source='derived' marks
+            # them so every rendering surface adds the "estimated from
+            # form score" qualifier.
             green_reps  = round(total_reps * (form_score / 100))
             yellow_reps = round(total_reps * max(0, (1 - form_score / 100)) * 0.6)
             red_reps    = total_reps - green_reps - yellow_reps
@@ -730,6 +735,7 @@ def v1_post_session_feedback(request):
                 total_green_reps=max(0, green_reps),
                 total_yellow_reps=max(0, yellow_reps),
                 total_red_reps=max(0, red_reps),
+                rep_quality_source='derived',
                 overall_form_score=form_score,
                 completion_percentage=completion_pct,
             )
