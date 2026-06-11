@@ -132,25 +132,25 @@ class MiniSquatsWithBandV2:
             'standing': {
                 'avg_knee': 175,
                 'knee_width': 'wide',
-                'back': 165,
+            # NOTE (DA-C3): back/hip-flexion angle removed from SCORED targets.
+            # It is either a synthetic lean proxy or a hip-flexion measure whose
+            # per-phase value varies too widely to score against a fixed target;
+            # spinal position is NOT measurable with MediaPipe's 33 landmarks.
                 'tolerance': 8
             },
             'descending': {
                 'avg_knee': 155,
                 'knee_width': 'wide',
-                'back': 160,
                 'tolerance': 10
             },
             'bottom': {
                 'avg_knee': 145,
                 'knee_width': 'wide',
-                'back': 160,
                 'tolerance': 8
             },
             'ascending': {
                 'avg_knee': 160,
                 'knee_width': 'wide',
-                'back': 160,
                 'tolerance': 10
             }
         }

@@ -137,28 +137,28 @@ class StepUpsV2:
             'ground': {
                 'lead_knee': 90,
                 'trail_knee': 175,
-                'back': 165,
+            # NOTE (DA-C3): back/hip-flexion angle removed from SCORED targets.
+            # It is either a synthetic lean proxy or a hip-flexion measure whose
+            # per-phase value varies too widely to score against a fixed target;
+            # spinal position is NOT measurable with MediaPipe's 33 landmarks.
                 'hip_level': 0,
                 'tolerance': 10
             },
             'pushing': {
                 'lead_knee': 140,
                 'trail_knee': 165,
-                'back': 165,
                 'hip_level': 0,
                 'tolerance': 12
             },
             'top': {
                 'lead_knee': 175,
                 'trail_knee': 175,
-                'back': 165,
                 'hip_level': 0,
                 'tolerance': 8
             },
             'descending': {
                 'lead_knee': 150,
                 'trail_knee': 170,
-                'back': 165,
                 'hip_level': 5,
                 'tolerance': 10
             }

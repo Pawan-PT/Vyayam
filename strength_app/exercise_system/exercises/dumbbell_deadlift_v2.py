@@ -136,25 +136,25 @@ class DeadliftDumbbellV2:
         return {
             'standing': {
                 'avg_hip': 175,    # Fully extended
-                'avg_back': 170,   # Upright
+            # NOTE (DA-C3): back/hip-flexion angle removed from SCORED targets.
+            # It is either a synthetic lean proxy or a hip-flexion measure whose
+            # per-phase value varies too widely to score against a fixed target;
+            # spinal position is NOT measurable with MediaPipe's 33 landmarks.
                 'avg_knee': 175,   # Nearly straight
                 'tolerance': 10
             },
             'hinging': {
                 'avg_hip': 130,    # Midway hinge
-                'avg_back': 165,   # Still straight!
                 'avg_knee': 170,   # Still nearly straight
                 'tolerance': 12
             },
             'bottom': {
                 'avg_hip': 100,    # Full hinge
-                'avg_back': 165,   # MUST stay straight
                 'avg_knee': 165,   # Slight bend
                 'tolerance': 10
             },
             'rising': {
                 'avg_hip': 140,    # Coming back up
-                'avg_back': 165,
                 'avg_knee': 170,
                 'tolerance': 12
             }

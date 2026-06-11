@@ -126,17 +126,18 @@ class TandemWalkingV2:
         return {
             'ready': {
                 'foot_separation': 30,
-                'back': 165,
+            # NOTE (DA-C3): back/hip-flexion angle removed from SCORED targets.
+            # It is either a synthetic lean proxy or a hip-flexion measure whose
+            # per-phase value varies too widely to score against a fixed target;
+            # spinal position is NOT measurable with MediaPipe's 33 landmarks.
                 'tolerance': 10
             },
             'stepping': {
                 'foot_separation': 50,
-                'back': 165,
                 'tolerance': 12
             },
             'stable': {
                 'foot_separation': 35,
-                'back': 165,
                 'tolerance': 10
             }
         }

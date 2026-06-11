@@ -90,3 +90,50 @@ class TestDAC2DeloadFallback(TestCase):
         )
         needed, _ = check_deload_needed(patient, periodisation_state=state)
         self.assertTrue(needed)
+
+
+class TestDAC3SquatFormScoring(TestCase):
+    """C3 — correct deep squats must not be penalized by hip-flexion targets."""
+
+    def test_da_c3_perfect_deep_squat_scores_green(self):
+        """C3 — a synthetically perfect deep squat must average ≥85.
+
+        Before the fix, get_target_poses() scored avg_back (hip flexion,
+        shoulder→hip→knee) against 155° at the bottom of the squat. A
+        CORRECT deep squat reads ~50–90° there, so the component scored 0
+        and dragged every correct rep down ~25 points.
+        """
+        try:
+            from strength_app.exercise_system.exercises.full_squat_v2 import (
+                FullSquatsV2,
+            )
+        except ImportError:
+            self.skipTest('CV stack (mediapipe/cv2) not available')
+
+        ex = FullSquatsV2()
+        joints = {
+            'lh': (300, 400), 'lk': (300, 500), 'la': (300, 600),
+            'rh': (340, 400), 'rk': (340, 500), 'ra': (340, 600),
+            'ls': (300, 250), 'rs': (340, 250),
+        }
+
+        def frames():
+            # 175 → 90 → 175, ~20 frames each way; avg_back tracks a
+            # realistic hip-flexion curve (172 standing → 75 at depth).
+            down = [175 - i * (85 / 19) for i in range(20)]
+            up = list(reversed(down))[1:]
+            for knee in down + up:
+                t = (175 - knee) / 85.0
+                yield knee, 172 - t * 97
+
+        scores = []
+        for _ in range(5):  # several reps: 3 practice + counted
+            for knee, back in frames():
+                angles = {'avg_knee': knee, 'avg_back': back}
+                score = ex.calculate_real_time_form_score(angles, joints)
+                scores.append(score)
+                ex.update_rep_counter(knee, {}, ex.voice)
+
+        mean_score = sum(scores) / len(scores)
+        self.assertGreaterEqual(mean_score, 85.0)
+        self.assertGreaterEqual(ex.rep_count + ex.practice_reps_completed, 1)

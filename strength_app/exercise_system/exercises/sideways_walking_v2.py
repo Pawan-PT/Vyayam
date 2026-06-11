@@ -129,25 +129,25 @@ class SidewaysWalkingV2:
             'ready': {
                 'foot_separation': 40,
                 'avg_knee': 145,
-                'back': 165,
+            # NOTE (DA-C3): back/hip-flexion angle removed from SCORED targets.
+            # It is either a synthetic lean proxy or a hip-flexion measure whose
+            # per-phase value varies too widely to score against a fixed target;
+            # spinal position is NOT measurable with MediaPipe's 33 landmarks.
                 'tolerance': 10
             },
             'stepping': {
                 'foot_separation': 80,
                 'avg_knee': 145,
-                'back': 165,
                 'tolerance': 12
             },
             'stepped': {
                 'foot_separation': 85,
                 'avg_knee': 145,
-                'back': 165,
                 'tolerance': 10
             },
             'returning': {
                 'foot_separation': 50,
                 'avg_knee': 145,
-                'back': 165,
                 'tolerance': 10
             }
         }

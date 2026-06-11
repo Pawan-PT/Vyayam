@@ -115,22 +115,22 @@ class DumbbellRowingV2:
         return {
             'hanging': {
                 'avg_elbow': 170,  # Arms extended
-                'avg_back': 160,   # Bent over but straight
+            # NOTE (DA-C3): back/hip-flexion angle removed from SCORED targets.
+            # It is either a synthetic lean proxy or a hip-flexion measure whose
+            # per-phase value varies too widely to score against a fixed target;
+            # spinal position is NOT measurable with MediaPipe's 33 landmarks.
                 'tolerance': 12
             },
             'pulling': {
                 'avg_elbow': 110,  # Midway pull
-                'avg_back': 160,
                 'tolerance': 15
             },
             'top': {
                 'avg_elbow': 45,   # Fully pulled
-                'avg_back': 160,
                 'tolerance': 12
             },
             'lowering': {
                 'avg_elbow': 120,  # Controlled descent
-                'avg_back': 160,
                 'tolerance': 15
             }
         }

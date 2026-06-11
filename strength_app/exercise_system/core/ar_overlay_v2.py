@@ -13,6 +13,25 @@ import math
 import numpy as np
 from typing import Dict, Tuple, Optional
 
+
+def _target_diff(target_value, current_value):
+    """Signed target-minus-current difference.
+
+    Band targets (lo, hi) are legal for moving phases (DA-C3): the
+    difference is 0 inside the band, else distance to the nearest bound.
+    Non-numeric targets (bool/str hints) yield 0.
+    """
+    if isinstance(target_value, bool) or isinstance(target_value, str):
+        return 0.0
+    if isinstance(target_value, (tuple, list)):
+        lo, hi = min(target_value), max(target_value)
+        if current_value < lo:
+            return lo - current_value
+        if current_value > hi:
+            return hi - current_value
+        return 0.0
+    return target_value - current_value
+
 try:
     from form_calculator import FormCalculator
 except ImportError:
@@ -250,7 +269,7 @@ class AROverlayV2:
 
         # ── PUSH / PULL: rotate forearm around elbow ─────────────────────────
         if has_elbow:
-            elbow_diff = target_angles['avg_elbow'] - current_angles['avg_elbow']
+            elbow_diff = _target_diff(target_angles['avg_elbow'], current_angles['avg_elbow'])
             angle_rad = math.radians(elbow_diff)
             cos_a, sin_a = math.cos(angle_rad), math.sin(angle_rad)
             for s_key, e_key, w_key in [('ls', 'le', 'lw'), ('rs', 're', 'rw')]:
@@ -270,7 +289,7 @@ class AROverlayV2:
 
         # ── HINGE: rotate torso around hip pivot ─────────────────────────────
         if has_hip and not has_elbow:
-            hip_diff = target_angles['avg_hip'] - current_angles['avg_hip']
+            hip_diff = _target_diff(target_angles['avg_hip'], current_angles['avg_hip'])
             # Positive hip_diff = more extended = torso rises (smaller Y in image)
             angle_rad = math.radians(-hip_diff)
             cos_a, sin_a = math.cos(angle_rad), math.sin(angle_rad)
@@ -289,7 +308,7 @@ class AROverlayV2:
 
         # ── SQUAT / LUNGE: vertical knee displacement ─────────────────────────
         if has_knee:
-            knee_diff = target_angles['avg_knee'] - current_angles['avg_knee']
+            knee_diff = _target_diff(target_angles['avg_knee'], current_angles['avg_knee'])
             vertical_adj = knee_diff * 2  # 1° ≈ 2 px vertical travel
             for k_key in ['lk', 'rk']:
                 if k_key in target_joints:
@@ -298,7 +317,7 @@ class AROverlayV2:
 
         # ── CORE: hip sag correction via body_alignment ───────────────────────
         if has_align:
-            align_diff = target_angles['body_alignment'] - current_angles['body_alignment']
+            align_diff = _target_diff(target_angles['body_alignment'], current_angles['body_alignment'])
             hip_adj = align_diff * 1.5
             for h_key in ['lh', 'rh']:
                 if h_key in target_joints:
@@ -325,7 +344,7 @@ class AROverlayV2:
             
             if angle_name in current_angles:
                 current_value = current_angles[angle_name]
-                diff = target_value - current_value
+                diff = _target_diff(target_value, current_value)
                 differences[angle_name] = diff
         
         return differences

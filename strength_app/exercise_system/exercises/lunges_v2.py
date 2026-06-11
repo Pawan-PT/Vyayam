@@ -190,24 +190,24 @@ class LungesV2:
         return {
             'standing': {
                 'min_knee': 165,
-                'back': 165,
+            # NOTE (DA-C3): back/hip-flexion angle removed from SCORED targets.
+            # It is either a synthetic lean proxy or a hip-flexion measure whose
+            # per-phase value varies too widely to score against a fixed target;
+            # spinal position is NOT measurable with MediaPipe's 33 landmarks.
                 'tolerance': 10
             },
             'lunge_down': {
                 'front_knee': 90,
                 'back_knee': 90,
-                'back': 160,
                 'tolerance': 10
             },
             'bottom': {
                 'front_knee': 90,
                 'back_knee': 85,
-                'back': 160,
                 'tolerance': 8
             },
             'lunge_up': {
                 'min_knee': 140,
-                'back': 160,
                 'tolerance': 12
             }
         }

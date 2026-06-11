@@ -186,25 +186,25 @@ class MarchingOnSpotV2:
             'standing': {
                 'lifted_hip': 170,
                 'standing_knee': 170,
-                'back': 165,
+            # NOTE (DA-C3): back/hip-flexion angle removed from SCORED targets.
+            # It is either a synthetic lean proxy or a hip-flexion measure whose
+            # per-phase value varies too widely to score against a fixed target;
+            # spinal position is NOT measurable with MediaPipe's 33 landmarks.
                 'tolerance': 10
             },
             'lifting': {
                 'lifted_hip': 110,
                 'standing_knee': 165,
-                'back': 165,
                 'tolerance': 12
             },
             'lifted': {
                 'lifted_hip': 85,  # 90° = thigh parallel
                 'standing_knee': 165,
-                'back': 165,
                 'tolerance': 10
             },
             'lowering': {
                 'lifted_hip': 120,
                 'standing_knee': 165,
-                'back': 165,
                 'tolerance': 12
             }
         }

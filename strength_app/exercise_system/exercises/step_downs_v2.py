@@ -137,28 +137,28 @@ class StepDownsV2:
             'standing': {
                 'stance_knee': 175,
                 'lowering_knee': 175,
-                'back': 165,
+            # NOTE (DA-C3): back/hip-flexion angle removed from SCORED targets.
+            # It is either a synthetic lean proxy or a hip-flexion measure whose
+            # per-phase value varies too widely to score against a fixed target;
+            # spinal position is NOT measurable with MediaPipe's 33 landmarks.
                 'hip_level': 0,
                 'tolerance': 8
             },
             'lowering': {
                 'stance_knee': 135,
                 'lowering_knee': 165,
-                'back': 165,
                 'hip_level': 0,
                 'tolerance': 12
             },
             'bottom': {
                 'stance_knee': 120,
                 'lowering_knee': 160,
-                'back': 165,
                 'hip_level': 10,
                 'tolerance': 10
             },
             'raising': {
                 'stance_knee': 155,
                 'lowering_knee': 170,
-                'back': 165,
                 'hip_level': 5,
                 'tolerance': 10
             }

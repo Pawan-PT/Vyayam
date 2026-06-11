@@ -123,28 +123,28 @@ class DeclineSquatsV2:
                 'avg_knee': 175,
                 'left_knee': 175,
                 'right_knee': 175,
-                'back': 165,
+            # NOTE (DA-C3): back/hip-flexion angle removed from SCORED targets.
+            # It is either a synthetic lean proxy or a hip-flexion measure whose
+            # per-phase value varies too widely to score against a fixed target;
+            # spinal position is NOT measurable with MediaPipe's 33 landmarks.
                 'tolerance': 8
             },
             'descending': {
                 'avg_knee': 135,
                 'left_knee': 135,
                 'right_knee': 135,
-                'back': 160,
                 'tolerance': 12
             },
             'bottom': {
                 'avg_knee': 90,
                 'left_knee': 90,
                 'right_knee': 90,
-                'back': 160,
                 'tolerance': 10
             },
             'ascending': {
                 'avg_knee': 135,
                 'left_knee': 135,
                 'right_knee': 135,
-                'back': 160,
                 'tolerance': 12
             }
         }

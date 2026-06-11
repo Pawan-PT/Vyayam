@@ -114,17 +114,18 @@ class RotationalSwingsV2:
         return {
             'center': {
                 'rotation': 5,  # Minimal rotation at center
-                'back_angle': 165,
+            # NOTE (DA-C3): back/hip-flexion angle removed from SCORED targets.
+            # It is either a synthetic lean proxy or a hip-flexion measure whose
+            # per-phase value varies too widely to score against a fixed target;
+            # spinal position is NOT measurable with MediaPipe's 33 landmarks.
                 'tolerance': 10
             },
             'rotating': {
                 'rotation': 25,  # Mid rotation
-                'back_angle': 165,
                 'tolerance': 15
             },
             'peak': {
                 'rotation': 45,  # Max rotation
-                'back_angle': 165,
                 'tolerance': 10
             }
         }

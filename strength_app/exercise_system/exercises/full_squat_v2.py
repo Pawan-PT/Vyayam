@@ -134,22 +134,25 @@ class FullSquatsV2:
         return {
             'standing': {
                 'avg_knee': 175,
-                'avg_back': 165,
+            # NOTE (DA-C3): back/hip-flexion angle removed from SCORED targets.
+            # It is either a synthetic lean proxy or a hip-flexion measure whose
+            # per-phase value varies too widely to score against a fixed target;
+            # spinal position is NOT measurable with MediaPipe's 33 landmarks.
                 'tolerance': 10
             },
             'descending': {
-                'avg_knee': 130,
-                'avg_back': 160,
+                # Moving phase: the knee legitimately sweeps the whole range,
+                # so score against a band (DA-C3). Depth itself is enforced by
+                # the rep state machine (bottom only reached < depth+10°).
+                'avg_knee': (self.target_depth + 5, 175),
                 'tolerance': 15
             },
             'bottom': {
                 'avg_knee': self.target_depth,  # 90° full depth
-                'avg_back': 155,
                 'tolerance': 10
             },
             'ascending': {
-                'avg_knee': 140,
-                'avg_back': 160,
+                'avg_knee': (self.target_depth + 5, 175),
                 'tolerance': 15
             }
         }
@@ -163,14 +166,22 @@ class FullSquatsV2:
         knee_angle = angles.get('avg_knee', 0)
         knee_target = targets['avg_knee']
         knee_tolerance = targets['tolerance']
-        
-        if abs(knee_angle - knee_target) <= knee_tolerance:
+
+        if isinstance(knee_target, (tuple, list)):
+            # Band target for moving phases (DA-C3): deviation is distance
+            # outside the band, 0 inside it.
+            lo, hi = min(knee_target), max(knee_target)
+            deviation = max(lo - knee_angle, knee_angle - hi, 0)
+        else:
+            deviation = abs(knee_angle - knee_target)
+
+        if deviation <= knee_tolerance:
             feedback['knee'] = JointFeedback(
                 status=FormStatus.CORRECT,
                 angle=knee_angle,
                 message="Good depth"
             )
-        elif abs(knee_angle - knee_target) <= knee_tolerance * 1.5:
+        elif deviation <= knee_tolerance * 1.5:
             feedback['knee'] = JointFeedback(
                 status=FormStatus.NEEDS_ADJUSTMENT,
                 angle=knee_angle,

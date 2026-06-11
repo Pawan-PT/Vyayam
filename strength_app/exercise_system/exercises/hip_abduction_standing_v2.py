@@ -75,11 +75,15 @@ class HipAbductionStandingV2:
     
     def get_target_poses(self):
         return {
-            'standing': {'max_abduction': 90, 'back': 165, 'tolerance': 10},
-            'lifting': {'max_abduction': 115, 'back': 165, 'tolerance': 10},
-            'lifted': {'max_abduction': 135, 'back': 165, 'tolerance': 10},
-            'holding': {'max_abduction': 135, 'back': 165, 'tolerance': 8},
-            'lowering': {'max_abduction': 115, 'back': 165, 'tolerance': 10}
+            # NOTE (DA-C3): back/hip-flexion angle removed from SCORED targets.
+            # It is either a synthetic lean proxy or a hip-flexion measure whose
+            # per-phase value varies too widely to score against a fixed target;
+            # spinal position is NOT measurable with MediaPipe's 33 landmarks.
+            'standing': {'max_abduction': 90, 'tolerance': 10},
+            'lifting': {'max_abduction': 115, 'tolerance': 10},
+            'lifted': {'max_abduction': 135, 'tolerance': 10},
+            'holding': {'max_abduction': 135, 'tolerance': 8},
+            'lowering': {'max_abduction': 115, 'tolerance': 10}
         }
     
     def validate_form(self, angles, phase):

@@ -145,22 +145,22 @@ class PartialSquatsV2:
         return {
             'standing': {
                 'avg_knee': 175,      # Nearly straight
-                'avg_back': 165,      # Upright posture
+            # NOTE (DA-C3): back/hip-flexion angle removed from SCORED targets.
+            # It is either a synthetic lean proxy or a hip-flexion measure whose
+            # per-phase value varies too widely to score against a fixed target;
+            # spinal position is NOT measurable with MediaPipe's 33 landmarks.
                 'tolerance': 10
             },
             'descending': {
                 'avg_knee': 145,      # Midway down
-                'avg_back': 160,      # Slight forward lean OK
                 'tolerance': 15
             },
             'bottom': {
                 'avg_knee': self.target_depth,  # Target depth (110-130°)
-                'avg_back': 155,      # Maintain back straightness
                 'tolerance': 10
             },
             'ascending': {
                 'avg_knee': 155,      # Coming back up
-                'avg_back': 160,
                 'tolerance': 15
             }
         }

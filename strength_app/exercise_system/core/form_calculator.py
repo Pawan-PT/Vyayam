@@ -56,14 +56,28 @@ class FormCalculator:
         for angle_name, target_value in target_angles.items():
             if angle_name == 'tolerance':
                 continue  # Skip tolerance key
-            
+
             current_value = angles.get(angle_name)
-            
+
             if current_value is None:
                 continue  # Skip if angle not measured
-            
-            # Calculate error
-            error = abs(current_value - target_value)
+
+            if isinstance(target_value, bool) or isinstance(target_value, str):
+                continue  # Boolean/string hints are not scoreable angles
+
+            # Band target (lo, hi): for MOVING phases (descending/ascending)
+            # the joint legitimately sweeps a range, so any angle inside the
+            # band is correct and error is distance to the nearest bound.
+            # Static phases keep scalar targets. (DA-C3)
+            if isinstance(target_value, (tuple, list)):
+                lo, hi = min(target_value), max(target_value)
+                if lo <= current_value <= hi:
+                    error = 0.0
+                else:
+                    error = lo - current_value if current_value < lo else current_value - hi
+            else:
+                # Calculate error
+                error = abs(current_value - target_value)
             
             # Score based on error magnitude
             if error <= FormCalculator.ANGLE_PERFECT_THRESHOLD:
