@@ -128,10 +128,10 @@ class NordicHamstringCurlV2:
                 )
         return feedback
 
-    def update_rep_counter(self, angle, feedback, voice):
+    def update_rep_counter(self, angles, feedback, voice):
         rep_done = False
         warnings = []
-        angles_dict = angle if isinstance(angle, dict) else {}
+        angles_dict = angles if isinstance(angles, dict) else {}
         fall_progress = angles_dict.get('fall_progress', 0.0)
 
         if self.phase == "kneeling" and fall_progress > 0.15:

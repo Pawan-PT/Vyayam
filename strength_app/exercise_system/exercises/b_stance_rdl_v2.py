@@ -81,10 +81,10 @@ class BStanceRdlV2:
             )
         return feedback
 
-    def update_rep_counter(self, angle, feedback, voice):
+    def update_rep_counter(self, angles, feedback, voice):
         rep_done = False
         warnings = []
-        angles_dict = angle if isinstance(angle, dict) else {}
+        angles_dict = angles if isinstance(angles, dict) else {}
         avg_hip = angles_dict.get('avg_hip', 175)
 
         if self.phase == "standing" and avg_hip < 155:

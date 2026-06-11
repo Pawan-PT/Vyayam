@@ -21,8 +21,9 @@ class PowerSkipV2:
         self.target_reps = target_reps
         self.rep_count = 0
         self.rejected_count = 0
-        self.phase = "skip_right"
-        self.last_phase = "skip_right"
+        self.phase = "start"  # DA-EX-init: was 'skip_right' — a phase the state machine never handles,
+        # so it could never advance and never counted a rep.
+        self.last_phase = "start"
         self.probation_mode = True
         self.practice_reps_needed = 3
         self.practice_reps_completed = 0
@@ -81,10 +82,10 @@ class PowerSkipV2:
             )
         return feedback
 
-    def update_rep_counter(self, angle, feedback, voice):
+    def update_rep_counter(self, angles, feedback, voice):
         rep_done = False
         warnings = []
-        angles_dict = angle if isinstance(angle, dict) else {}
+        angles_dict = angles if isinstance(angles, dict) else {}
         avg_hip = angles_dict.get('avg_hip', 175)
         if self.phase == "start" and avg_hip < 155:
             self.phase = "active"

@@ -36,8 +36,9 @@ class WeightedPullUpV2:
         self.target_reps = target_reps
         self.rep_count = 0
         self.rejected_count = 0
-        self.phase = "start"
-        self.last_phase = "start"
+        self.phase = "hang"  # DA-EX-init: was 'start' — a phase the state machine never handles,
+        # so it could never advance and never counted a rep.
+        self.last_phase = "hang"
         self.probation_mode = True
         self.practice_reps_needed = 3
         self.practice_reps_completed = 0

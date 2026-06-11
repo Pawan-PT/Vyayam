@@ -101,10 +101,10 @@ class PlancheLeanV2:
                 )
         return feedback
 
-    def update_rep_counter(self, angle, feedback, voice):
+    def update_rep_counter(self, angles, feedback, voice):
         rep_done = False
         warnings = []
-        angles_dict = angle if isinstance(angle, dict) else {}
+        angles_dict = angles if isinstance(angles, dict) else {}
         lean = angles_dict.get('lean_offset', 0)
 
         if self.phase == "setup" and lean > 8:

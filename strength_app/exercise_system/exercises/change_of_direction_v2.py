@@ -153,11 +153,11 @@ class ChangeOfDirectionV2:
                 )
         return feedback
 
-    def update_rep_counter(self, angle, feedback, voice):
+    def update_rep_counter(self, angles, feedback, voice):
         """Detect sprint → decel → cut → drive cycle via knee flexion and hip velocity."""
         rep_done = False
         warnings = []
-        angles_dict = angle if isinstance(angle, dict) else {}
+        angles_dict = angles if isinstance(angles, dict) else {}
         plant_knee = angles_dict.get('plant_knee', 170)
         avg_knee = angles_dict.get('avg_knee', 170)
         hip_lat_vel = angles_dict.get('hip_lateral_vel', 0)

@@ -80,10 +80,10 @@ class SkippingLungeV2:
             )
         return feedback
 
-    def update_rep_counter(self, angle, feedback, voice):
+    def update_rep_counter(self, angles, feedback, voice):
         rep_done = False
         warnings = []
-        angles_dict = angle if isinstance(angle, dict) else {}
+        angles_dict = angles if isinstance(angles, dict) else {}
         front_knee = angles_dict.get('front_knee', 170)
 
         if self.phase == "standing" and front_knee < 145:

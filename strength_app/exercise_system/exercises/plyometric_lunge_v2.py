@@ -119,10 +119,10 @@ class PlyometricLungeV2:
                 )
         return feedback
 
-    def update_rep_counter(self, angle, feedback, voice):
+    def update_rep_counter(self, angles, feedback, voice):
         rep_done = False
         warnings = []
-        angles_dict = angle if isinstance(angle, dict) else {}
+        angles_dict = angles if isinstance(angles, dict) else {}
         min_knee = angles_dict.get('min_knee', 170)
         hip_ratio = angles_dict.get('hip_height_ratio', 0.6)
 

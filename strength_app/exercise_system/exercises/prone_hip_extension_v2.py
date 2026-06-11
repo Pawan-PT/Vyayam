@@ -111,10 +111,10 @@ class ProneHipExtensionV2:
                 )
         return feedback
 
-    def update_rep_counter(self, angle, feedback, voice):
+    def update_rep_counter(self, angles, feedback, voice):
         rep_done = False
         warnings = []
-        angles_dict = angle if isinstance(angle, dict) else {}
+        angles_dict = angles if isinstance(angles, dict) else {}
         active_hip = angles_dict.get('active_hip_ext', 180)
 
         if self.phase == "resting" and active_hip < 170:

@@ -70,7 +70,7 @@ class PlankShoulderTapV2:
         feedback = {}
         return feedback
 
-    def update_rep_counter(self, angle, feedback, voice):
+    def update_rep_counter(self, angles, feedback, voice):
         """State machine for plank shoulder tap.
 
         Phase "plank"   — both wrists approximately level (on the ground).
@@ -87,7 +87,7 @@ class PlankShoulderTapV2:
         """
         rep_done = False
         warnings = []
-        angles_dict = angle if isinstance(angle, dict) else {}
+        angles_dict = angles if isinstance(angles, dict) else {}
 
         # Pull wrist coordinates from the joints_coords sub-dict if present.
         # calculate_angles() stores them as pixel (x, y) tuples.
