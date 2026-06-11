@@ -809,7 +809,17 @@ def v1_session_complete(request):
         state = patient.periodisation
         state.total_sessions_this_cycle += 1
 
-        # Advance week when enough sessions have been completed
+        # Advance week when enough sessions have been completed.
+        #
+        # DA-C11 — deload gate rule: "Mandatory deload = max(counter,
+        # calendar) reaches the limit." This session-counted week drives
+        # phase context, but it drifts from calendar time (a 3x/week
+        # patient training 6x/week reaches 'week 4' in 2 calendar weeks;
+        # 1x/week takes 12). The authoritative mandatory gate is
+        # check_deload_needed(), which checks BOTH this counter and
+        # last_deload_date calendar arithmetic (anchored at state
+        # creation, refreshed when a deload phase completes). Either
+        # reaching the limit triggers deload; the conservative side wins.
         spw = max(1, patient.sessions_per_week or 3)
         if state.total_sessions_this_cycle % spw == 0:
             state.current_week += 1

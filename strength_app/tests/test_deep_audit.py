@@ -78,6 +78,16 @@ class TestDAC2DeloadFallback(TestCase):
         needed, reason = check_deload_needed(patient)
         self.assertFalse(needed)
 
+    def test_da_c11_new_state_anchors_calendar_gate(self):
+        # DA-C11: the engine anchors last_deload_date at state creation so
+        # the calendar gate works even for patients training less often
+        # than sessions_per_week (whose session-counted weeks under-count).
+        from strength_app.v1_prescription_engine import _get_or_create_periodisation
+
+        patient = _make_patient(pid='DA005', phone='9000009005')
+        state = _get_or_create_periodisation(patient)
+        self.assertEqual(state.last_deload_date, date.today())
+
     def test_da_c11_counter_wins_when_ahead_of_calendar(self):
         # Counter 5 but deload 1 week ago: counter is stale-high, but the
         # documented rule is max(counter, calendar) → deload True is the

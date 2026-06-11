@@ -172,6 +172,11 @@ def _get_or_create_periodisation(patient):
             'macrocycle_number': 1,
             'weeks_since_deload': 0,
             'phase_start_date': date.today(),
+            # DA-C11: anchor the calendar deload gate at the start of
+            # loading. Without this, a patient training less often than
+            # sessions_per_week could go far beyond 4 calendar weeks
+            # before the session-counted gate fired (no date to check).
+            'last_deload_date': date.today(),
         },
     )
     return state
