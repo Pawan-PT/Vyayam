@@ -106,10 +106,14 @@ class PrescriptionAndSessionTests(TestCase):
         self.assertTrue(strength)
         self.assertEqual(strength[0]["exercise_id"], "partial_squats")
 
-    def test_execute_workout_session_rejects_meta(self):
+    def test_execute_workout_session_handles_meta(self):
+        # DA-C8: a prescription containing a 'meta' dict section used to
+        # crash with AttributeError (dict iterated as exercise list). It
+        # must now be skipped and the session execute normally.
         prescription = generate_prescription(self.patient)
-        with self.assertRaises(AttributeError):
-            execute_workout_session(self.patient, prescription)
+        self.assertIn("meta", prescription)
+        session = execute_workout_session(self.patient, prescription)
+        self.assertIsInstance(session, WorkoutSession)
 
     def test_execute_workout_session_without_meta(self):
         prescription = {

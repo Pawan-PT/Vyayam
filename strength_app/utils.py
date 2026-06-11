@@ -503,8 +503,14 @@ def execute_workout_session(patient, prescription_data):
     # Convert category strings back to enums if needed
     prescription_with_enums = {}
     for section, exercises in prescription_data.items():
+        # DA-C8: prescriptions carry non-list sections ('meta' dict etc.) —
+        # iterating a dict here yielded string keys and crashed on .copy().
+        if not isinstance(exercises, list):
+            continue
         prescription_with_enums[section] = []
         for exercise in exercises:
+            if not isinstance(exercise, dict):
+                continue  # defensive: skip malformed items
             exercise_copy = exercise.copy()
             # Convert category string to enum if it's a string
             if 'category' in exercise_copy and isinstance(exercise_copy['category'], str):
