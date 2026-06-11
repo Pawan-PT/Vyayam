@@ -277,29 +277,32 @@ def check_deload_needed(patient, periodisation_state=None):
 
     Returns: (bool: needs_deload, str: reason)
     """
+    from django.core.exceptions import ObjectDoesNotExist
     from .v1_constants import DELOAD_CONFIG
-    from datetime import date, timedelta
+    from datetime import date
 
     max_weeks = DELOAD_CONFIG.get('trigger_every_n_weeks', 4)
 
-    # 1. Use supplied periodisation_state
-    if periodisation_state:
-        if periodisation_state.weeks_since_deload >= max_weeks:
-            return True, f'Mandatory deload: {periodisation_state.weeks_since_deload} weeks of progressive loading (limit {max_weeks})'
-
-    # 2. Fallback: resolve state from patient directly if caller omitted it
-    else:
+    # Resolve state: supplied by caller, else from the patient's OneToOne
+    # (related_name is 'periodisation' — see models.PeriodisationState).
+    state = periodisation_state
+    if state is None:
         try:
-            state = patient.periodisation_state
-            if state.weeks_since_deload >= max_weeks:
-                return True, f'Mandatory deload: {state.weeks_since_deload} weeks of progressive loading (limit {max_weeks})'
-            # Also check by date in case weeks_since_deload counter drifted
-            if state.last_deload_date:
-                weeks_elapsed = (date.today() - state.last_deload_date).days // 7
-                if weeks_elapsed >= max_weeks:
-                    return True, f'Mandatory deload: {weeks_elapsed} weeks elapsed since last deload (limit {max_weeks})'
-        except Exception:
-            pass  # No periodisation state yet — new patient, skip time gate
+            state = patient.periodisation
+        except ObjectDoesNotExist:
+            state = None  # No periodisation state yet — new patient, skip time gate
+
+    # Mandatory time gate = max(session-driven counter, calendar weeks since
+    # last deload) reaching the limit. Both checks run regardless of how the
+    # state was obtained, so a caller passing a state with a stale counter
+    # cannot bypass the calendar rule and vice versa (DA-C2 / DA-C11).
+    if state is not None:
+        if state.weeks_since_deload >= max_weeks:
+            return True, f'Mandatory deload: {state.weeks_since_deload} weeks of progressive loading (limit {max_weeks})'
+        if state.last_deload_date:
+            weeks_elapsed = (date.today() - state.last_deload_date).days // 7
+            if weeks_elapsed >= max_weeks:
+                return True, f'Mandatory deload: {weeks_elapsed} weeks elapsed since last deload (limit {max_weeks})'
 
     # Check recent session feedback
     recent_feedbacks = patient.session_feedbacks.order_by('-created_at')[:5]
