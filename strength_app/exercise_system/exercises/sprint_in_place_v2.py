@@ -154,7 +154,7 @@ class SprintInPlaceV2:
                 'tolerance': 15
             },
             'lowering': {
-                'working_hip_flexion': 120,  # Returning
+                'working_hip_flexion': (85, 160),  # Returning
                 'tolerance': 20
             }
         }

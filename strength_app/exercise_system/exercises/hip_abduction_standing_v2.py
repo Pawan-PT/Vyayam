@@ -80,10 +80,10 @@ class HipAbductionStandingV2:
             # per-phase value varies too widely to score against a fixed target;
             # spinal position is NOT measurable with MediaPipe's 33 landmarks.
             'standing': {'max_abduction': 90, 'tolerance': 10},
-            'lifting': {'max_abduction': 115, 'tolerance': 10},
+            'lifting': {'max_abduction': (90, 135), 'tolerance': 10},
             'lifted': {'max_abduction': 135, 'tolerance': 10},
             'holding': {'max_abduction': 135, 'tolerance': 8},
-            'lowering': {'max_abduction': 115, 'tolerance': 10}
+            'lowering': {'max_abduction': (90, 135), 'tolerance': 10}
         }
     
     def validate_form(self, angles, phase):

@@ -88,7 +88,7 @@ class SplitSquatStaticV2:
     def get_target_poses(self):
         return {
             'standing':   {'front_knee': 170, 'tolerance': 10},
-            'descending': {'front_knee': 120, 'tolerance': 15},
+            'descending': {'front_knee': (90, 170), 'tolerance': 15},
             'bottom':     {'front_knee': 90,  'tolerance': 12},
             'ascending':  {'front_knee': 130, 'tolerance': 15},
         }

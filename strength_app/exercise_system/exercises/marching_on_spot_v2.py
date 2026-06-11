@@ -193,7 +193,7 @@ class MarchingOnSpotV2:
                 'tolerance': 10
             },
             'lifting': {
-                'lifted_hip': 110,
+                'lifted_hip': (85, 170),
                 'standing_knee': 165,
                 'tolerance': 12
             },
@@ -203,7 +203,7 @@ class MarchingOnSpotV2:
                 'tolerance': 10
             },
             'lowering': {
-                'lifted_hip': 120,
+                'lifted_hip': (85, 170),
                 'standing_knee': 165,
                 'tolerance': 12
             }

@@ -143,8 +143,8 @@ class HighKneesV2:
                 'tolerance': 20
             },
             'raising': {
-                'active_hip_angle': 120,  # Mid raise
-                'active_knee_height': 30,
+                'active_hip_angle': (75, 175),  # Mid raise
+                'active_knee_height': (0, 60),
                 'tolerance': 25
             },
             'up': {

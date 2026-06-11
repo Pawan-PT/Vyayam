@@ -143,7 +143,7 @@ class StraightLegRaisesV2:
                 'tolerance': 8
             },
             'lifting': {
-                'lift_angle': 25,
+                'lift_angle': (0, 45),
                 'knee_angle': 175,
                 'tolerance': 10
             },
@@ -153,7 +153,7 @@ class StraightLegRaisesV2:
                 'tolerance': 8
             },
             'lowering': {
-                'lift_angle': 25,
+                'lift_angle': (0, 45),
                 'knee_angle': 175,
                 'tolerance': 10
             }

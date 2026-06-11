@@ -93,7 +93,7 @@ class HipThrustBodyweightV2:
             'lowered':  {'avg_hip_ext': 70,  'avg_knee': 90,  'tolerance': 15},
             'rising':   {'avg_hip_ext': 120, 'avg_knee': 90,  'tolerance': 15},
             'holding':  {'avg_hip_ext': 175, 'avg_knee': 90,  'tolerance': 12},
-            'lowering': {'avg_hip_ext': 120, 'avg_knee': 90,  'tolerance': 15},
+            'lowering': {'avg_hip_ext': (70, 175), 'avg_knee': 90,  'tolerance': 15},
         }
 
     def validate_form(self, angles, phase):

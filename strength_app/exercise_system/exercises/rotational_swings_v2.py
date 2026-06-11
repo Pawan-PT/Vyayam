@@ -121,7 +121,7 @@ class RotationalSwingsV2:
                 'tolerance': 10
             },
             'rotating': {
-                'rotation': 25,  # Mid rotation
+                'rotation': (5, 45),  # Mid rotation
                 'tolerance': 15
             },
             'peak': {

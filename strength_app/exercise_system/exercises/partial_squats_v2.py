@@ -152,7 +152,7 @@ class PartialSquatsV2:
                 'tolerance': 10
             },
             'descending': {
-                'avg_knee': 145,      # Midway down
+                'avg_knee': (145, 175),      # Midway down
                 'tolerance': 15
             },
             'bottom': {
@@ -160,7 +160,7 @@ class PartialSquatsV2:
                 'tolerance': 10
             },
             'ascending': {
-                'avg_knee': 155,      # Coming back up
+                'avg_knee': (145, 175),      # Coming back up
                 'tolerance': 15
             }
         }
@@ -182,6 +182,10 @@ class PartialSquatsV2:
         # Check knee angle
         knee_angle = angles.get('avg_knee', 0)
         knee_target = targets['avg_knee']
+        if isinstance(knee_target, (tuple, list)):
+            # DA-EX-band: band target — deviation is distance outside it
+            _lo, _hi = min(knee_target), max(knee_target)
+            knee_target = min(max(knee_angle, _lo), _hi)
         knee_tolerance = targets['tolerance']
         
         knee_diff = abs(knee_angle - knee_target)

@@ -91,7 +91,7 @@ class SingleLegDeadBugV2:
         """Define target angles for each phase."""
         return {
             'start': {'left_hip_flex': 90, 'right_hip_flex': 90, 'tolerance': 15},
-            'extending': {'left_hip_flex': 170, 'tolerance': 15},
+            'extending': {'left_hip_flex': (90, 170), 'tolerance': 15},
             'return': {'left_hip_flex': 90, 'tolerance': 15},
         }
 

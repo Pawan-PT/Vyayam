@@ -187,8 +187,8 @@ class BulgarianSplitSquatsV2:
                 'tolerance': 10
             },
             'descending': {
-                'front_knee': 135,
-                'back_knee': 110,
+                'front_knee': (90, 175),
+                'back_knee': (90, 140),
                 'back': 165,
                 'tolerance': 12
             },
@@ -199,8 +199,8 @@ class BulgarianSplitSquatsV2:
                 'tolerance': 10
             },
             'ascending': {
-                'front_knee': 135,
-                'back_knee': 110,
+                'front_knee': (90, 175),
+                'back_knee': (90, 140),
                 'back': 165,
                 'tolerance': 12
             }

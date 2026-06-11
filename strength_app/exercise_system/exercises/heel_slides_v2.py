@@ -137,7 +137,7 @@ class HeelSlidesV2:
                 'tolerance': 8
             },
             'sliding': {
-                'avg_knee': 135,
+                'avg_knee': (90, 175),
                 'tolerance': 15
             },
             'bent': {
@@ -149,7 +149,7 @@ class HeelSlidesV2:
                 'tolerance': 15
             },
             'returning': {
-                'avg_knee': 135,
+                'avg_knee': (90, 175),
                 'tolerance': 15
             }
         }
@@ -178,6 +178,10 @@ class HeelSlidesV2:
         # Phase-specific validation
         knee_angle = angles.get('avg_knee', 0)
         knee_target = targets['avg_knee']
+        if isinstance(knee_target, (tuple, list)):
+            # DA-EX-band: band target — deviation is distance outside it
+            _lo, _hi = min(knee_target), max(knee_target)
+            knee_target = min(max(knee_angle, _lo), _hi)
         knee_tolerance = targets['tolerance']
         
         if phase == 'straight':

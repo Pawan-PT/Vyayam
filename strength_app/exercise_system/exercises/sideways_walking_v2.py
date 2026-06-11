@@ -146,7 +146,7 @@ class SidewaysWalkingV2:
                 'tolerance': 10
             },
             'returning': {
-                'foot_separation': 50,
+                'foot_separation': (40, 85),
                 'avg_knee': 145,
                 'tolerance': 10
             }

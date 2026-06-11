@@ -100,7 +100,7 @@ class SingleLegHipThrustV2:
             'lowered':  {'active_hip_ext': 70,  'tolerance': 15},
             'rising':   {'active_hip_ext': 120, 'tolerance': 15},
             'holding':  {'active_hip_ext': 175, 'tolerance': 12},
-            'lowering': {'active_hip_ext': 120, 'tolerance': 15},
+            'lowering': {'active_hip_ext': (70, 175), 'tolerance': 15},
         }
 
     def validate_form(self, angles, phase):

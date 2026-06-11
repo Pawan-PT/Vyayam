@@ -65,7 +65,7 @@ class BandPullApartV2:
     def get_target_poses(self):
         return {
             'hanging': {'avg_elbow': 170, 'tolerance': 15},
-            'pulling': {'avg_elbow': 100, 'tolerance': 20},
+            'pulling': {'avg_elbow': (100, 170), 'tolerance': 20},
             'top':     {'avg_elbow': 170,  'tolerance': 15},
             'lowering':{'avg_elbow': 100, 'tolerance': 20},
         }

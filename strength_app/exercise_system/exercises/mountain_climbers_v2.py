@@ -162,7 +162,7 @@ class MountainClimbersV2:
                 'tolerance': 15
             },
             'returning': {
-                'working_hip_flexion': 120,  # Returning
+                'working_hip_flexion': (70, 120),  # Returning
                 'tolerance': 20
             }
         }

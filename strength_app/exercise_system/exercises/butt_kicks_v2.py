@@ -142,7 +142,7 @@ class ButtKicksV2:
                 'tolerance': 10
             },
             'kicking': {
-                'working_knee_angle': 120,  # Mid-kick
+                'working_knee_angle': (60, 170),  # Mid-kick
                 'tolerance': 15
             },
             'peak': {
@@ -150,7 +150,7 @@ class ButtKicksV2:
                 'tolerance': 15
             },
             'lowering': {
-                'working_knee_angle': 120,  # Returning
+                'working_knee_angle': (60, 170),  # Returning
                 'tolerance': 15
             }
         }

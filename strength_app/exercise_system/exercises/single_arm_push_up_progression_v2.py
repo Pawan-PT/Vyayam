@@ -84,8 +84,8 @@ class SingleArmPushUpProgressionV2:
 
     def get_target_poses(self):
         return {
-            'up':   {'active_elbow': 168, 'tolerance': 12},
-            'down': {'active_elbow': 90,  'tolerance': 18},
+            'up':   {'active_elbow': (90, 168), 'tolerance': 12},
+            'down': {'active_elbow': (90, 168),  'tolerance': 18},
         }
 
     def validate_form(self, angles, phase):

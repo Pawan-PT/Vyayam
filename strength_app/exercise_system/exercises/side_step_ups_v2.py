@@ -136,8 +136,8 @@ class SideStepUpsV2:
                 'tolerance': 15
             },
             'pushing': {
-                'knee': 130,  # Extending
-                'hip': 140,
+                'knee': (90, 175),  # Extending
+                'hip': (90, 175),
                 'tolerance': 15
             },
             'top': {
@@ -146,8 +146,8 @@ class SideStepUpsV2:
                 'tolerance': 10
             },
             'descending': {
-                'knee': 120,  # Controlled bend
-                'hip': 130,
+                'knee': (90, 175),  # Controlled bend
+                'hip': (90, 175),
                 'tolerance': 15
             }
         }
@@ -160,6 +160,10 @@ class SideStepUpsV2:
         # Knee angle
         knee_angle = angles.get('knee', 0)
         knee_target = targets['knee']
+        if isinstance(knee_target, (tuple, list)):
+            # DA-EX-band: band target — deviation is distance outside it
+            _lo, _hi = min(knee_target), max(knee_target)
+            knee_target = min(max(knee_angle, _lo), _hi)
         
         if abs(knee_angle - knee_target) <= 12:
             feedback['knee'] = JointFeedback(
@@ -177,6 +181,10 @@ class SideStepUpsV2:
         # Hip angle
         hip_angle = angles.get('hip', 0)
         hip_target = targets['hip']
+        if isinstance(hip_target, (tuple, list)):
+            # DA-EX-band: band target — deviation is distance outside it
+            _lo, _hi = min(hip_target), max(hip_target)
+            hip_target = min(max(hip_angle, _lo), _hi)
         
         if abs(hip_angle - hip_target) <= 12:
             feedback['hip'] = JointFeedback(

@@ -139,9 +139,9 @@ class GluteBridgeV2:
                 'tolerance': 10
             },
             'lifting': {
-                'avg_hip': 140,
-                'avg_knee': 95,
-                'body_alignment': 160,
+                'avg_hip': (90, 170),
+                'avg_knee': (90, 100),
+                'body_alignment': (160, 170),
                 'tolerance': 12
             },
             'top': {
@@ -151,8 +151,8 @@ class GluteBridgeV2:
                 'tolerance': 8
             },
             'lowering': {
-                'avg_hip': 120,
-                'avg_knee': 95,
+                'avg_hip': (90, 170),
+                'avg_knee': (90, 100),
                 'tolerance': 12
             }
         }

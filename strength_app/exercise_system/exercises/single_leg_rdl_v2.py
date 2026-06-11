@@ -142,9 +142,9 @@ class SingleLegRDLV2:
                 'tolerance': 10
             },
             'hinging': {
-                'stance_knee': 165,
+                'stance_knee': (165, 175),
                 'back_leg_knee': 175,
-                'hip_hinge': 50,
+                'hip_hinge': (20, 85),
                 'tolerance': 12
             },
             'bottom': {
@@ -154,9 +154,9 @@ class SingleLegRDLV2:
                 'tolerance': 10
             },
             'rising': {
-                'stance_knee': 165,
+                'stance_knee': (165, 175),
                 'back_leg_knee': 175,
-                'hip_hinge': 50,
+                'hip_hinge': (20, 85),
                 'tolerance': 12
             }
         }

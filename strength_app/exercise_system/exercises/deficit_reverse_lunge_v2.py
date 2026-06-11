@@ -96,7 +96,7 @@ class DeficitReverseLungeV2:
         """Deeper bottom angle (80°) due to platform deficit."""
         return {
             'standing':   {'front_knee': 170, 'tolerance': 10},
-            'descending': {'front_knee': 120, 'tolerance': 15},
+            'descending': {'front_knee': (80, 170), 'tolerance': 15},
             'bottom':     {'front_knee': 80,  'tolerance': 12},
             'ascending':  {'front_knee': 130, 'tolerance': 15},
         }

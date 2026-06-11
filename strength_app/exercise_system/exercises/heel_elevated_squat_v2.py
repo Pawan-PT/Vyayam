@@ -87,7 +87,7 @@ class HeelElevatedSquatV2:
         """Deeper bottom (80°) expected with heel elevation."""
         return {
             'standing':   {'avg_knee': 175, 'tolerance': 10},
-            'descending': {'avg_knee': 125, 'tolerance': 15},
+            'descending': {'avg_knee': (80, 175), 'tolerance': 15},
             'bottom':     {'avg_knee': 80,  'tolerance': 12},
             'ascending':  {'avg_knee': 125, 'tolerance': 15},
         }

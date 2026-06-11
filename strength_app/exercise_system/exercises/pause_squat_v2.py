@@ -84,7 +84,7 @@ class PauseSquatV2:
     def get_target_poses(self):
         return {
             'standing':   {'avg_knee': 175, 'tolerance': 10},
-            'descending': {'avg_knee': 130, 'tolerance': 15},
+            'descending': {'avg_knee': (90, 175), 'tolerance': 15},
             'pausing':    {'avg_knee': 90,  'tolerance': 12},
             'ascending':  {'avg_knee': 130, 'tolerance': 15},
         }

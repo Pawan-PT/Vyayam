@@ -108,7 +108,7 @@ class TricepExtensionsV2:
                 'tolerance': 12
             },
             'extending': {
-                'avg_elbow': 110,  # Midway extension
+                'avg_elbow': (45, 170),  # Midway extension
                 'tolerance': 15
             },
             'straight': {
@@ -116,7 +116,7 @@ class TricepExtensionsV2:
                 'tolerance': 10
             },
             'flexing': {
-                'avg_elbow': 100,  # Lowering back down
+                'avg_elbow': (45, 170),  # Lowering back down
                 'tolerance': 15
             }
         }
@@ -129,6 +129,10 @@ class TricepExtensionsV2:
         # Elbow angle
         elbow_angle = angles.get('avg_elbow', 0)
         elbow_target = targets['avg_elbow']
+        if isinstance(elbow_target, (tuple, list)):
+            # DA-EX-band: band target — deviation is distance outside it
+            _lo, _hi = min(elbow_target), max(elbow_target)
+            elbow_target = min(max(elbow_angle, _lo), _hi)
         
         if abs(elbow_angle - elbow_target) <= 12:
             feedback['elbow'] = JointFeedback(

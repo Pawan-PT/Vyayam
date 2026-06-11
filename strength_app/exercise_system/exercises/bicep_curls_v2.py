@@ -108,7 +108,7 @@ class BicepCurlsV2:
                 'tolerance': 10
             },
             'flexing': {
-                'avg_elbow': 100,  # Midway curl
+                'avg_elbow': (40, 170),  # Midway curl
                 'tolerance': 15
             },
             'contracted': {
@@ -116,7 +116,7 @@ class BicepCurlsV2:
                 'tolerance': 12
             },
             'extending': {
-                'avg_elbow': 120,  # Lowering
+                'avg_elbow': (40, 170),  # Lowering
                 'tolerance': 15
             }
         }
@@ -129,6 +129,10 @@ class BicepCurlsV2:
         # Elbow angle
         elbow_angle = angles.get('avg_elbow', 0)
         elbow_target = targets['avg_elbow']
+        if isinstance(elbow_target, (tuple, list)):
+            # DA-EX-band: band target — deviation is distance outside it
+            _lo, _hi = min(elbow_target), max(elbow_target)
+            elbow_target = min(max(elbow_angle, _lo), _hi)
         
         if abs(elbow_angle - elbow_target) <= 12:
             feedback['elbow'] = JointFeedback(

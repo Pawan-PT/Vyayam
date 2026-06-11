@@ -88,7 +88,7 @@ class HinduPushUpV2:
             'pike':      {'avg_elbow': 165, 'tolerance': 15},
             'diving':    {'avg_elbow': 100, 'tolerance': 20},
             'cobra':     {'avg_elbow': 160, 'tolerance': 15},
-            'returning': {'avg_elbow': 130, 'tolerance': 20},
+            'returning': {'avg_elbow': (100, 165), 'tolerance': 20},
         }
 
     def validate_form(self, angles, phase):

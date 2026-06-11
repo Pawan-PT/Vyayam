@@ -65,7 +65,7 @@ class JumpingPullUpV2:
     def get_target_poses(self):
         return {
             'hanging': {'avg_elbow': 170, 'tolerance': 15},
-            'pulling': {'avg_elbow': 100, 'tolerance': 20},
+            'pulling': {'avg_elbow': (30, 170), 'tolerance': 20},
             'top':     {'avg_elbow': 30,  'tolerance': 15},
             'lowering':{'avg_elbow': 100, 'tolerance': 20},
         }
@@ -78,6 +78,10 @@ class JumpingPullUpV2:
             target_val = targets.get(angle_key)
             if target_val is None or angle_key not in angles:
                 continue
+            if isinstance(target_val, (tuple, list)):
+                # DA-EX-band: band target — deviation is distance outside it
+                _lo, _hi = min(target_val), max(target_val)
+                target_val = min(max(angles[angle_key], _lo), _hi)
             diff = abs(angles[angle_key] - target_val)
             if diff <= tolerance:
                 status, msg = FormStatus.CORRECT, 'Good position'

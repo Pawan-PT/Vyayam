@@ -88,7 +88,7 @@ class GobletSquatV2:
         """Deeper bottom position (85°) expected due to counterbalance."""
         return {
             'standing':   {'avg_knee': 175, 'tolerance': 10},
-            'descending': {'avg_knee': 130, 'tolerance': 15},
+            'descending': {'avg_knee': (85, 175), 'tolerance': 15},
             'bottom':     {'avg_knee': 85,  'tolerance': 12},
             'ascending':  {'avg_knee': 130, 'tolerance': 15},
         }

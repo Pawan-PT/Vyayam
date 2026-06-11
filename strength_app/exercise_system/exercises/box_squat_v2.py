@@ -87,7 +87,7 @@ class BoxSquatV2:
     def get_target_poses(self):
         return {
             'standing':   {'avg_knee': 175, 'tolerance': 10},
-            'descending': {'avg_knee': 135, 'tolerance': 15},
+            'descending': {'avg_knee': (105, 175), 'tolerance': 15},
             'touching':   {'avg_knee': 105, 'tolerance': 12},
             'ascending':  {'avg_knee': 135, 'tolerance': 15},
         }

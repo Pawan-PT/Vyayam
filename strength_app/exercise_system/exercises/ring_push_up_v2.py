@@ -78,8 +78,8 @@ class RingPushUpV2:
 
     def get_target_poses(self):
         return {
-            'up':   {'avg_elbow': 168, 'tolerance': 12},
-            'down': {'avg_elbow': 90,  'tolerance': 15},
+            'up':   {'avg_elbow': (90, 168), 'tolerance': 12},
+            'down': {'avg_elbow': (90, 168),  'tolerance': 15},
         }
 
     def validate_form(self, angles, phase):
