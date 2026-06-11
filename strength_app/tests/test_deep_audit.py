@@ -166,6 +166,65 @@ class TestDAC5RedFlagAuditTrail(TestCase):
         self.assertEqual(event.new_flags, ['hernia'])
 
 
+class TestDAC6EmergencyScreening(TestCase):
+    """C6 — emergency screens (cauda equina/DVT/cardiac/systemic patterns)
+    hard-stop with urgent-care copy, audit event, and engine refusal."""
+
+    def setUp(self):
+        self.patient = _make_patient(pid='DAC601', phone='9000009601')
+        session = self.client.session
+        session['patient_id'] = self.patient.patient_id
+        session.save()
+
+    def test_da_c6_each_new_option_stops_with_urgent_copy(self):
+        from django.urls import reverse
+        from strength_app.models import RedFlagEvent
+        from strength_app.v1_onboarding_views import URGENT_STOP_IDS
+        from strength_app.v1_prescription_engine import generate_v1_session
+
+        self.assertEqual(len(URGENT_STOP_IDS), 5)
+        for stop_id in sorted(URGENT_STOP_IDS):
+            with self.subTest(stop_id=stop_id):
+                resp = self.client.post(reverse('onboarding_red_flags'), data={
+                    'absolute_stop_conditions': [stop_id],
+                    'surgical_history': '', 'medications': '',
+                })
+                self.assertEqual(resp.status_code, 200)
+                self.assertContains(resp, 'seek urgent medical care')
+
+                self.patient.refresh_from_db()
+                self.assertTrue(self.patient.absolute_stop)
+                # Internal ID must not leak into patient-facing copy (R4)
+                self.assertNotIn(stop_id, self.patient.absolute_stop_reason)
+
+                # Engine refuses to generate a session
+                data = generate_v1_session(self.patient)
+                self.assertEqual(data['status'], 'stopped')
+
+                # Reset for next subtest (confirmation required to clear)
+                self.client.post(reverse('onboarding_red_flags'), data={
+                    'confirm_stop_clear': '1',
+                    'surgical_history': '', 'medications': '',
+                })
+                self.patient.refresh_from_db()
+                self.assertFalse(self.patient.absolute_stop)
+
+        # Audit events recorded for every set + clear
+        self.assertGreaterEqual(
+            RedFlagEvent.objects.filter(patient=self.patient).count(), 10
+        )
+
+    def test_da_c6_classic_stop_keeps_generic_copy(self):
+        from django.urls import reverse
+        resp = self.client.post(reverse('onboarding_red_flags'), data={
+            'absolute_stop_conditions': ['acute_fracture'],
+            'surgical_history': '', 'medications': '',
+        })
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'Consult Your Clinician')
+        self.assertNotContains(resp, 'seek urgent medical care')
+
+
 class TestDAC4AcwrRemoved(TestCase):
     """C4 — ACWR (discredited metric, standing decision R2) fully removed."""
 

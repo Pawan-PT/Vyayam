@@ -20,8 +20,13 @@
   <!-- Absolute stop card -->
   <div class="bg-gradient-to-br from-error to-error/80 rounded-xl p-8 text-center shadow-[0_8px_32px_rgba(186,26,26,0.25)]">
     <i class="fas fa-hand-paper fa-4x mb-3" style="color:white;opacity:.9;"></i>
+    {% if urgent_stop %}
+    <h3 class="font-extrabold text-xl text-white mb-2">Please Stop and Seek Urgent Medical Care Before Training</h3>
+    <p class="text-white/90 text-sm mb-4 leading-relaxed">One or more of the symptoms you selected needs prompt medical attention. Please stop and seek urgent medical care before training — contact your doctor or go to an urgent-care service today.</p>
+    {% else %}
     <h3 class="font-extrabold text-xl text-white mb-2">Please Consult Your Clinician First</h3>
     <p class="text-white/90 text-sm mb-4 leading-relaxed">Based on your reported condition(s), we recommend speaking with your doctor or physiotherapist before starting an exercise programme.</p>
+    {% endif %}
     <div class="bg-white/15 rounded-lg px-4 py-3 mb-4 text-left">
       <span class="text-white/90 text-sm"><strong class="text-white">Flagged:</strong> {{ patient.absolute_stop_reason }}</span>
     </div>
@@ -65,7 +70,7 @@
           {% for val, label in absolute_stop_options %}
           <label class="flex items-center gap-3 p-3 rounded-lg border border-error/30 bg-error-container/20 cursor-pointer">
             <input type="checkbox" name="absolute_stop_conditions" value="{{ val }}" class="flex-shrink-0" style="accent-color:#ba1a1a;"
-              {% if val in patient.absolute_stop_reason %}checked{% endif %}>
+              {% if label in patient.absolute_stop_reason %}checked{% endif %}>
             <span class="text-sm font-medium text-error">{{ label }}</span>
           </label>
           {% endfor %}

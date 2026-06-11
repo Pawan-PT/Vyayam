@@ -291,11 +291,26 @@ ABSOLUTE_STOP_OPTIONS = [
     ('currently_pregnant',         'Currently pregnant (please consult your doctor first)'),
     ('uncontrolled_hypertension',  'Uncontrolled high blood pressure'),
     ('active_cancer_treatment',    'Currently undergoing cancer treatment'),
+    # DA-C6 emergency screening additions. Internal IDs are clinical
+    # (cauda equina / DVT / cardiac / malignancy / progressive neuro
+    # deficit screens); patient copy is symptom-based per rule R4 —
+    # never name a suspected diagnosis to the patient.
+    ('saddle_numbness_bladder',       'New numbness around the groin/inner thighs, or new trouble controlling bladder or bowels'),
+    ('calf_swelling_one_side',        'One calf newly swollen, hot, or painful (especially after travel, surgery, or bed rest)'),
+    ('chest_pain_exertion',           'Chest pain, pressure, or fainting during exercise'),
+    ('night_pain_weight_loss',        "Constant night pain that doesn't change with position, or unexplained weight loss"),
+    ('numbness_weakness_progressive', 'Numbness or weakness in a limb that is getting worse'),
 ]
 
 # Stop options whose stopped-state copy must escalate to "seek urgent
-# medical care" (DA-C6). Populated with the emergency-screening additions.
-URGENT_STOP_IDS = set()
+# medical care" (DA-C6) — stronger than the generic clearance copy.
+URGENT_STOP_IDS = {
+    'saddle_numbness_bladder',
+    'calf_swelling_one_side',
+    'chest_pain_exertion',
+    'night_pain_weight_loss',
+    'numbness_weakness_progressive',
+}
 
 # ============================================================================
 # HELPERS
@@ -1091,7 +1106,13 @@ def onboarding_red_flags(request):
 
         if abs_stops:
             patient.absolute_stop        = True
-            patient.absolute_stop_reason = '; '.join(abs_stops)
+            # Store human-readable labels — this field is patient-facing
+            # (stopped card + v1_stopped page), so raw internal IDs like
+            # 'saddle_numbness_bladder' must not leak into copy (R4).
+            _stop_labels = dict(ABSOLUTE_STOP_OPTIONS)
+            patient.absolute_stop_reason = '; '.join(
+                _stop_labels.get(s, s) for s in abs_stops
+            )
         else:
             patient.absolute_stop        = False
             patient.absolute_stop_reason = ''
@@ -1112,6 +1133,9 @@ def onboarding_red_flags(request):
                 'red_flag_options': RED_FLAG_OPTIONS,
                 'absolute_stop_options': ABSOLUTE_STOP_OPTIONS,
                 'stopped': True,
+                # DA-C6: emergency-pattern symptoms escalate the stop copy
+                # to "seek urgent medical care" (stronger than clearance).
+                'urgent_stop': any(s in URGENT_STOP_IDS for s in abs_stops),
                 'step': 8,
                 'total': _total_steps(patient if 'patient' in locals() else None),
             })
