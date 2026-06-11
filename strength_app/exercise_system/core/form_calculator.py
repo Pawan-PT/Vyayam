@@ -79,31 +79,29 @@ class FormCalculator:
                 # Calculate error
                 error = abs(current_value - target_value)
             
-            # Score based on error magnitude
-            if error <= FormCalculator.ANGLE_PERFECT_THRESHOLD:
-                # Perfect - within 5°
+            # DA-H1: piecewise curve parameterized by the exercise's OWN
+            # tolerance, so a tighter tolerance means stricter scoring.
+            # The old fixed 5/10/15° thresholds made any tolerance ≤ 15
+            # meaningless (errors up to 15° always scored ≥ 70 even when
+            # the exercise asked ±8) and the (tolerance - 15) divisor was
+            # a degenerate slope for small tolerances.
+            #
+            #   error ≤ tol/4      → 100            (perfect zone)
+            #   error ≤ tol        → 100 → 70 linear (acceptable)
+            #   error ≤ 2·tol      → 70 → 30 linear  (poor)
+            #   beyond 2·tol       → 30 → 0 at 3·tol (failing)
+            tol = tolerance if tolerance and tolerance > 0 else 8.0
+            perfect_zone = tol / 4.0
+
+            if error <= perfect_zone:
                 score = 100.0
-            
-            elif error <= FormCalculator.ANGLE_GOOD_THRESHOLD:
-                # Good - within 10°
-                # Linear interpolation: 5° = 100, 10° = 85
-                score = 100.0 - ((error - 5) * 3)  # -3 points per degree
-                
-            elif error <= FormCalculator.ANGLE_ACCEPTABLE_THRESHOLD:
-                # Acceptable - within 15°
-                # Linear interpolation: 10° = 85, 15° = 70
-                score = 85.0 - ((error - 10) * 3)  # -3 points per degree
-                
-            elif error <= tolerance:
-                # Within custom tolerance but not ideal
-                # Linear interpolation: 15° = 70, tolerance = 50
-                score = 70.0 - ((error - 15) * (20.0 / (tolerance - 15)))
-                
+            elif error <= tol:
+                score = 100.0 - 30.0 * (error - perfect_zone) / (tol - perfect_zone)
+            elif error <= 2 * tol:
+                score = 70.0 - 40.0 * (error - tol) / tol
             else:
-                # Beyond tolerance - poor form
-                # Penalties increase rapidly
-                score = max(0, 50.0 - ((error - tolerance) * 5))
-            
+                score = max(0.0, 30.0 - 30.0 * (error - 2 * tol) / tol)
+
             angle_scores.append(score)
         
         # Average all angle scores

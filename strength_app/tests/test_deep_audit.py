@@ -411,6 +411,40 @@ class TestDAC13InputValidation(TestCase):
         self.assertIsNone(self.patient.competition_date)
 
 
+class TestDAH1FormCalculatorToleranceCurve(TestCase):
+    """H1 — angle accuracy is parameterized by the exercise's tolerance."""
+
+    def _score(self, error, tol):
+        from strength_app.exercise_system.core.form_calculator import FormCalculator
+        return FormCalculator.calculate_angle_accuracy(
+            {'angle': 100.0 + error}, {'angle': 100.0, 'tolerance': tol},
+        )
+
+    def test_da_h1_tighter_tolerance_is_stricter(self):
+        for error in (4, 8, 12, 18, 24):
+            scores = [self._score(error, t) for t in (5, 8, 10, 15, 20, 25)]
+            self.assertEqual(scores, sorted(scores),
+                             f'error {error}: tighter tol must score lower: {scores}')
+
+    def test_da_h1_within_tolerance_at_least_70(self):
+        for tol in (5, 8, 10, 15, 20, 25):
+            self.assertGreaterEqual(self._score(tol, tol), 70.0)
+            self.assertEqual(self._score(0, tol), 100.0)
+
+    def test_da_h1_no_zero_division_and_degenerate_tolerances(self):
+        # tolerance 0 / missing must not explode; falls back to default 8
+        self.assertGreaterEqual(self._score(0, 0), 100.0)
+        for tol in (0, 1, 15, 15.5, 16):
+            for error in (0, 5, 15, 15.4, 16, 50):
+                score = self._score(error, tol)
+                self.assertTrue(0.0 <= score <= 100.0)
+
+    def test_da_h1_monotone_in_error(self):
+        for tol in (5, 8, 10, 15, 20, 25):
+            scores = [self._score(e, tol) for e in range(0, 80, 2)]
+            self.assertEqual(scores, sorted(scores, reverse=True))
+
+
 class TestDAC15HormonalModifierConvention(TestCase):
     """C15 — one key convention, complete dict for every phase value."""
 
