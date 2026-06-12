@@ -837,6 +837,44 @@ def send_message(request, link_id):
 
 @therapist_required
 @require_POST
+def reset_patient_password(request, link_id):
+    """R2-U1: issue a one-time temporary password for a managed patient.
+
+    The patient's account is phone+password (PatientProfile, not Django
+    auth) with no self-serve email on file in most B2B2C cases — the
+    therapist is their recovery path. The temp password is shown ONCE to
+    the therapist; the patient is forced through change_password at next
+    sign-in (must_change_password flag).
+    """
+    therapist = request.user.therapist
+    link = get_linked_patient_or_404(therapist, link_id)
+
+    from strength_app.models import PatientProfile
+    profile = PatientProfile.objects.filter(user_id=link.patient_id).first()
+    if profile is None:
+        flash.error(request, "This patient hasn't activated their app account yet.")
+        return redirect(f"/therapist/patient/{link.id}/")
+
+    import secrets
+    import string
+    alphabet = string.ascii_letters + string.digits
+    temp = ''.join(secrets.choice(alphabet) for _ in range(10))
+
+    from django.contrib.auth.hashers import make_password
+    profile.password = make_password(temp)
+    profile.must_change_password = True
+    profile.save(update_fields=['password', 'must_change_password'])
+
+    flash.success(
+        request,
+        f"Temporary password for {link.full_name}: {temp} — share it securely. "
+        "They must set their own password at next sign-in.",
+    )
+    return redirect(f"/therapist/patient/{link.id}/")
+
+
+@therapist_required
+@require_POST
 def generate_report(request, link_id):
     """Generate a 1-2 page PDF progress report for the most recent 7-day window."""
     therapist = request.user.therapist

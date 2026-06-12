@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Offline — VYAYAM</title>
+  <style>
+    body { margin:0; font-family: -apple-system, system-ui, sans-serif; background:#f7f9f8;
+           min-height:100vh; display:flex; align-items:center; justify-content:center; }
+    .card { text-align:center; padding:40px 28px; max-width:320px; }
+    .icon { font-size:44px; margin-bottom:14px; }
+    h1 { font-size:1.25rem; color:#1a1c1c; margin:0 0 8px; }
+    p { font-size:.9rem; color:#5f6463; line-height:1.5; margin:0 0 22px; }
+    button { background:#0c6c3f; color:#fff; border:none; border-radius:12px;
+             padding:13px 28px; font-size:.95rem; font-weight:700; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="icon">📡</div>
+    <h1>You're offline</h1>
+    <p>VYAYAM needs a connection to load your session. Your last saved progress is safe — reconnect and try again.</p>
+    <button onclick="location.reload()">Try again</button>
+  </div>
+</body>
+</html>

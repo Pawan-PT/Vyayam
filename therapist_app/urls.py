@@ -25,4 +25,5 @@ urlpatterns = [
     path('patient/<uuid:link_id>/program/save/', views.save_program, name='therapist_save_program'),
     path('patient/<uuid:link_id>/messages/send/', views.send_message, name='therapist_send_message'),
     path('patient/<uuid:link_id>/reports/generate/', views.generate_report, name='therapist_generate_report'),
+    path('patient/<uuid:link_id>/reset-password/', views.reset_patient_password, name='therapist_reset_patient_password'),  # R2-U1
 ]

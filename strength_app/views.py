@@ -7,6 +7,7 @@ import logging
 
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
+from django.urls import reverse
 from django.http import JsonResponse, HttpResponse, HttpRequest
 from django.contrib.auth.hashers import check_password
 from django.views.decorators.http import require_POST
@@ -61,6 +62,12 @@ def patient_login(request: HttpRequest):
                 has_profile = patient.strength_profiles.exists()
                 request.session['has_strength_profile'] = has_profile
 
+                # R2-U1: therapist-issued temp password — force a change
+                # before anything else.
+                if patient.must_change_password:
+                    messages.info(request, 'Please set a new password to continue.')
+                    return redirect('change_password')
+
                 # B2B2C: therapist-managed patients skip strength_app onboarding
                 # entirely and land on their therapist-driven session today page.
                 if patient.therapist_managed:
@@ -88,6 +95,99 @@ def patient_login(request: HttpRequest):
 def patient_register(request: HttpRequest):
     """Patient registration — redirects to V1 onboarding flow."""
     return redirect('onboarding_start')
+
+
+def offline(request: HttpRequest):
+    """R2-U9: standalone offline fallback page pre-cached by sw.js."""
+    return render(request, 'strength_app/offline.html')
+
+
+# ============================================================================
+# R2-U1: FORGOT / RESET PASSWORD
+# ============================================================================
+
+@rate_limit(max_attempts=5, window_seconds=300, key_prefix='forgot_password')
+def forgot_password(request: HttpRequest):
+    """Self-serve password recovery by phone number.
+
+    The response is IDENTICAL whether or not the phone matches an account
+    (no user enumeration). When an account with an email exists, a
+    single-use 1-hour reset link is emailed; therapist-managed patients are
+    covered by the on-page copy ("ask your therapist") and the therapist
+    console's reset button.
+    """
+    import re as _re
+    sent = False
+    if request.method == 'POST':
+        phone = _re.sub(r'[^0-9]', '', request.POST.get('phone', '').strip())
+        if 10 <= len(phone) <= 15:
+            patient = PatientProfile.objects.filter(phone=phone).first()
+            if patient and patient.email:
+                import secrets
+                from .models import PasswordResetToken
+                token = secrets.token_urlsafe(32)
+                PasswordResetToken.objects.create(patient=patient, token=token)
+                reset_url = request.build_absolute_uri(
+                    reverse('reset_password', args=[token])
+                )
+                try:
+                    from django.core.mail import send_mail
+                    from django.conf import settings as _settings
+                    send_mail(
+                        'VYAYAM — reset your password',
+                        ('Hi {name},\n\nSomeone (hopefully you) asked to reset the '
+                         'password for your VYAYAM account. Use this link within '
+                         '1 hour:\n\n{url}\n\nIf this wasn\'t you, you can ignore '
+                         'this email — your password is unchanged.').format(
+                            name=patient.name or 'there', url=reset_url),
+                        getattr(_settings, 'DEFAULT_FROM_EMAIL', 'noreply@vyayam.app'),
+                        [patient.email],
+                        fail_silently=True,
+                    )
+                except Exception:
+                    logger.error('password reset email failed for %s',
+                                 patient.patient_id, exc_info=True)
+        sent = True  # always — identical response either way
+    return render(request, 'strength_app/forgot_password.html', {'sent': sent})
+
+
+@rate_limit(max_attempts=10, window_seconds=300, key_prefix='reset_password')
+def reset_password(request: HttpRequest, token: str):
+    """Set a new password from an emailed single-use token."""
+    from django.contrib.auth.hashers import make_password
+    from .models import PasswordResetToken
+
+    prt = PasswordResetToken.objects.filter(token=token).select_related('patient').first()
+    if not prt or not prt.is_valid():
+        return render(request, 'strength_app/reset_password.html',
+                      {'invalid': True})
+
+    error = None
+    if request.method == 'POST':
+        new = request.POST.get('new_password', '')
+        confirm = request.POST.get('confirm_password', '')
+        # Same rules as registration
+        if len(new) < 8:
+            error = 'Password must be at least 8 characters.'
+        elif new.isdigit() or new.isalpha():
+            error = 'Password must mix letters and numbers.'
+        elif new != confirm:
+            error = 'Passwords do not match.'
+        else:
+            patient = prt.patient
+            patient.password = make_password(new)
+            patient.must_change_password = False
+            patient.save(update_fields=['password', 'must_change_password'])
+            prt.used = True
+            prt.save(update_fields=['used'])
+            # kill any other live tokens for this account
+            PasswordResetToken.objects.filter(
+                patient=patient, used=False
+            ).update(used=True)
+            messages.success(request, 'Password updated. Please sign in.')
+            return redirect('patient_login')
+    return render(request, 'strength_app/reset_password.html',
+                  {'invalid': False, 'error': error})
 
 
 def dashboard(request: HttpRequest):
@@ -1749,7 +1849,8 @@ def change_password(request):
             error = 'New passwords do not match.'
         else:
             patient.password = make_password(new)
-            patient.save(update_fields=['password'])
+            patient.must_change_password = False  # R2-U1: temp-password flow complete
+            patient.save(update_fields=['password', 'must_change_password'])
             # DA-P6: rotate the session key after a credential change.
             # (Cross-session invalidation is a known limitation — patient
             # auth is session-based without a server-side token registry.)

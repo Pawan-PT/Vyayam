@@ -345,6 +345,21 @@ def v1_dashboard(request):
     difficulty = meta.get('difficulty', 'Intermediate')
     today_session = {'name': session_name, 'duration_minutes': duration, 'difficulty': difficulty}
 
+    # R2-U2: half-finished session today → offer to continue it rather
+    # than silently restarting from exercise 1.
+    resume_session = None
+    if (request.session.get('v1_session_date') == str(date.today())
+            and request.session.get('v1_resume_url')
+            and not request.session.get('v1_pain_stop')):
+        _total = len(working)
+        _done = min(int(request.session.get('v1_main_done', 0) or 0), _total)
+        if 0 < _done < _total:
+            resume_session = {
+                'done': _done,
+                'total': _total,
+                'url': request.session['v1_resume_url'],
+            }
+
     context = {
         'patient': patient,
         'profile': profile,
@@ -375,6 +390,7 @@ def v1_dashboard(request):
         'phase_range': phase_ctx['phase_range'],
         'session_url': '/v1/session/',
         'reassess_nudge': reassess_nudge,
+        'resume_session': resume_session,
     }
     return render(request, 'strength_app/v1_home_gamified.html', context)
 
@@ -552,6 +568,43 @@ def v1_execute_warmup_exercise(request, warmup_index):
 # VIEW 4: EXECUTE EXERCISE
 # ============================================================================
 
+# R2-U5: one-line "why this exercise" — pattern rationale + real target
+# muscles from content metadata. Plain, honest copy; no clinical claims.
+_PATTERN_WHY = {
+    'squat':  'Builds the sit-down-and-stand-up strength you use every day',
+    'hinge':  'Strengthens your hips and the back of your legs — the engine of lifting safely',
+    'lunge':  'Single-leg strength and balance for stairs, walking and sport',
+    'push':   'Upper-body pressing strength for everything you push away from you',
+    'pull':   'Pulling strength that balances pressing and supports your posture',
+    'rotate': 'Trains your trunk to control and resist twisting forces',
+    'carry':  'Grip and whole-body bracing under load — strength you can use',
+    'core':   'Teaches your trunk to stay stable while your limbs work',
+    'balance': 'Sharpens the control that keeps you steady on one leg',
+    'power':  'Develops the speed and elasticity layer on top of your strength',
+    'plyometric': 'Teaches your legs to absorb and release force safely',
+    'cardio': 'Raises your heart rate to build work capacity',
+    'mobility': 'Restores comfortable range so the strength work fits well',
+    'stretch': 'Eases the muscles you just worked back to resting length',
+    'pogo':   'Trains springy ankle stiffness for running and jumping',
+    'nordic': 'Builds the lengthening hamstring strength that protects sprinters',
+}
+
+
+def _exercise_why(exercise_id, movement_pattern):
+    """Build the one-liner: pattern rationale + target muscles when known."""
+    why = _PATTERN_WHY.get((movement_pattern or '').lower(), '')
+    try:
+        from .exercise_content import EXERCISE_CONTENT
+        muscles = (EXERCISE_CONTENT.get(exercise_id) or {}).get('target_muscles')
+        if muscles:
+            if isinstance(muscles, (list, tuple)):
+                muscles = ', '.join(str(m) for m in muscles[:3])
+            why = (why + '. ' if why else '') + f'Works: {muscles}'
+    except Exception:
+        pass
+    return why
+
+
 def v1_execute_exercise(request, exercise_index):
     patient, err = _require_patient(request)
     if err:
@@ -594,6 +647,8 @@ def v1_execute_exercise(request, exercise_index):
         'next_exercise_index': exercise_index + 1,
         'has_strength_profile': True,
         'pain_skip_banner': pain_skip_banner,
+        'exercise_why': _exercise_why(exercise.get('exercise_id', ''),
+                                      exercise.get('movement_pattern', '')),  # R2-U5
     }
     return render(request, 'strength_app/v1_exercise_execute.html', context)
 
@@ -731,7 +786,44 @@ def v1_save_exercise_result(request):
         else:
             next_url = reverse('v1_execute_exercise', args=[next_index])
 
+        # R2-U2: track mid-session progress so the dashboard can offer
+        # "Continue today's session (N of M done)" instead of orphaning
+        # half-finished work. Cleared at feedback time.
+        request.session['v1_main_done'] = min(next_index, total)
+        request.session['v1_resume_url'] = next_url
+        request.session.modified = True
+
     return JsonResponse({'status': 'saved', 'next_url': next_url})
+
+
+# ============================================================================
+# VIEW 5b: UNDO LAST RESULT (R2-U3)
+# ============================================================================
+
+def v1_undo_last_result(request):
+    """Remove the most recent saved exercise result and return to that
+    exercise — one-tap correction for wrong reps or an accidental skip."""
+    patient, err = _require_patient(request)
+    if err:
+        return err
+    if request.method != 'POST':
+        return redirect('v1_dashboard')
+
+    from django.urls import reverse
+    results = list(request.session.get('v1_exercise_results', []))
+    main_done = int(request.session.get('v1_main_done', 0) or 0)
+
+    # Nothing undoable, or we'd be popping a warmup entry
+    if not results or main_done <= 0 or request.session.get('v1_in_warmup_flow'):
+        return redirect('v1_dashboard')
+
+    results.pop()
+    new_index = main_done - 1
+    request.session['v1_exercise_results'] = results
+    request.session['v1_main_done'] = new_index
+    request.session['v1_resume_url'] = reverse('v1_execute_exercise', args=[new_index])
+    request.session.modified = True
+    return redirect('v1_execute_exercise', exercise_index=new_index)
 
 
 # ============================================================================
@@ -960,6 +1052,9 @@ def v1_post_session_feedback(request):
         # Store feedback id for session complete view
         request.session['v1_feedback_id']  = feedback.pk
         request.session['v1_workout_id']   = workout.pk
+        # R2-U2: session finished — clear the mid-session resume markers
+        request.session.pop('v1_resume_url', None)
+        request.session.pop('v1_main_done', None)
         request.session.modified = True
 
         return redirect('v1_session_complete')

@@ -277,3 +277,149 @@ def v1_profile(request):
         'has_strength_profile': True,
     }
     return render(request, 'strength_app/v1_profile.html', context)
+
+
+# ============================================================================
+# R2-U4: SESSION HISTORY
+# ============================================================================
+
+def v1_session_history(request):
+    """Past-sessions list — date, exercises, duration, traffic light."""
+    patient, err = _require_patient(request)
+    if err:
+        return err
+
+    from .models import WorkoutSession
+    sessions = (
+        WorkoutSession.objects.filter(patient=patient)
+        .order_by('-session_date')
+        .prefetch_related('feedback')[:60]
+    )
+    rows = []
+    for s in sessions:
+        try:
+            fb = s.feedback  # OneToOne — raises DoesNotExist when absent
+        except Exception:
+            fb = None
+        rows.append({
+            'id': s.pk,
+            'date': s.session_date,
+            'week': s.week_number,
+            'exercises': s.total_exercises_completed,
+            'duration': s.total_duration_minutes,
+            'traffic_light': getattr(fb, 'traffic_light', '') if fb else '',
+            'xp': s.xp_earned,
+        })
+    return render(request, 'strength_app/v1_session_history.html', {
+        'patient': patient,
+        'sessions': rows,
+        'has_strength_profile': True,
+    })
+
+
+def v1_session_detail(request, session_id):
+    """Per-session detail: exercises, sets×reps, form (only where real),
+    pain events, traffic light. Ownership enforced via patient filter."""
+    patient, err = _require_patient(request)
+    if err:
+        return err
+
+    from django.http import Http404
+    from .models import WorkoutSession
+    workout = (
+        WorkoutSession.objects.filter(patient=patient, pk=session_id).first()
+    )
+    if workout is None:
+        raise Http404  # someone else's session id → indistinguishable from missing
+
+    exercises = []
+    for ex in workout.exercises.all():
+        exercises.append({
+            'name': ex.exercise_name or ex.exercise_id,
+            'prescribed': f"{ex.prescribed_sets}×{ex.prescribed_reps}",
+            'completion_pct': round(ex.completion_percentage or 0),
+            # form is only shown when it was actually measured/derived —
+            # manual (guided) entries carry no fabricated number (R2-W1-4)
+            'form_score': (round(ex.overall_form_score)
+                           if ex.overall_form_score is not None
+                           and ex.rep_quality_source != 'manual' else None),
+            'rep_quality_source': ex.rep_quality_source,
+            'skipped': ex.skipped,
+            'skip_reason': ex.skip_reason,
+            'pain': ({
+                'type': ex.pain_type, 'location': ex.pain_location,
+                'severity': ex.pain_severity,
+            } if ex.pain_reported else None),
+        })
+
+    try:
+        fb = workout.feedback  # OneToOne
+    except Exception:
+        fb = None
+
+    return render(request, 'strength_app/v1_session_detail.html', {
+        'patient': patient,
+        'workout': workout,
+        'exercises': exercises,
+        'feedback': fb,
+        'has_strength_profile': True,
+    })
+
+
+# ============================================================================
+# R2-U7: PROFILE EDITING
+# ============================================================================
+
+def v1_edit_profile(request):
+    """Edit name / email / weight / equipment. Changing equipment clears
+    today's cached session so the next dashboard visit regenerates with
+    the new equipment set."""
+    patient, err = _require_patient(request)
+    if err:
+        return err
+
+    from .models import PatientProfile
+    from .validation import safe_float
+
+    error = None
+    if request.method == 'POST':
+        name = (request.POST.get('name') or '').strip()[:200]
+        email = (request.POST.get('email') or '').strip()[:254]
+        weight = request.POST.get('weight_kg', '')
+        equipment = request.POST.getlist('equipment')
+
+        valid_eq = {key for key, _ in PatientProfile.EQUIPMENT_CHOICES}
+        equipment = [e for e in equipment if e in valid_eq]
+
+        if not name:
+            error = 'Name cannot be empty.'
+        elif email and '@' not in email:
+            error = 'That email address doesn\'t look right.'
+        else:
+            patient.name = name
+            patient.email = email
+            if weight:
+                patient.weight_kg = safe_float(weight, patient.weight_kg or 70, 25, 300)
+            equipment_changed = set(equipment) != set(patient.equipment_available_json or [])
+            patient.equipment_available_json = equipment
+            patient.save(update_fields=['name', 'email', 'weight_kg',
+                                        'equipment_available_json'])
+            if equipment_changed:
+                # next session must respect the new equipment
+                request.session.pop('v1_session', None)
+                request.session.pop('v1_session_date', None)
+                request.session.modified = True
+            from django.contrib import messages
+            messages.success(request, 'Profile updated.'
+                             + (' Your next session will use your new equipment.'
+                                if equipment_changed else ''))
+            from django.shortcuts import redirect
+            return redirect('v1_profile')
+
+    return render(request, 'strength_app/v1_edit_profile.html', {
+        'patient': patient,
+        'equipment_choices': PatientProfile.EQUIPMENT_CHOICES,
+        'selected_equipment': set(patient.equipment_available_json or []),
+        'error': error,
+        'has_strength_profile': True,
+    })

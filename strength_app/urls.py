@@ -65,14 +65,18 @@ urlpatterns = [
     path('v1/session/warmup/exercise/<int:warmup_index>/', views_session.v1_execute_warmup_exercise,   name='v1_execute_warmup_exercise'),
     path('v1/session/exercise/<int:exercise_index>/',       views_session.v1_execute_exercise,          name='v1_execute_exercise'),
     path('v1/session/save-exercise/',                       views_session.v1_save_exercise_result,  name='v1_save_exercise_result'),
+    path('v1/session/undo-last/',                           views_session.v1_undo_last_result,      name='v1_undo_last_result'),  # R2-U3
     path('v1/session/cooldown/',                            views_session.v1_cooldown,              name='v1_cooldown'),
     path('v1/session/conditioning/',                        views_session.v1_conditioning_session,  name='v1_conditioning_session'),
     path('v1/session/feedback/',                            views_session.v1_post_session_feedback, name='v1_post_session_feedback'),
     path('v1/session/complete/',                            views_session.v1_session_complete,      name='v1_session_complete'),
     path('v1/session/pain-stop/',                           views_session.v1_pain_stop,             name='v1_pain_stop'),  # DA-F2
     path('v1/progress/',                                    views_progress.v1_progress_dashboard,   name='v1_progress'),
+    path('v1/history/',                                     views_progress.v1_session_history,      name='v1_session_history'),   # R2-U4
+    path('v1/history/<int:session_id>/',                    views_progress.v1_session_detail,       name='v1_session_detail'),    # R2-U4
     path('v1/progress/api/',                                views_progress.v1_progress_api,         name='v1_progress_api'),
     path('v1/profile/',                                     views_progress.v1_profile,              name='v1_profile'),
+    path('v1/profile/edit/',                                views_progress.v1_edit_profile,         name='v1_edit_profile'),  # R2-U7
     path('v1/test-exercises/',                              views_session.v1_test_list,             name='v1_test_list'),
     path('v1/test-exercise/<str:exercise_id>/',             views_session.v1_test_exercise,         name='v1_test_exercise'),
     # R2-W1-7: api/analyze-frame/ ROUTE REMOVED. The live patient path is
@@ -100,6 +104,10 @@ urlpatterns = [
     path('', views.home, name='home'),
     path('register/', views.patient_register, name='patient_register'),
     path('login/', views.patient_login, name='patient_login'),
+    path('offline/', views.offline, name='offline'),  # R2-U9: sw.js fallback
+    # R2-U1: self-serve password recovery
+    path('forgot-password/', views.forgot_password, name='forgot_password'),
+    path('reset-password/<str:token>/', views.reset_password, name='reset_password'),
     path('logout/', views.patient_logout, name='patient_logout'),
     
     # ========================================================================

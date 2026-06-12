@@ -31,6 +31,21 @@ Context variables expected:
 {% block content %}
 <main class="px-6 pt-8 space-y-10">
 
+  {% if resume_session %}
+  <!-- R2-U2: half-finished session — continue, don't restart -->
+  <section>
+    <div class="bg-primary/[0.08] border border-primary/[0.2] rounded-[16px] px-4 py-3 text-sm text-on-surface flex items-center justify-between gap-3">
+      <div>
+        <strong>Session in progress</strong> — {{ resume_session.done }} of {{ resume_session.total }} exercises done.
+      </div>
+      <a href="{{ resume_session.url }}"
+         class="shrink-0 rounded-xl bg-primary text-white font-bold text-xs px-4 py-2 no-underline">
+        Continue →
+      </a>
+    </div>
+  </section>
+  {% endif %}
+
   {% if is_deload %}
   <!-- DA-F5: deload week visibility (the live dashboard had no banner) -->
   <section>

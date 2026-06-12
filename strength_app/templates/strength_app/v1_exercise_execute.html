@@ -190,6 +190,14 @@
     {% endif %}
   </div>
 
+  {% if exercise_why %}
+  <!-- R2-U5: why this exercise -->
+  <div style="background:rgba(12,108,63,.08);border:1px solid rgba(12,108,63,.18);border-radius:12px;
+              padding:9px 13px;margin-bottom:12px;font-size:.82rem;opacity:.9;">
+    <i class="fas fa-circle-info me-1" style="color:#0c6c3f;"></i>{{ exercise_why }}
+  </div>
+  {% endif %}
+
   <div class="main-layout">
     <!-- Camera -->
     <div class="video-section">
@@ -325,6 +333,13 @@
           <div class="rest-label">seconds rest</div>
           <button class="skip-rest" onclick="skipRest()">Skip Rest</button>
         </div>
+
+        <!-- R2-U3: correct the last set before moving on -->
+        <button id="undoSetBtn" onclick="undoLastSet()" style="display:none;width:100%;margin-top:8px;
+          background:none;border:1px dashed rgba(255,255,255,.25);border-radius:8px;color:#fff;
+          opacity:.7;font-size:.78rem;padding:6px;">
+          <i class="fas fa-rotate-left me-1"></i>Undo last set
+        </button>
       </div>
 
       <!-- Mind-muscle cue -->
@@ -395,6 +410,16 @@
         {% if assessment_mode %}Score &amp; Next Test{% elif library_mode %}Finish Practice{% elif is_last_exercise %}Finish &amp; Cool Down{% else %}Next Exercise{% endif %}
       </button>
       <button class="skip-btn" onclick="skipExercise()">Skip this exercise</button>
+      {% if not assessment_mode and not library_mode and exercise_index > 0 %}
+      <!-- R2-U3: one-tap correction of the previous entry (incl. accidental skips) -->
+      <form method="post" action="{% url 'v1_undo_last_result' %}" style="margin:6px 0 0;"
+            onsubmit="return confirm('Go back and redo the previous exercise? Its saved result will be removed.');">
+        {% csrf_token %}
+        <button type="submit" style="width:100%;background:none;border:none;color:#fff;opacity:.5;font-size:.78rem;padding:6px;">
+          <i class="fas fa-rotate-left me-1"></i>Made a mistake? Redo previous exercise
+        </button>
+      </form>
+      {% endif %}
 
     </div>
   </div>
@@ -4948,7 +4973,26 @@ async function startCamera() {
   }
 
   // ---- Set management ----
+  var _completedSetStack = [];  // R2-U3: undo support (most recent first)
+
+  function undoLastSet() {
+    var setNum = _completedSetStack.pop();
+    if (!setNum) return;
+    repsPerSet.pop();
+    completedSets = Math.max(0, completedSets - 1);
+    var btn = document.getElementById('doneBtn' + setNum);
+    if (btn) { btn.classList.remove('done'); btn.disabled = false; }
+    try { skipRest(); } catch (e) {}
+    if (_completedSetStack.length === 0) {
+      document.getElementById('undoSetBtn').style.display = 'none';
+    }
+    VoiceCoach.speak('Set removed. Redo it when ready.', false);
+  }
+
   function completeSet(setNum) {
+    _completedSetStack.push(setNum);
+    var _undoBtn = document.getElementById('undoSetBtn');
+    if (_undoBtn) _undoBtn.style.display = 'block';
     resetGhostForNextSet();
     // Reset rep counter for next set
     repState.count = 0;

@@ -27,6 +27,12 @@
       {% include "therapist_app/_compliance_ring.html" with pct=card.compliance size=68 %}
       <a class="t-btn t-btn--outline t-btn--sm" href="?tab=messages"><i class="fas fa-comment-medical"></i> Quick message</a>
       <button type="button" class="t-btn t-btn--sm" id="open-edit-details"><i class="fas fa-user-edit"></i> Edit patient details</button>
+      <!-- R2-U1: therapist is the recovery path for managed patients -->
+      <form method="post" action="{% url 'therapist_reset_patient_password' link.id %}" style="display:inline;margin:0;"
+            onsubmit="return confirm('Issue a one-time temporary password for {{ link.full_name }}? Their current password stops working immediately.');">
+        {% csrf_token %}
+        <button type="submit" class="t-btn t-btn--outline t-btn--sm"><i class="fas fa-key"></i> Reset password</button>
+      </form>
     </div>
   </div>
 </div>

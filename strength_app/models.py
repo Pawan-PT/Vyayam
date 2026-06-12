@@ -26,6 +26,9 @@ class PatientProfile(models.Model):
     phone = models.CharField(max_length=20, unique=True)
     email = models.EmailField(blank=True)
     password = models.CharField(max_length=128, default='')
+    # R2-U1: set when a therapist issues a one-time temp password — the
+    # patient is forced through change_password before using the app.
+    must_change_password = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     
     # 8 CLUSTERAL DIMENSIONS
@@ -1400,3 +1403,26 @@ class FootballProfile(models.Model):
 
         self.plyometric_cleared = cleared
         return cleared
+
+class PasswordResetToken(models.Model):
+    """R2-U1: single-use, time-limited token for the patient password-reset
+    email flow. Tokens are random 64-char urlsafe strings generated in the
+    view; a token is dead once used or older than EXPIRY_HOURS."""
+    EXPIRY_HOURS = 1
+
+    patient = models.ForeignKey(
+        PatientProfile, on_delete=models.CASCADE,
+        related_name='password_reset_tokens',
+    )
+    token = models.CharField(max_length=64, unique=True, db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    used = models.BooleanField(default=False)
+
+    def is_valid(self):
+        from django.utils import timezone
+        from datetime import timedelta
+        return (not self.used
+                and timezone.now() - self.created_at < timedelta(hours=self.EXPIRY_HOURS))
+
+    def __str__(self):
+        return f"reset token for {self.patient.patient_id} ({'used' if self.used else 'live'})"

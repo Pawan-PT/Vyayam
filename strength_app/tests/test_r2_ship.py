@@ -348,3 +348,190 @@ class TestR2W2ProtocolHygiene(SimpleTestCase):
             for s in stretches:
                 if 'hold' in s:  # cat_cow_slow is reps-based
                     self.assertLessEqual(s['hold'], 30, f"{day}/{s['id']}")
+
+
+# ════════════════════════════════════════════════════════════════════════
+# W3 — user-POV features
+# ════════════════════════════════════════════════════════════════════════
+
+class TestR2W3ForgotPassword(TestCase):
+    """U1: recovery flow — generic responses, single-use 1-hour tokens,
+    forced change after a therapist-issued temp password."""
+
+    def setUp(self):
+        from django.contrib.auth.hashers import make_password
+        self.patient = PatientProfile.objects.create(
+            patient_id='P9101', name='Reset Me', phone='9000009101',
+            age=30, goals='Strength', email='reset@example.com',
+            password=make_password('oldpass123'),
+        )
+
+    def test_r2_u1_generic_response_for_unknown_and_known_phone(self):
+        r1 = self.client.post(reverse('forgot_password'), {'phone': '9000009101'})
+        r2 = self.client.post(reverse('forgot_password'), {'phone': '9999999999'})
+        self.assertEqual(r1.status_code, 200)
+        self.assertEqual(r2.status_code, 200)
+        # identical copy — no enumeration signal
+        self.assertEqual(r1.content, r2.content)
+
+    def test_r2_u1_token_created_and_reset_works(self):
+        from strength_app.models import PasswordResetToken
+        from django.contrib.auth.hashers import check_password
+        self.client.post(reverse('forgot_password'), {'phone': '9000009101'})
+        token = PasswordResetToken.objects.get(patient=self.patient)
+        self.assertTrue(token.is_valid())
+        resp = self.client.post(
+            reverse('reset_password', args=[token.token]),
+            {'new_password': 'newpass123', 'confirm_password': 'newpass123'},
+        )
+        self.assertEqual(resp.status_code, 302)
+        self.patient.refresh_from_db()
+        self.assertTrue(check_password('newpass123', self.patient.password))
+        token.refresh_from_db()
+        self.assertTrue(token.used)
+        # reuse blocked
+        resp2 = self.client.get(reverse('reset_password', args=[token.token]))
+        self.assertContains(resp2, 'expired')
+
+    def test_r2_u1_weak_password_rejected(self):
+        from strength_app.models import PasswordResetToken
+        PasswordResetToken.objects.create(patient=self.patient, token='t' * 40)
+        resp = self.client.post(
+            reverse('reset_password', args=['t' * 40]),
+            {'new_password': '12345678', 'confirm_password': '12345678'},
+        )
+        self.assertContains(resp, 'letters and numbers')
+
+    def test_r2_u1_no_token_without_email(self):
+        from strength_app.models import PasswordResetToken
+        from django.contrib.auth.hashers import make_password
+        PatientProfile.objects.create(
+            patient_id='P9102', name='No Email', phone='9000009102',
+            age=30, goals='Strength', password=make_password('x1234567'),
+        )
+        self.client.post(reverse('forgot_password'), {'phone': '9000009102'})
+        self.assertEqual(PasswordResetToken.objects.count(), 0)
+
+    def test_r2_u1_must_change_password_forces_change(self):
+        self.patient.must_change_password = True
+        self.patient.save(update_fields=['must_change_password'])
+        resp = self.client.post(reverse('patient_login'),
+                                {'phone': '9000009101', 'password': 'oldpass123'})
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn('change-password', resp.url)
+
+
+class TestR2W3ResumeAndUndo(TestCase):
+    """U2/U3: resume markers and the undo-last-result endpoint."""
+
+    def setUp(self):
+        self.patient = PatientProfile.objects.create(
+            patient_id='P9103', name='Resume', phone='9000009103',
+            age=30, goals='Strength',
+        )
+        session = self.client.session
+        session['patient_id'] = self.patient.patient_id
+        session['v1_session'] = {
+            'working_sets': [
+                {'exercise_id': 'full_squats', 'exercise_name': 'Full Squats',
+                 'movement_pattern': 'squat', 'sets': 3, 'reps': 10},
+                {'exercise_id': 'push_ups', 'exercise_name': 'Push-ups',
+                 'movement_pattern': 'push', 'sets': 3, 'reps': 10},
+            ],
+        }
+        from datetime import date as _date
+        session['v1_session_date'] = str(_date.today())
+        session.save()
+
+    def _save_one(self):
+        return self.client.post(
+            reverse('v1_save_exercise_result'),
+            data=json.dumps({
+                'exercise_index': 0, 'exercise_id': 'full_squats',
+                'exercise_name': 'Full Squats', 'movement_pattern': 'squat',
+                'completed_sets': 3, 'reps_per_set': [10, 10, 10],
+                'form_score': 85, 'pain_reported': False, 'skipped': False,
+            }),
+            content_type='application/json',
+        )
+
+    def test_r2_u2_resume_markers_set_and_dashboard_offers_continue(self):
+        self._save_one()
+        self.assertEqual(self.client.session.get('v1_main_done'), 1)
+        self.assertIn('exercise/1', self.client.session.get('v1_resume_url', ''))
+        resp = self.client.get(reverse('v1_dashboard'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'Session in progress')
+        self.assertContains(resp, '1 of 2')
+
+    def test_r2_u3_undo_pops_last_result_and_redirects_back(self):
+        self._save_one()
+        resp = self.client.post(reverse('v1_undo_last_result'))
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn('exercise/0', resp.url)
+        self.assertEqual(self.client.session.get('v1_exercise_results'), [])
+        self.assertEqual(self.client.session.get('v1_main_done'), 0)
+
+    def test_r2_u3_undo_with_nothing_done_is_safe(self):
+        resp = self.client.post(reverse('v1_undo_last_result'))
+        self.assertEqual(resp.status_code, 302)  # dashboard, no crash
+
+
+class TestR2W3SessionHistory(TestCase):
+    """U4: history list + ownership-enforced detail."""
+
+    def setUp(self):
+        self.patient = PatientProfile.objects.create(
+            patient_id='P9104', name='History', phone='9000009104',
+            age=30, goals='Strength',
+        )
+        self.other = PatientProfile.objects.create(
+            patient_id='P9105', name='Other', phone='9000009105',
+            age=30, goals='Strength',
+        )
+        self.own = WorkoutSession.objects.create(patient=self.patient, week_number=2)
+        ExerciseExecution.objects.create(
+            session=self.own, exercise_id='full_squats', exercise_name='Full Squats',
+            category='lower_body', prescribed_sets=3, prescribed_reps=10,
+            rep_quality_source='manual', overall_form_score=None,
+        )
+        self.theirs = WorkoutSession.objects.create(patient=self.other, week_number=1)
+        session = self.client.session
+        session['patient_id'] = self.patient.patient_id
+        session.save()
+
+    def test_r2_u4_history_lists_own_sessions(self):
+        resp = self.client.get(reverse('v1_session_history'))
+        self.assertContains(resp, 'Week 2')
+
+    def test_r2_u4_detail_renders_manual_without_fake_form(self):
+        resp = self.client.get(reverse('v1_session_detail', args=[self.own.pk]))
+        self.assertContains(resp, 'guided — no form tracking')
+
+    def test_r2_u4_other_patients_session_404s(self):
+        resp = self.client.get(reverse('v1_session_detail', args=[self.theirs.pk]))
+        self.assertEqual(resp.status_code, 404)
+
+
+class TestR2W3ProfileEdit(TestCase):
+    """U7: equipment change clears the cached session."""
+
+    def setUp(self):
+        self.patient = PatientProfile.objects.create(
+            patient_id='P9106', name='Editor', phone='9000009106',
+            age=30, goals='Strength', equipment_available_json=['none'],
+        )
+        session = self.client.session
+        session['patient_id'] = self.patient.patient_id
+        session['v1_session'] = {'working_sets': []}
+        session.save()
+
+    def test_r2_u7_equipment_change_clears_cached_session(self):
+        resp = self.client.post(reverse('v1_edit_profile'), {
+            'name': 'Editor', 'email': '', 'weight_kg': '70',
+            'equipment': ['dumbbells', 'bands'],
+        })
+        self.assertEqual(resp.status_code, 302)
+        self.patient.refresh_from_db()
+        self.assertEqual(set(self.patient.equipment_available_json), {'dumbbells', 'bands'})
+        self.assertNotIn('v1_session', self.client.session)

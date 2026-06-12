@@ -1,0 +1,62 @@
+{% extends 'strength_app/base_gamified.html' %}
+{% block title %}Session Detail — VYAYAM{% endblock %}
+
+{% block content %}
+<main class="px-6 pt-8 pb-24 space-y-6">
+
+  <section>
+    <a href="{% url 'v1_session_history' %}" class="text-sm text-on-secondary-container no-underline">
+      <i class="fas fa-arrow-left me-1"></i>All sessions
+    </a>
+    <h1 class="text-2xl font-extrabold text-on-surface tracking-tight mt-2">{{ workout.session_date|date:"l, j F Y" }}</h1>
+    <p class="text-sm text-on-secondary-container">
+      Week {{ workout.week_number }}
+      {% if workout.total_duration_minutes %} · {{ workout.total_duration_minutes }} min{% endif %}
+      {% if workout.xp_earned %} · +{{ workout.xp_earned }} XP{% endif %}
+    </p>
+  </section>
+
+  {% if feedback %}
+  <section class="bg-surface-container-lowest rounded-2xl px-4 py-3 border border-outline-variant/20 flex items-center gap-3">
+    <span class="w-3.5 h-3.5 rounded-full
+      {% if feedback.traffic_light == 'green' %}bg-primary{% elif feedback.traffic_light == 'yellow' %}bg-amber-400{% else %}bg-error{% endif %}"></span>
+    <div class="text-sm text-on-surface">
+      <strong>{{ feedback.traffic_light|title }}</strong> session
+      · felt {{ feedback.get_perceived_difficulty_display|lower }}
+      {% if feedback.pain_reported and feedback.pain_reported != 'none' %}· pain: {{ feedback.pain_reported }}{% endif %}
+    </div>
+  </section>
+  {% endif %}
+
+  <section class="space-y-3">
+    {% for ex in exercises %}
+    <div class="bg-surface-container-lowest rounded-2xl px-4 py-4 border border-outline-variant/20 {% if ex.skipped %}opacity-60{% endif %}">
+      <div class="flex items-center justify-between">
+        <div class="font-bold text-on-surface text-sm">{{ ex.name }}</div>
+        {% if ex.skipped %}
+        <span class="text-xs font-bold text-on-secondary-container uppercase">skipped{% if ex.skip_reason %} — {{ ex.skip_reason }}{% endif %}</span>
+        {% elif ex.form_score is not None %}
+        <span class="text-xs font-bold {% if ex.form_score >= 80 %}text-primary{% elif ex.form_score >= 55 %}text-amber-500{% else %}text-error{% endif %}">
+          {{ ex.form_score }}% form{% if ex.rep_quality_source == 'derived' %} (estimated){% endif %}
+        </span>
+        {% else %}
+        <span class="text-xs text-on-secondary-container">guided — no form tracking</span>
+        {% endif %}
+      </div>
+      <div class="text-xs text-on-secondary-container mt-1">
+        Prescribed {{ ex.prescribed }}{% if not ex.skipped %} · {{ ex.completion_pct }}% completed{% endif %}
+      </div>
+      {% if ex.pain %}
+      <div class="mt-2 text-xs font-bold text-error">
+        <i class="fas fa-exclamation-triangle me-1"></i>
+        Pain reported: {{ ex.pain.type|default:"unspecified" }}{% if ex.pain.location %} at {{ ex.pain.location }}{% endif %}{% if ex.pain.severity %} — {{ ex.pain.severity }}/10{% endif %}
+      </div>
+      {% endif %}
+    </div>
+    {% empty %}
+    <p class="text-sm text-on-secondary-container">No exercise records for this session.</p>
+    {% endfor %}
+  </section>
+
+</main>
+{% endblock %}

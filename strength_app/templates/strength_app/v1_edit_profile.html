@@ -1,0 +1,60 @@
+{% extends 'strength_app/base_gamified.html' %}
+{% block title %}Edit Profile — VYAYAM{% endblock %}
+
+{% block content %}
+<main class="px-6 pt-8 pb-24 space-y-6">
+
+  <section>
+    <a href="{% url 'v1_profile' %}" class="text-sm text-on-secondary-container no-underline">
+      <i class="fas fa-arrow-left me-1"></i>Profile
+    </a>
+    <h1 class="text-2xl font-extrabold text-on-surface tracking-tight mt-2">Edit profile</h1>
+  </section>
+
+  {% if error %}
+  <div class="bg-error-container/40 border border-error/20 rounded-lg px-4 py-3 text-sm text-error">
+    <i class="fas fa-exclamation-circle me-2"></i>{{ error }}
+  </div>
+  {% endif %}
+
+  <form method="post" class="space-y-5">
+    {% csrf_token %}
+
+    <section class="bg-surface-container-lowest rounded-2xl p-5 border border-outline-variant/20 space-y-4">
+      <div>
+        <label class="block text-xs font-bold text-on-secondary-container uppercase tracking-wide mb-2">Name</label>
+        <input type="text" name="name" value="{{ patient.name }}" required maxlength="200"
+               class="w-full rounded-xl border border-outline-variant/40 bg-surface px-4 py-3 text-on-surface">
+      </div>
+      <div>
+        <label class="block text-xs font-bold text-on-secondary-container uppercase tracking-wide mb-2">Email <span class="normal-case font-normal">(used for password recovery)</span></label>
+        <input type="email" name="email" value="{{ patient.email }}" maxlength="254"
+               class="w-full rounded-xl border border-outline-variant/40 bg-surface px-4 py-3 text-on-surface">
+      </div>
+      <div>
+        <label class="block text-xs font-bold text-on-secondary-container uppercase tracking-wide mb-2">Weight (kg)</label>
+        <input type="number" name="weight_kg" value="{{ patient.weight_kg|default_if_none:'' }}" min="25" max="300" step="0.1"
+               class="w-full rounded-xl border border-outline-variant/40 bg-surface px-4 py-3 text-on-surface">
+      </div>
+    </section>
+
+    <section class="bg-surface-container-lowest rounded-2xl p-5 border border-outline-variant/20">
+      <p class="text-xs font-bold text-on-secondary-container uppercase tracking-wide mb-3">Equipment available</p>
+      <p class="text-xs text-on-secondary-container mb-4">Changing this regenerates your next session with exercises you can actually do.</p>
+      <div class="space-y-2">
+        {% for key, label in equipment_choices %}
+        <label class="flex items-center gap-3 py-2">
+          <input type="checkbox" name="equipment" value="{{ key }}"
+                 {% if key in selected_equipment %}checked{% endif %}
+                 class="w-5 h-5 rounded accent-[#0c6c3f]">
+          <span class="text-sm text-on-surface">{{ label }}</span>
+        </label>
+        {% endfor %}
+      </div>
+    </section>
+
+    <button type="submit" class="w-full rounded-xl bg-primary text-white font-bold py-3.5">Save changes</button>
+  </form>
+
+</main>
+{% endblock %}

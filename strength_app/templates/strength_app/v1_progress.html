@@ -249,5 +249,14 @@ Context variables expected:
   </section>
   {% endif %}
 
+  <!-- R2-U4: full session history entry point -->
+  <section>
+    <a href="{% url 'v1_session_history' %}"
+       class="block bg-surface-container-lowest rounded-2xl px-4 py-4 border border-outline-variant/20 no-underline flex items-center justify-between">
+      <span class="font-bold text-sm text-on-surface"><i class="fas fa-clock-rotate-left me-2 text-primary"></i>Session history</span>
+      <i class="fas fa-chevron-right text-on-secondary-container/40 text-xs"></i>
+    </a>
+  </section>
+
 </main>
 {% endblock %}
