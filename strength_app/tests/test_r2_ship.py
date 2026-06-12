@@ -674,3 +674,10 @@ class TestR2W5Security(TestCase):
         major, minor, patch = (int(x) for x in django.get_version().split('.')[:3])
         self.assertGreaterEqual((major, minor, patch), (4, 2, 30),
                                 'Django must stay at >= 4.2.30 (security patches)')
+
+
+class TestR2W6Healthz(TestCase):
+    def test_r2_w6_healthz_unauthenticated_200(self):
+        resp = self.client.get('/healthz/')
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.json()['status'], 'ok')

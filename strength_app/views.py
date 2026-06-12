@@ -102,6 +102,18 @@ def offline(request: HttpRequest):
     return render(request, 'strength_app/offline.html')
 
 
+def healthz(request: HttpRequest):
+    """R2-W6: trivial unauthenticated health check for uptime monitors.
+    Touches the DB so a dead database shows as unhealthy, not a 200."""
+    try:
+        from django.db import connection
+        with connection.cursor() as cur:
+            cur.execute('SELECT 1')
+        return JsonResponse({'status': 'ok'})
+    except Exception:
+        return JsonResponse({'status': 'degraded'}, status=503)
+
+
 # ============================================================================
 # R2-U1: FORGOT / RESET PASSWORD
 # ============================================================================

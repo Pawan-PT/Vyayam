@@ -105,6 +105,7 @@ urlpatterns = [
     path('register/', views.patient_register, name='patient_register'),
     path('login/', views.patient_login, name='patient_login'),
     path('offline/', views.offline, name='offline'),  # R2-U9: sw.js fallback
+    path('healthz/', views.healthz, name='healthz'),  # R2-W6: uptime check (unauthenticated)
     # R2-U1: self-serve password recovery
     path('forgot-password/', views.forgot_password, name='forgot_password'),
     path('reset-password/<str:token>/', views.reset_password, name='reset_password'),
