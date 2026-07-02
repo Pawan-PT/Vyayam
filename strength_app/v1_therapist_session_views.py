@@ -14,6 +14,7 @@ which is set when the patient hits Start and cleared on Finished.
 """
 
 import json
+import logging
 from datetime import date, timedelta
 
 from django.contrib import messages as flash
@@ -25,11 +26,12 @@ from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from django.conf import settings
-from .models import PatientProfile, PainEvent
+from .models import PatientProfile, PainEvent, RestEvent
 from .rate_limiter import rate_limit
 from therapist_app.exercise_catalog import EXERCISES_BY_ID
 from therapist_app.models import (
     Alert,
+    ExerciseSetLog,
     Prescription,
     PrescriptionItem,
     SessionLog,
@@ -37,6 +39,8 @@ from therapist_app.models import (
     TherapistMessage,
     TherapistPatientLink,
 )
+
+logger = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
@@ -228,6 +232,13 @@ def therapist_session_exercise(request, idx):
     state['current_index'] = idx
     _set_session_state(request, state)
 
+    # R1c: exercise start = page entry, stamped server-side (first GET wins).
+    log_ids = state.get('log_item_ids') or []
+    if 0 <= idx < len(log_ids):
+        SessionLogItem.objects.filter(
+            id=log_ids[idx], started_at__isnull=True,
+        ).update(started_at=timezone.now())
+
     enriched = items[idx]
     item = enriched['item']
     is_last = (idx == len(items) - 1)
@@ -248,6 +259,8 @@ def therapist_session_exercise(request, idx):
         'is_last_exercise': is_last,
         'feedback_url': reverse('therapist_session_feedback', args=[idx]),
         'report_pain_url': reverse('therapist_session_report_pain', args=[idx]),
+        'set_log_url': reverse('therapist_session_set_log', args=[idx]),
+        'rest_event_url': reverse('therapist_session_rest_event', args=[idx]),
         'today_url': reverse('therapist_session_today'),
     }
     return render(request, 'strength_app/therapist_session_exercise.html', ctx)
@@ -306,6 +319,9 @@ def _render_v2_ghost(request, patient, enriched, idx, total, is_last):
         'library_return_url': feedback_url,
         'therapist_mode':     True,
         'report_pain_url':    reverse('therapist_session_report_pain', args=[idx]),
+        # R1: capture endpoints (per-set batch POST + rest/pause events).
+        'set_log_url':        reverse('therapist_session_set_log', args=[idx]),
+        'rest_event_url':     reverse('therapist_session_rest_event', args=[idx]),
         # C2: the therapist's per-exercise cue, shown as escaped HTML on the
         # camera screen (never injected into an inline JS block).
         'therapist_note':     item.notes,
@@ -374,7 +390,7 @@ def therapist_session_feedback(request, idx):
 
 
 def _record_pain(link, patient, *, exercise_id, exercise_name, pain_type,
-                 severity, set_number, threshold, outcome):
+                 severity, set_number, threshold, outcome, rep_number=None):
     """Phase 2: log a PainEvent, post a SYSTEM message to the therapist chat
     (every time), and raise an Alert (only on skip/pause). Returns the body."""
     when = timezone.localtime().strftime('%d %b %Y at %I:%M %p')
@@ -395,7 +411,8 @@ def _record_pain(link, patient, *, exercise_id, exercise_name, pain_type,
 
     PainEvent.objects.create(
         patient=patient, exercise_id=exercise_id or '', exercise_name=exercise_name or '',
-        set_number=set_number or None, pain_type=ptype, pain_severity=severity,
+        set_number=set_number or None, rep_number=rep_number or None,
+        pain_type=ptype, pain_severity=severity,
         threshold_applied=threshold, outcome=outcome,
     )
     # Tiers: <= usual pain -> report only (PainEvent already saved, no ping);
@@ -457,6 +474,12 @@ def therapist_session_report_pain(request, idx):
         set_number = int(data.get('set_number'))
     except (TypeError, ValueError):
         set_number = None
+    # R1d: camera exercises pin pain to the rep the modal opened on;
+    # guided sends nothing and rep_number stays null (honest set-level).
+    try:
+        rep_number = max(1, min(200, int(data.get('rep_number'))))
+    except (TypeError, ValueError):
+        rep_number = None
 
     item = items[idx]['item']
     threshold = item.pain_stop_threshold or getattr(settings, 'PAIN_STOP_THRESHOLD_DEFAULT', 5)
@@ -484,7 +507,7 @@ def therapist_session_report_pain(request, idx):
                  exercise_id=getattr(item, 'exercise_id', ''),
                  exercise_name=item.exercise_name, pain_type=pain_type,
                  severity=severity, set_number=set_number, threshold=threshold,
-                 outcome=outcome)
+                 outcome=outcome, rep_number=rep_number)
 
     # G1b: the patient-facing guidance is written HERE, mirroring
     # _record_pain's tiers, so the exercise screen and the therapist chat
@@ -514,6 +537,189 @@ def therapist_session_report_pain(request, idx):
                      "within your usual range for this exercise — carry on, "
                      "and report again if it climbs."),
     })
+
+
+# ---------------------------------------------------------------------------
+# R1: capture endpoints (per-set logs + rest/pause events)
+# ---------------------------------------------------------------------------
+
+def _capture_context(request, idx):
+    """Shared auth/state resolution for the R1 capture endpoints. Returns
+    (patient, link, state, item, log) or (None, ..., JsonResponse error)."""
+    patient, err = _require_patient(request)
+    if err:
+        return None, None, None, None, JsonResponse({'error': 'auth'}, status=401)
+    link = _active_link(patient)
+    rx = _latest_published_prescription(link)
+    if rx is None or link is None:
+        return None, None, None, None, JsonResponse(
+            {'error': 'no_active_prescription'}, status=400)
+    state = _get_session_state(request)
+    if not state or state.get('rx_id') != rx.id:
+        return None, None, None, None, JsonResponse(
+            {'error': 'session_expired'}, status=400)
+    items = _enriched_items(rx)
+    if idx < 0 or idx >= len(items):
+        return None, None, None, None, JsonResponse(
+            {'error': 'bad_index'}, status=400)
+    log = SessionLog.objects.filter(id=state.get('log_id')).first()
+    if log is None:
+        return None, None, None, None, JsonResponse(
+            {'error': 'session_expired'}, status=400)
+    return patient, link, state, items[idx]['item'], log
+
+
+def _num(value, lo, hi):
+    """Clamp a client-supplied number into [lo, hi]; None when unusable."""
+    try:
+        return max(lo, min(hi, float(value)))
+    except (TypeError, ValueError):
+        return None
+
+
+def _sanitize_reps(raw):
+    """R1a: bound and clamp a client per-rep array. Returns None when the
+    payload isn't a list at all (caller logs + stores []); individually
+    malformed items are skipped. Never raises."""
+    if not isinstance(raw, list):
+        return None
+    out = []
+    for entry in raw[:60]:
+        if not isinstance(entry, dict):
+            continue
+        rep = {
+            'rep_n': int(_num(entry.get('rep_n'), 0, 200) or 0),
+            'partial': bool(entry.get('partial', False)),
+        }
+        form_pct = _num(entry.get('form_pct'), 0, 100)
+        if form_pct is not None:
+            rep['form_pct'] = round(form_pct, 1)
+        bottom = _num(entry.get('bottom_angle'), 0, 360)
+        if bottom is not None:
+            rep['bottom_angle'] = round(bottom, 1)
+        phase_ms = entry.get('phase_ms')
+        if isinstance(phase_ms, dict):
+            clean = {}
+            for key in ('ecc', 'hold', 'con'):
+                ms = _num(phase_ms.get(key), 0, 120000)
+                if ms is not None:
+                    clean[key] = int(ms)
+            if clean:
+                rep['phase_ms'] = clean
+        phases_raw = entry.get('phases_raw')
+        if isinstance(phases_raw, list):
+            rep['phases_raw'] = [
+                {'name': str(p.get('name', ''))[:30],
+                 'ms': int(_num(p.get('ms'), 0, 120000) or 0)}
+                for p in phases_raw[:12] if isinstance(p, dict)
+            ]
+        cues = entry.get('cues')
+        if isinstance(cues, list):
+            rep['cues'] = [
+                {'cue_id': str(c.get('cue_id', ''))[:40],
+                 'corrected': bool(c.get('corrected', False))}
+                for c in cues[:12] if isinstance(c, dict) and c.get('cue_id')
+            ]
+        out.append(rep)
+    return out
+
+
+@rate_limit(max_attempts=60, window_seconds=60, key_prefix='set_log')
+@require_POST
+def therapist_session_set_log(request, idx):
+    """R1a/R1c/R1e: persist one performed set (camera batch or guided tap).
+    Idempotent on (session_log, exercise, set_number) so a client retry
+    never duplicates a set."""
+    patient, link, state, item, log = _capture_context(request, idx)
+    if patient is None:
+        return log  # the error JsonResponse
+
+    try:
+        data = json.loads(request.body or '{}')
+    except ValueError:
+        data = {}
+    if not isinstance(data, dict):
+        return JsonResponse({'error': 'malformed'}, status=400)
+
+    mode = data.get('mode')
+    if mode not in ('camera', 'guided'):
+        mode = 'guided'
+    set_number = int(_num(data.get('set_number'), 1, 30) or 1)
+    reps_count = int(_num(data.get('reps_count'), 0, 200) or 0)
+    hold_raw = _num(data.get('hold_seconds'), 0, 3600)
+    hold_seconds = int(hold_raw) if hold_raw else None
+    duration_ms = int(_num(data.get('duration_ms'), 0, 3 * 3600 * 1000) or 0)
+    demo_viewed = bool(data.get('demo_viewed', False))
+
+    reps = _sanitize_reps(data.get('reps')) if 'reps' in data else []
+    if reps is None:
+        logger.warning('set_log: malformed reps array dropped '
+                       '(patient=%s exercise=%s set=%s)',
+                       patient.patient_id, item.exercise_id, set_number)
+        reps = []
+
+    now = timezone.now()
+    ExerciseSetLog.objects.update_or_create(
+        session_log=log,
+        exercise_id=item.exercise_id,
+        set_number=set_number,
+        defaults={
+            'link': link,
+            'exercise_name': item.exercise_name,
+            'mode': mode,
+            'reps_count': reps_count,
+            'hold_seconds': hold_seconds,
+            'reps_json': reps,
+            'demo_viewed': demo_viewed,
+            'started_at': now - timedelta(milliseconds=duration_ms),
+            'ended_at': now,
+        },
+    )
+    return JsonResponse({'ok': True})
+
+
+@rate_limit(max_attempts=60, window_seconds=60, key_prefix='rest_event')
+@require_POST
+def therapist_session_rest_event(request, idx):
+    """R1b: rest extension (+30s), rest cut short, or session pause."""
+    patient, link, state, item, log = _capture_context(request, idx)
+    if patient is None:
+        return log  # the error JsonResponse
+
+    try:
+        data = json.loads(request.body or '{}')
+    except ValueError:
+        data = {}
+    if not isinstance(data, dict):
+        return JsonResponse({'error': 'malformed'}, status=400)
+
+    kind = data.get('kind')
+    if kind not in ('extension', 'pause', 'skip'):
+        return JsonResponse({'error': 'bad_kind'}, status=400)
+    set_raw = _num(data.get('set_number'), 1, 30)
+    set_number = int(set_raw) if set_raw else None
+
+    if kind == 'pause':
+        seconds = int(_num(data.get('seconds'), 0, 3 * 3600) or 0)
+        context, cut_short = 'pause', False
+    elif kind == 'extension':
+        seconds = int(_num(data.get('seconds'), 0, 600) or 0)
+        context, cut_short = 'between_sets', False
+    else:  # skip — rest cut short, no extra seconds
+        seconds = 0
+        context, cut_short = 'between_sets', True
+
+    RestEvent.objects.create(
+        patient=patient,
+        session_log=log,
+        exercise_id=item.exercise_id,
+        exercise_name=item.exercise_name,
+        set_number=set_number,
+        context=context,
+        extra_seconds=seconds,
+        cut_short=cut_short,
+    )
+    return JsonResponse({'ok': True})
 
 
 def therapist_session_complete(request):
