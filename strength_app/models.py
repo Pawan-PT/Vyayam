@@ -1465,17 +1465,25 @@ class PainEvent(models.Model):
 
 
 class RestEvent(models.Model):
-    """Records when a patient adds EXTRA rest beyond the prescribed rest."""
+    """Records when a patient adds EXTRA rest beyond the prescribed rest,
+    cuts rest short, or pauses the whole session (context='pause' with the
+    pause duration in extra_seconds). R1b wires these from both managed
+    screens; session_log ties them to the therapist-flow session."""
     CONTEXT_CHOICES = [
         ('between_sets', 'Between sets'),
         ('between_exercises', 'Between exercises'),
+        ('pause', 'Session paused'),
     ]
     patient = models.ForeignKey('PatientProfile', on_delete=models.CASCADE, related_name='rest_events')
     session = models.ForeignKey('WorkoutSession', on_delete=models.SET_NULL, null=True, blank=True, related_name='rest_events')
+    session_log = models.ForeignKey(
+        'therapist_app.SessionLog', on_delete=models.SET_NULL, null=True,
+        blank=True, related_name='rest_events')
     exercise_id = models.CharField(max_length=100, blank=True, default='')
     exercise_name = models.CharField(max_length=200, blank=True, default='')
+    set_number = models.PositiveSmallIntegerField(null=True, blank=True)
     context = models.CharField(max_length=20, choices=CONTEXT_CHOICES, default='between_sets')
-    extra_seconds = models.PositiveSmallIntegerField(default=0)
+    extra_seconds = models.PositiveIntegerField(default=0)
     cut_short = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 

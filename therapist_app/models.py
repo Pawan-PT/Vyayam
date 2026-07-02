@@ -325,6 +325,9 @@ class SessionLogItem(models.Model):
     difficulty = models.CharField(
         max_length=10, choices=DIFFICULTY_CHOICES, blank=True, default='',
     )
+    # R1c: exercise start = the moment the exercise page was served (stamped
+    # server-side on first GET). End is the existing completed_at.
+    started_at = models.DateTimeField(null=True, blank=True)
     completed_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
@@ -332,6 +335,44 @@ class SessionLogItem(models.Model):
 
     def __str__(self):
         return f"{self.session_log} · {self.order}. {self.exercise_name}"
+
+
+class ExerciseSetLog(models.Model):
+    """R1a: one row per performed SET inside a managed session — the capture
+    substrate for the session report. Camera-tracked sets carry a per-rep
+    array in reps_json; guided sets carry only the self-reported count
+    (rep-level data is never fabricated for guided work)."""
+
+    MODE_CHOICES = [
+        ('camera', 'Camera-tracked'),
+        ('guided', 'Guided (self-reported)'),
+    ]
+
+    session_log = models.ForeignKey(
+        SessionLog, on_delete=models.CASCADE, related_name='set_logs')
+    link = models.ForeignKey(
+        TherapistPatientLink, on_delete=models.CASCADE, related_name='set_logs')
+    exercise_id = models.CharField(max_length=100, blank=True, default='')
+    exercise_name = models.CharField(max_length=200, blank=True, default='')
+    set_number = models.PositiveSmallIntegerField(default=1)
+    mode = models.CharField(max_length=10, choices=MODE_CHOICES, default='guided')
+    reps_count = models.PositiveSmallIntegerField(default=0)
+    hold_seconds = models.PositiveSmallIntegerField(null=True, blank=True)
+    # Camera only: [{rep_n, partial, form_pct, bottom_angle, phase_ms:{ecc,
+    # hold,con}, phases_raw:[{name,ms}], cues:[{cue_id, corrected}]}, ...]
+    reps_json = models.JSONField(default=list, blank=True)
+    demo_viewed = models.BooleanField(default=False)
+    started_at = models.DateTimeField(null=True, blank=True)
+    ended_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['session_log_id', 'exercise_id', 'set_number', 'id']
+        indexes = [models.Index(fields=['session_log', 'exercise_id'])]
+
+    def __str__(self):
+        return (f"{self.exercise_name} set {self.set_number} "
+                f"({self.mode}, {self.reps_count} reps)")
 
 
 class ProgressReport(models.Model):
