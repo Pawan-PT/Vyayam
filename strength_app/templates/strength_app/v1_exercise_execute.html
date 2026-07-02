@@ -356,6 +356,10 @@
           <div class="rest-val" id="restVal">{{ exercise.rest_seconds|default:75 }}</div>
           <div class="rest-label">seconds rest</div>
           <button class="skip-rest" onclick="skipRest()">Skip Rest</button>
+          {% if library_mode %}
+          <!-- R1b: extend this rest; every tap adds 30s and is logged -->
+          <button class="skip-rest" onclick="extendRest()" style="margin-left:6px;">+30s</button>
+          {% endif %}
         </div>
 
         <!-- R2-U3: correct the last set before moving on -->
@@ -370,6 +374,25 @@
       {% if exercise.mind_muscle_cue %}
       <div class="mmc-card">
         <i class="fas fa-brain me-2"></i>{{ exercise.mind_muscle_cue.during|default:exercise.mind_muscle_cue }}
+      </div>
+      {% endif %}
+
+      {% if library_mode %}
+      <!-- R1b: whole-session pause — duration recorded for the report -->
+      <button class="pain-toggle" onclick="pauseSession()"
+              style="background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.25);color:#e2e8f0;margin-bottom:8px;">
+        <i class="fas fa-pause me-2"></i>Pause session
+      </button>
+      <div id="pauseOverlay" style="display:none;position:fixed;inset:0;background:rgba(6,10,8,.92);
+           z-index:80;flex-direction:column;align-items:center;justify-content:center;gap:14px;">
+        <div style="font-size:1.3rem;font-weight:800;color:#fff;">Session paused</div>
+        <div id="pauseElapsed" style="font-size:2.4rem;font-weight:800;color:#6bbf8a;">0:00</div>
+        <div style="font-size:.85rem;color:#cbd5d1;max-width:280px;text-align:center;">
+          Take the time you need. Your place is saved.
+        </div>
+        <button onclick="resumeSession()" class="start-cam-btn" style="margin-top:6px;">
+          <i class="fas fa-play me-2"></i>Resume
+        </button>
       </div>
       {% endif %}
 
@@ -485,6 +508,9 @@
   const LIBRARY_MODE = {{ library_mode|yesno:"true,false" }};
   const LIBRARY_RETURN_URL = "{{ library_return_url|default:'' }}";
   const REPORT_PAIN_URL = "{{ report_pain_url|default:'' }}";
+  // R1: capture endpoints (managed flow only — empty elsewhere)
+  const SET_LOG_URL = "{{ set_log_url|default:'' }}";
+  const REST_EVENT_URL = "{{ rest_event_url|default:'' }}";
   const CAPABILITY_LEVEL = "{{ exercise.capability_level|default:2 }}";
   const EXERCISE_FORM_CUES = [{% for cue in exercise.form_cues %}"{{ cue|escapejs }}"{% if not forloop.last %},{% endif %}{% endfor %}];
 
@@ -606,6 +632,7 @@ function startDemoSequence() {
 
 function showDemo() {
   if (CV_TRACKING !== 'camera') return;
+  window.demoWasViewed = true;  // R1e: rolls up onto the exercise's set logs
   if (!stream) {
     // Camera not running yet — the demo rides the pose loop, so start the
     // camera and run the sequence as soon as the framing check passes.
@@ -2767,6 +2794,176 @@ async function startCamera() {
     var _tempoCard = document.getElementById('tempoCard');
     if (_tempoCard) _tempoCard.style.display = 'none';
   }
+
+  // ── R1a: per-rep capture — a PURE OBSERVER of the ghost state machine ────
+  // Fed one call per pose frame; detects rep/phase boundaries by watching
+  // ghostState (mode, currentPhaseIndex, repCount, partialRomReps) change
+  // between frames. It never writes machine state (detection boundary).
+  // Cue capture: VoiceCoach.speak is wrapped below; any spoken text found in
+  // the cue registry is recorded on the open rep. `corrected` is
+  // operationalized as "the same cue was NOT re-attempted during the
+  // following rep" (call sites re-attempt every frame a fault persists,
+  // throttled ~4s, so a persisting fault re-fires within a normal rep).
+  // R4 will refine this with per-metric in-band predicates.
+  var RepCapture = {
+    reps: [],
+    _cur: null,
+    _lastPhaseIdx: -1,
+    _lastRepCount: 0,
+    _lastPartialCount: 0,
+    _phaseEnteredAt: 0,
+    _primaryJoint: '',
+    _registered: false,
+    _prevRepCues: [],
+    // Static registry: literal safety/position cue strings → stable cue_id.
+    _cueIds: {
+      'Push your knees out. Do not let them cave in.': 'knee_valgus',
+      'Knees out on landing! Do not let them cave in.': 'knee_valgus_landing',
+      'Bend your knees on landing — absorb the impact.': 'soft_landing',
+      'Even out your hips — keep them level.': 'hips_even',
+      'Stay hinged forward — push your hips back.': 'stay_hinged',
+      'Step your front foot further forward.': 'foot_forward',
+      'Stay upright — chest tall.': 'chest_up',
+      'Keep your hips level — do not hike.': 'hips_level',
+      'Stand tall on the step.': 'stand_tall',
+      'Keep your feet together.': 'feet_together',
+      'Keep your hips stacked': 'hips_stacked',
+      'Please lie on your back.': 'orientation',
+      'Please lie face down.': 'orientation',
+      'Please lie on your side.': 'orientation',
+      'Get back into position. Timer paused.': 'hold_position',
+    },
+    _registerExerciseCues: function(def) {
+      // Per-exercise worst-joint cues + force-arrow labels, ids stable.
+      if (def.cues) {
+        for (var k in def.cues) {
+          if (def.cues.hasOwnProperty(k)) this._cueIds[def.cues[k]] = 'cue_' + k;
+        }
+      }
+      if (def.forceArrows) {
+        for (var i = 0; i < def.forceArrows.length; i++) {
+          this._cueIds[def.forceArrows[i].label] = 'arrow_' + i;
+        }
+      }
+    },
+    _phaseBucket: function(name) {
+      name = String(name || '').toLowerCase();
+      if (/hold|pause|bottom/.test(name)) return 'hold';
+      if (/down|lower|descend|drop|sink|bend|ecc/.test(name)) return 'ecc';
+      if (/up|rise|return|lift|press|extend|con/.test(name)) return 'con';
+      return null;
+    },
+    _openRep: function(now) {
+      this._cur = {
+        frames: 0, formSum: 0, bottomAngle: null,
+        phaseMs: {}, phasesRaw: [], cues: [],
+      };
+      this._lastPhaseIdx = window.ghostState ? ghostState.currentPhaseIndex : -1;
+      this._phaseEnteredAt = now;
+    },
+    _closePhase: function(now) {
+      if (!this._cur || !window.ghostState || !ghostState.exerciseDef) return;
+      var phases = ghostState.exerciseDef.phases || [];
+      var phase = phases[this._lastPhaseIdx];
+      if (!phase) return;
+      var ms = Math.max(0, now - this._phaseEnteredAt);
+      if (ms < 50) return;  // frame jitter, not a real dwell
+      this._cur.phasesRaw.push({ name: phase.name, ms: ms });
+      var bucket = this._phaseBucket(phase.name);
+      if (bucket) this._cur.phaseMs[bucket] = (this._cur.phaseMs[bucket] || 0) + ms;
+    },
+    _closeRep: function(now, partial) {
+      if (!this._cur) return;
+      this._closePhase(now);
+      var rep = {
+        rep_n: this.reps.length + 1,
+        partial: !!partial,
+        form_pct: this._cur.frames
+          ? Math.round((this._cur.formSum / this._cur.frames) * 10) / 10 : null,
+        bottom_angle: this._cur.bottomAngle !== null
+          ? Math.round(this._cur.bottomAngle * 10) / 10 : null,
+        phase_ms: this._cur.phaseMs,
+        phases_raw: this._cur.phasesRaw,
+        cues: this._cur.cues,
+      };
+      // Correction verdicts for the PREVIOUS rep's cues: corrected when the
+      // same cue was not re-attempted during THIS rep.
+      var thisRepIds = {};
+      for (var i = 0; i < rep.cues.length; i++) thisRepIds[rep.cues[i].cue_id] = true;
+      for (var j = 0; j < this._prevRepCues.length; j++) {
+        var prev = this._prevRepCues[j];
+        if (!thisRepIds[prev.cue_id]) prev.corrected = true;
+      }
+      this._prevRepCues = rep.cues;
+      this.reps.push(rep);
+      this._cur = null;
+    },
+    noteSpeech: function(text) {
+      if (!this._cur) return;
+      var id = this._cueIds[text];
+      if (!id) return;
+      for (var i = 0; i < this._cur.cues.length; i++) {
+        if (this._cur.cues[i].cue_id === id) return;  // dedupe per rep
+      }
+      this._cur.cues.push({ cue_id: id, corrected: false });
+    },
+    frame: function(matchScore, userAngles) {
+      if (!window.ghostState || !ghostState.exerciseDef) return;
+      var now = Date.now();
+      if (!this._registered) {
+        this._registerExerciseCues(ghostState.exerciseDef);
+        var phases = ghostState.exerciseDef.phases || [];
+        var deep = phases.length > 1 ? phases[1] : phases[0];
+        this._primaryJoint = deep && deep.joints ? Object.keys(deep.joints)[0] : '';
+        this._registered = true;
+      }
+      var mode = ghostState.mode;
+      // Rep close first (repCount/partial bumped by the machine last frame).
+      if (ghostState.repCount !== this._lastRepCount) {
+        this._closeRep(now, false);
+        this._lastRepCount = ghostState.repCount;
+      } else if (ghostState.partialRomReps !== this._lastPartialCount) {
+        this._closeRep(now, true);
+        this._lastPartialCount = ghostState.partialRomReps;
+      }
+      if (mode === 'GHOST_LEADS' || mode === 'USER_FOLLOWS') {
+        if (!this._cur) this._openRep(now);
+        // Phase dwell tracking.
+        if (ghostState.currentPhaseIndex !== this._lastPhaseIdx) {
+          this._closePhase(now);
+          this._lastPhaseIdx = ghostState.currentPhaseIndex;
+          this._phaseEnteredAt = now;
+        }
+        this._cur.frames++;
+        this._cur.formSum += (matchScore || 0);
+        if (userAngles && this._primaryJoint &&
+            typeof userAngles[this._primaryJoint] === 'number') {
+          var angle = userAngles[this._primaryJoint];
+          if (this._cur.bottomAngle === null || angle < this._cur.bottomAngle) {
+            this._cur.bottomAngle = angle;
+          }
+        }
+      }
+    },
+    // Drain the finished set's reps (an unfinished trailing rep is discarded
+    // — never fabricate) and reset for the next set.
+    takeSet: function() {
+      var out = this.reps;
+      this.reps = [];
+      this._cur = null;
+      this._prevRepCues = [];
+      return out;
+    },
+  };
+
+  // Cue capture: observe every spoken line; registry decides what counts.
+  (function() {
+    var _origSpeak = VoiceCoach.speak;
+    VoiceCoach.speak = function(text, priority) {
+      try { RepCapture.noteSpeech(text); } catch (e) { /* capture must never break coaching */ }
+      return _origSpeak.call(this, text, priority);
+    };
+  })();
 
   function toggleVoice() {
     var on = VoiceCoach.toggle();
@@ -4992,6 +5189,9 @@ async function startCamera() {
             });
           }
           ghostState._lastMatchScore = matchScore;
+          // R1a: per-rep capture observes each frame (pre-update state; the
+          // observer detects transitions itself — no machine writes).
+          try { RepCapture.frame(matchScore, userAngles); } catch (e) { /* never break tracking */ }
           updateGhostState(userAngles, matchScore, lm);
           target = getGhostCurrentTarget();
           drawGhostTarget(ctx, target, matchScore || 50, W, H, lm);
@@ -5107,7 +5307,34 @@ async function startCamera() {
     VoiceCoach.speak('Set removed. Redo it when ready.', false);
   }
 
+  // ── R1: capture plumbing (managed flow; no-ops when URLs are absent) ────
+  var _setStartMs = Date.now();     // reset at rest end / skip — set duration
+  var demoWasViewed = false;        // R1e: Show demo pressed on this exercise
+
+  function postJSON(url, payload) {
+    if (!url) return;
+    // Fire-and-forget: capture must never block or break the patient flow.
+    fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+      body: JSON.stringify(payload),
+    }).catch(function() {});
+  }
+
+  function postRestEvent(kind, seconds) {
+    if (!LIBRARY_MODE) return;
+    postJSON(REST_EVENT_URL, {
+      kind: kind,
+      seconds: seconds,
+      set_number: completedSets + 1,
+    });
+  }
+
   function completeSet(setNum) {
+    // R1a: drain the per-rep records BEFORE the ghost reset zeroes repCount.
+    var capturedReps = RepCapture.takeSet();
+    var capturedHold = (window.ghostState && ghostState.holdSeconds) ||
+                       (typeof _guidedHold !== 'undefined' && _guidedHold.seconds) || 0;
     _completedSetStack.push(setNum);
     var _undoBtn = document.getElementById('undoSetBtn');
     if (_undoBtn) _undoBtn.style.display = 'block';
@@ -5123,10 +5350,23 @@ async function startCamera() {
     const reps = parseInt(repsEl.value) || PRESCRIBED_REPS;
     repsPerSet.push(reps);
     completedSets++;
+    if (LIBRARY_MODE && SET_LOG_URL) {
+      postJSON(SET_LOG_URL, {
+        set_number: setNum,
+        mode: (CV_TRACKING === 'camera') ? 'camera' : 'guided',
+        reps_count: reps,
+        hold_seconds: capturedHold,
+        duration_ms: Date.now() - _setStartMs,
+        demo_viewed: demoWasViewed,
+        reps: capturedReps,
+      });
+    }
     if (completedSets < PRESCRIBED_SETS) {
       startRest();
     }
   }
+
+  var _restExtend = null;  // R1b: bound to the live rest closure below
 
   function startRest() {
     TempoCoach.stop();
@@ -5136,32 +5376,84 @@ async function startCamera() {
     let t = REST_SECS;
     val.textContent = t;
     VoiceCoach.announceRest(t);
+    // R1b: +30s extends THIS rest (tap again = +30 more), logged per tap.
+    _restExtend = function() {
+      t += 30;
+      val.textContent = t;
+      postRestEvent('extension', 30);
+    };
     restInterval = setInterval(() => {
       t--;
       val.textContent = t;
       if (t <= 0) {
         clearInterval(restInterval);
+        _restExtend = null;
         wrap.style.display = 'none';
         VoiceCoach.speak('Rest over. Next set.', true);
         // Phase E: the tempo guide runs during the SET, not during rest.
         TempoCoach.start();
+        _setStartMs = Date.now();  // R1c: next set's clock starts at rest end
       }
     }, 1000);
   }
 
+  function extendRest() {
+    if (_restExtend) _restExtend();
+  }
+
   function skipRest() {
     clearInterval(restInterval);
+    _restExtend = null;
     document.getElementById('restTimerWrap').style.display = 'none';
     VoiceCoach.speak('Next set.', true);
     TempoCoach.start();
+    _setStartMs = Date.now();      // R1c: next set's clock starts now
+    postRestEvent('skip', 0);      // R1b: rest cut short — report-relevant
+  }
+
+  // ── R1b: whole-session pause (managed flow) ─────────────────────────────
+  var _pauseStartedAt = 0;
+  var _pauseTick = null;
+
+  function pauseSession() {
+    var overlay = document.getElementById('pauseOverlay');
+    if (!overlay || _pauseStartedAt) return;
+    _pauseStartedAt = Date.now();
+    overlay.style.display = 'flex';
+    VoiceCoach.stop();
+    TempoCoach.stop();
+    var el = document.getElementById('pauseElapsed');
+    _pauseTick = setInterval(function() {
+      var s = Math.round((Date.now() - _pauseStartedAt) / 1000);
+      var m = Math.floor(s / 60);
+      if (el) el.textContent = m + ':' + ('0' + (s % 60)).slice(-2);
+    }, 1000);
+  }
+
+  function resumeSession() {
+    var overlay = document.getElementById('pauseOverlay');
+    if (!overlay || !_pauseStartedAt) return;
+    var seconds = Math.round((Date.now() - _pauseStartedAt) / 1000);
+    _pauseStartedAt = 0;
+    clearInterval(_pauseTick);
+    overlay.style.display = 'none';
+    postRestEvent('pause', seconds);
+    _setStartMs = Date.now();      // don't bill paused time to the set
   }
 
   // ---- Pain protocol ----
+  var painRepAtOpen = null;  // R1d: rep pinned when the modal OPENS
+
   function togglePain() {
     const p = document.getElementById('painProtocol');
     p.classList.toggle('show');
     // Reset to step 1 each time opened
     if (p.classList.contains('show')) {
+      // R1d: pin the rep the patient stopped on — the one in progress
+      // (repCount holds COMPLETED reps). Guided/no-camera stays null.
+      painRepAtOpen = (CV_TRACKING === 'camera' && window.ghostState &&
+                       ghostState.exerciseDef)
+        ? ghostState.repCount + 1 : null;
       document.querySelectorAll('.pain-step').forEach(s => s.classList.remove('active'));
       document.getElementById('painStep1').classList.add('active');
       selectedLocation = '';
@@ -5256,7 +5548,7 @@ async function startCamera() {
         fetch(REPORT_PAIN_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
-          body: JSON.stringify({ severity: severity, pain_type: type, set_number: completedSets + 1 })
+          body: JSON.stringify({ severity: severity, pain_type: type, set_number: completedSets + 1, rep_number: painRepAtOpen })
         }).then(r => r.json()).then(out => {
           const action = (out.action === 'skip' || out.action === 'pause') ? out.action : 'continue';
           const wrap = document.createElement('div');
