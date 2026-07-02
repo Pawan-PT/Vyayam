@@ -122,6 +122,19 @@ def _clear_session_state(request):
     request.session.modified = True
 
 
+def _generate_report_safely(session_log):
+    """R2 trigger wrapper: a report failure must NEVER block the patient's
+    completion flow — log it and move on."""
+    if session_log is None:
+        return
+    try:
+        from .report_builder import generate_session_report
+        generate_session_report(session_log)
+    except Exception:
+        logger.exception('session report generation failed (session_log=%s)',
+                         getattr(session_log, 'id', None))
+
+
 def _resolve_session_log(request, link, rx):
     """Return (state, log) — creates state lazily from a started SessionLog
     if the in-session dict has been cleared (e.g. after browser refresh)."""
@@ -513,6 +526,10 @@ def therapist_session_report_pain(request, idx):
     # _record_pain's tiers, so the exercise screen and the therapist chat
     # can never disagree. (Clinical wording — flag for the physio mentor.)
     if outcome == 'session_paused':
+        # R2 trigger (b): an aborted session is the report a therapist most
+        # needs — generate it now, synchronously, never blocking the reply.
+        _generate_report_safely(
+            SessionLog.objects.filter(id=state.get('log_id')).first())
         return JsonResponse({
             'action': 'pause',
             'next_url': reverse('v1_pain_stop'),
@@ -752,6 +769,9 @@ def therapist_session_complete(request):
         log.completed_at = timezone.now()
         log.save()
 
+        # R2 trigger (a): the session just completed — build its report.
+        _generate_report_safely(log)
+
         _clear_session_state(request)
         return redirect('therapist_session_finished')
 
@@ -780,6 +800,10 @@ def therapist_session_finished(request):
         .first()
         if link else None
     )
+
+    # R2 trigger (c): idempotent safety net — a completed session that
+    # somehow missed generation gets its report here.
+    _generate_report_safely(last_log)
 
     ctx = {
         'patient': patient,
