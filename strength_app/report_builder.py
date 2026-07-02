@@ -151,11 +151,16 @@ def tempo_adherence(reps, prescribed):
     prescribed = {k: v for k, v in (prescribed or {}).items() if v > 0}
     if not prescribed:
         return None
-    scored = on_tempo = 0
+    scored = on_tempo = reps_scored = 0
     misses = {}
     deviations = {}
     for rep in reps or []:
-        phase_ms = rep.get('phase_ms') or {}
+        if not isinstance(rep, dict):
+            continue
+        phase_ms = rep.get('phase_ms')
+        if not isinstance(phase_ms, dict):
+            continue
+        rep_counted = False
         for phase, target in prescribed.items():
             ms = phase_ms.get(phase)
             if not isinstance(ms, (int, float)) or ms <= 0:
@@ -163,17 +168,21 @@ def tempo_adherence(reps, prescribed):
             actual = ms / 1000.0
             tolerance = max(0.4 * target, 0.7)
             scored += 1
+            rep_counted = True
             if abs(actual - target) <= tolerance:
                 on_tempo += 1
             else:
                 direction = 'fast' if actual < target else 'slow'
                 misses[(phase, direction)] = misses.get((phase, direction), 0) + 1
                 deviations.setdefault((phase, direction), []).append(actual)
+        if rep_counted:
+            reps_scored += 1
     if not scored:
         return None
     return {
         'pct': int(round(100.0 * on_tempo / scored)),
         'scored': scored,
+        'reps_scored': reps_scored,
         'misses': misses,
         'deviations': deviations,
     }
@@ -224,15 +233,16 @@ def _exercise_block(presc_item, log_item, set_logs, rest_events, pain_events,
     all_reps = []
     working_seconds = 0
     for s in set_logs:
-        reps = s.reps_json if isinstance(s.reps_json, list) else []
+        reps = [r for r in (s.reps_json if isinstance(s.reps_json, list) else [])
+                if isinstance(r, dict)]
         all_reps.extend(reps)
         form_avg = _mean([r.get('form_pct') for r in reps])
         depths = [r.get('bottom_angle') for r in reps
                   if r.get('bottom_angle') is not None]
         adherence = tempo_adherence(reps, tempo_parts) if has_tempo else None
         rep_durations = [
-            sum(p.get('ms', 0) for p in (r.get('phases_raw') or []))
-            for r in reps if r.get('phases_raw')
+            sum(p.get('ms', 0) for p in r['phases_raw'] if isinstance(p, dict))
+            for r in reps if isinstance(r.get('phases_raw'), list)
         ]
         avg_rep_ms = int(_mean(rep_durations)) if rep_durations else None
         if s.started_at and s.ended_at:
@@ -299,12 +309,14 @@ def _exercise_block(presc_item, log_item, set_logs, rest_events, pain_events,
             (phase, direction), count = max(
                 exercise_adherence['misses'].items(), key=lambda kv: kv[1])
             avg_actual = _mean(exercise_adherence['deviations'][(phase, direction)])
+            # share = reps missing this phase/direction over scored REPS
+            # (the docstring rule) — one phase misses at most once per rep.
             tempo_out['dominant_miss'] = {
                 'phase': PHASE_LABEL[phase],
                 'direction': direction,
                 'avg_actual': round(avg_actual, 1),
                 'prescribed': tempo_parts[phase],
-                'share': round(count / exercise_adherence['scored'], 2),
+                'share': round(count / exercise_adherence['reps_scored'], 2),
             }
 
     # R1c times — per Pawan's R2 addition: BOTH clocks, clearly labeled.
