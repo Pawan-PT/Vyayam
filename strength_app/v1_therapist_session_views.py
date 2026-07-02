@@ -36,6 +36,7 @@ from therapist_app.models import (
     PrescriptionItem,
     SessionLog,
     SessionLogItem,
+    SessionReport,
     TherapistMessage,
     TherapistPatientLink,
 )
@@ -809,6 +810,9 @@ def therapist_session_finished(request):
         'patient': patient,
         'link': link,
         'last_log': last_log,
+        # R3: link straight to today's report when it exists.
+        'last_report': (SessionReport.objects.filter(session_log=last_log).first()
+                        if last_log else None),
     }
     return render(request, 'strength_app/therapist_session_finished.html', ctx)
 
@@ -932,8 +936,27 @@ def therapist_session_progress(request):
         'compliance_pct': compliance_pct,
         'next_checkin': next_checkin,
         'latest_therapist_note': latest_therapist_note,
+        # R3: session history entries link to their rendered reports.
+        'recent_reports': list(
+            SessionReport.objects.filter(patient=patient)
+            .order_by('-report_date', '-created_at')[:10]),
     }
     return render(request, 'strength_app/therapist_session_progress.html', ctx)
+
+
+def therapist_session_report_view(request, report_id):
+    """R3: the patient reads their OWN session report — the identical
+    document the therapist sees (locked decision 1). Ownership: the report
+    must belong to the logged-in patient, 404 otherwise (IDOR matrix)."""
+    patient, err = _require_patient(request)
+    if err:
+        return err
+    report_obj = get_object_or_404(SessionReport, id=report_id, patient=patient)
+    return render(request, 'strength_app/therapist_session_report.html', {
+        'patient': patient,
+        'report_obj': report_obj,
+        'report': report_obj.report_json,
+    })
 
 
 def therapist_session_profile(request):

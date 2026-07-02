@@ -357,6 +357,22 @@ def alerts_inbox(request):
 
 
 @therapist_required
+def session_report_detail(request, link_id, report_id):
+    """R3: render one immutable session report for the therapist. Ownership
+    via the cross-therapist firewall + link-scoped report lookup (IDOR)."""
+    link = get_linked_patient_or_404(request.user.therapist, link_id)
+    from .models import SessionReport
+    report_obj = get_object_or_404(SessionReport, id=report_id, link=link)
+    return render(request, 'therapist_app/session_report_detail.html', {
+        'therapist': request.user.therapist,
+        'link': link,
+        'report_obj': report_obj,
+        'report': report_obj.report_json,
+        'active_section': 'patients',
+    })
+
+
+@therapist_required
 @require_POST
 def alert_mark_reviewed(request, alert_id):
     from .models import Alert
@@ -708,6 +724,10 @@ def patient_detail(request, link_id):
 
     reports_qs = list(link.progress_reports.all())
 
+    # R3: per-session reports (newest first) for the Reports tab.
+    session_reports = list(
+        link.session_reports.order_by('-report_date', '-created_at')[:30])
+
     # Therapist-managed clinical fields + patient PWA workout logs.
     health_profile = getattr(link, 'health_profile', None)
     session_logs = list(
@@ -759,6 +779,7 @@ def patient_detail(request, link_id):
         'history_seed': history_seed,
         'messages': msgs,
         'reports': reports_qs,
+        'session_reports': session_reports,
         'active_section': 'patients',
         'health_profile': health_profile,
         'patient_profile': patient_profile,

@@ -164,6 +164,7 @@ urlpatterns = [
     path('therapist-session/complete/',              views_thrx.therapist_session_complete,  name='therapist_session_complete'),
     path('therapist-session/finished/',              views_thrx.therapist_session_finished,  name='therapist_session_finished'),
     path('therapist-session/progress/',              views_thrx.therapist_session_progress,  name='therapist_session_progress'),
+    path('therapist-session/report/<int:report_id>/', views_thrx.therapist_session_report_view, name='therapist_session_report'),  # R3
     path('therapist-session/profile/',               views_thrx.therapist_session_profile,   name='therapist_session_profile'),
 
     # ========================================================================

@@ -63,5 +63,23 @@
   {% endif %}
 </div>
 
+{# ── R3: session reports (one per finished session) ── #}
+{% if recent_reports %}
+<div class="ts-card" style="margin-bottom:14px;">
+  <div style="font-size:.72rem; color:#666; font-weight:700; letter-spacing:.08em; margin-bottom:10px;">SESSION REPORTS</div>
+  {% for r in recent_reports %}
+  <a href="{% url 'therapist_session_report' r.id %}" style="text-decoration:none; color:inherit;">
+    <div class="ts-row-kv"{% if forloop.last %} style="border-bottom:0;"{% endif %}>
+      <span>
+        {{ r.report_date|date:"D, M d" }}
+        {% if r.status == 'ended_early_pain' %}<span style="color:#b42318; font-weight:700;"> · stopped early</span>{% endif %}
+      </span>
+      <strong style="color:#0c6c3f;">{{ r.report_json.header.completion_pct }}% ›</strong>
+    </div>
+  </a>
+  {% endfor %}
+</div>
+{% endif %}
+
 {% endif %}{# end total_sessions > 0 #}
 {% endblock %}

@@ -18,7 +18,15 @@
 </div>
 {% endif %}
 
-<a href="{% url 'therapist_session_today' %}" class="ts-btn" style="text-decoration:none; width:100%; justify-content:center;">
+{% if last_report %}
+{# R3: today's full session report — the same document the therapist sees #}
+<a href="{% url 'therapist_session_report' last_report.id %}" class="ts-btn" style="text-decoration:none; width:100%; justify-content:center; margin-bottom:10px;">
+  <span class="material-symbols-outlined">description</span>
+  View today's session report
+</a>
+{% endif %}
+
+<a href="{% url 'therapist_session_today' %}" class="ts-btn" style="text-decoration:none; width:100%; justify-content:center; background:#fff; color:#0c6c3f; border:1px solid #cfe3d8;">
   Back to today
 </a>
 {% endblock %}

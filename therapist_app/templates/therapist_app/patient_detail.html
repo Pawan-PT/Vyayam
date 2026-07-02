@@ -519,8 +519,38 @@
 
 {# ---- REPORTS TAB ---- #}
 {% if tab == 'reports' %}
+{# ---- R3: per-session reports (auto-generated at session end) ---- #}
+<div style="font-size:.95rem; font-weight:800; margin-bottom:12px;">Session reports</div>
+<div class="t-card t-table-card" style="margin-bottom:22px;">
+  {% for sr in session_reports %}
+    <div class="t-report-row">
+      <div class="t-report-row__id">
+        <div class="t-report-row__icon {% if sr.status == 'ended_early_pain' %}is-flagged{% endif %}"><i class="fas fa-notes-medical"></i></div>
+        <div>
+          <div class="t-report-row__title">{{ sr.report_date|date:"D, M d, Y" }} · Session {{ sr.report_json.header.session_number }}</div>
+          <div class="t-report-row__sub">
+            {{ sr.report_json.header.completion_pct }}% complete ·
+            {{ sr.report_json.header.duration_mmss }}
+            {% if sr.report_json.safety %} · <strong style="color:#8c1414;">⚠ safety event{{ sr.report_json.safety|length|pluralize }}</strong>{% endif %}
+          </div>
+        </div>
+      </div>
+      <div class="t-report-row__actions">
+        {% if sr.status == 'complete' %}<span class="t-pill t-pill--green">Completed</span>
+        {% elif sr.status == 'ended_early_pain' %}<span class="t-pill t-pill--error">Ended early — pain</span>
+        {% else %}<span class="t-pill">Partial</span>{% endif %}
+        <a class="t-btn t-btn--ghost t-btn--sm" href="{% url 'therapist_session_report_detail' link.id sr.id %}"><i class="fas fa-eye"></i> Open</a>
+      </div>
+    </div>
+  {% empty %}
+    <div style="padding:24px; text-align:center; color:var(--muted);">
+      No session reports yet — one is generated automatically when {{ link.display_name|truncatewords:1 }} finishes a session.
+    </div>
+  {% endfor %}
+</div>
+
 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-  <div style="font-size:.95rem; font-weight:800;">Reports for {{ link.display_name|truncatewords:1 }}</div>
+  <div style="font-size:.95rem; font-weight:800;">Progress reports for {{ link.display_name|truncatewords:1 }}</div>
   <form method="post" action="{% url 'therapist_generate_report' link.id %}" style="margin:0;">
     {% csrf_token %}
     <button type="submit" class="t-btn"><i class="fas fa-file-medical-alt"></i> Generate new report</button>

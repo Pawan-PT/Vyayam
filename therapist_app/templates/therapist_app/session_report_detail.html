@@ -1,0 +1,17 @@
+{% extends "therapist_app/base_therapist.html" %}
+{% block title %}Session report · {{ link.display_name }} — VYAYAM{% endblock %}
+
+{% block content %}
+<div class="no-print" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+  <a class="t-link" href="{% url 'therapist_patient_detail' link.id %}?tab=reports">
+    <i class="fas fa-arrow-left"></i> Back to {{ link.display_name|truncatewords:1 }}'s reports
+  </a>
+  <button type="button" class="t-btn t-btn--outline t-btn--sm" onclick="window.print()">
+    <i class="fas fa-print"></i> Print
+  </button>
+</div>
+
+<div class="t-card" style="padding:22px 26px;">
+  {% include 'strength_app/_session_report.html' %}
+</div>
+{% endblock %}

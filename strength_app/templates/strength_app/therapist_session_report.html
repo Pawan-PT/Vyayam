@@ -1,0 +1,19 @@
+{% extends 'strength_app/therapist_session_base.html' %}
+{% block title %}Session report — VYAYAM{% endblock %}
+{% block bottom_nav %}{% endblock %}
+
+{% block content %}
+<div class="no-print" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+  <a href="{% url 'therapist_session_progress' %}" style="font-size:.82rem; color:#0c6c3f; text-decoration:none; font-weight:700;">
+    <span class="material-symbols-outlined" style="font-size:1rem; vertical-align:-3px;">arrow_back</span> Back
+  </a>
+  <button type="button" onclick="window.print()"
+          style="background:#fff; border:1px solid #d4d8d4; border-radius:999px; padding:6px 16px; font-size:.78rem; font-weight:700; cursor:pointer;">
+    Print
+  </button>
+</div>
+
+<div class="ts-card" style="padding:18px;">
+  {% include 'strength_app/_session_report.html' %}
+</div>
+{% endblock %}
