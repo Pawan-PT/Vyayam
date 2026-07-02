@@ -57,6 +57,7 @@
     <div style="font-size:.74rem; letter-spacing:.08em; opacity:.8;">REST</div>
     <div id="rest-countdown" style="font-size:2rem; font-weight:800;">0:00</div>
     <button type="button" id="rest-skip" style="margin-top:6px; background:transparent; border:1px solid rgba(255,255,255,.5); color:#fff; padding:6px 14px; border-radius:999px; font-size:.78rem; cursor:pointer;">Skip rest</button>
+    <button type="button" id="rest-extend" style="margin-top:6px; margin-left:6px; background:transparent; border:1px solid rgba(255,255,255,.5); color:#fff; padding:6px 14px; border-radius:999px; font-size:.78rem; cursor:pointer;">+30s</button>
   </div>
 </div>
 
@@ -64,6 +65,16 @@
   <button type="button" id="report-pain-btn" class="ts-btn" style="flex:1; justify-content:center; background:#fff; color:#b42318; border:1px solid #f1c4bf;">
     Report pain
   </button>
+  <button type="button" id="pause-session-btn" class="ts-btn" style="flex:1; justify-content:center; background:#fff; color:#334155; border:1px solid #d4d8d4;">
+    Pause session
+  </button>
+</div>
+
+<div id="pause-overlay" style="display:none; position:fixed; inset:0; background:rgba(10,14,12,.9); z-index:60; flex-direction:column; align-items:center; justify-content:center; gap:12px;">
+  <div style="font-size:1.25rem; font-weight:800; color:#fff;">Session paused</div>
+  <div id="pause-elapsed" style="font-size:2.2rem; font-weight:800; color:#6bbf8a;">0:00</div>
+  <div style="font-size:.84rem; color:#cbd5d1; max-width:280px; text-align:center;">Take the time you need. Your place is saved.</div>
+  <button type="button" id="pause-resume" class="ts-btn" style="margin-top:6px;">Resume</button>
 </div>
 <form method="get" action="{{ feedback_url }}" style="display:flex; gap:10px;">
   <button type="submit" class="ts-btn" style="flex:1; justify-content:center;">
@@ -94,10 +105,27 @@
 {% block extra_scripts %}
 <script>
 (function(){
-  const totalSets = {{ item.sets }};
-  const restSecs = {{ item.rest_seconds }};
+  // G0 hardening (deferred until this file was next touched): quoted +
+  // parseInt so a future builder change can never emit invalid inline JS.
+  const totalSets = parseInt("{{ item.sets }}", 10) || 3;
+  const restSecs = parseInt("{{ item.rest_seconds }}", 10) || 60;
+  const targetReps = parseInt("{{ item.reps }}", 10) || 0;
+  // R1: capture endpoints
+  const SET_LOG_URL = "{{ set_log_url|default:'' }}";
+  const REST_EVENT_URL = "{{ rest_event_url|default:'' }}";
   const row = document.getElementById('sets-row');
   let completed = 0;
+  let setClockStart = Date.now();  // R1c: per-set duration clock
+
+  function postJSON(url, payload) {
+    if (!url) return;
+    // Fire-and-forget: capture must never block the patient's flow.
+    fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': "{{ csrf_token }}" },
+      body: JSON.stringify(payload),
+    }).catch(() => {});
+  }
 
   function render() {
     row.innerHTML = '';
@@ -123,6 +151,15 @@
       btn.addEventListener('click', () => {
         if (i === completed + 1) {
           completed = i;
+          // R1a: one guided set row — self-reported count only, no
+          // rep-level data is ever fabricated for guided work.
+          postJSON(SET_LOG_URL, {
+            set_number: i,
+            mode: 'guided',
+            reps_count: targetReps,
+            duration_ms: Date.now() - setClockStart,
+            reps: [],
+          });
           render();
           if (i < totalSets) startRest();
         }
@@ -132,6 +169,7 @@
   }
 
   let restInterval = null;
+  let restExtend = null;
   function startRest() {
     let t = restSecs;
     const box = document.getElementById('rest-timer');
@@ -139,11 +177,19 @@
     box.style.display = 'block';
     cd.textContent = formatTime(t);
     if (restInterval) clearInterval(restInterval);
+    // R1b: +30s extends THIS rest; every tap is logged.
+    restExtend = () => {
+      t += 30;
+      cd.textContent = formatTime(t);
+      postJSON(REST_EVENT_URL, { kind: 'extension', seconds: 30, set_number: completed });
+    };
     restInterval = setInterval(() => {
       t -= 1;
       if (t <= 0) {
         clearInterval(restInterval);
+        restExtend = null;
         box.style.display = 'none';
+        setClockStart = Date.now();  // next set's clock starts at rest end
         return;
       }
       cd.textContent = formatTime(t);
@@ -155,7 +201,36 @@
   }
   document.getElementById('rest-skip').addEventListener('click', () => {
     if (restInterval) clearInterval(restInterval);
+    restExtend = null;
     document.getElementById('rest-timer').style.display = 'none';
+    setClockStart = Date.now();
+    postJSON(REST_EVENT_URL, { kind: 'skip', seconds: 0, set_number: completed });
+  });
+  document.getElementById('rest-extend').addEventListener('click', () => {
+    if (restExtend) restExtend();
+  });
+
+  // ── R1b: whole-session pause ─────────────────────────────────────────
+  let pauseStartedAt = 0;
+  let pauseTick = null;
+  document.getElementById('pause-session-btn').addEventListener('click', () => {
+    if (pauseStartedAt) return;
+    pauseStartedAt = Date.now();
+    document.getElementById('pause-overlay').style.display = 'flex';
+    const el = document.getElementById('pause-elapsed');
+    pauseTick = setInterval(() => {
+      const s = Math.round((Date.now() - pauseStartedAt) / 1000);
+      el.textContent = Math.floor(s / 60) + ':' + ('0' + (s % 60)).slice(-2);
+    }, 1000);
+  });
+  document.getElementById('pause-resume').addEventListener('click', () => {
+    if (!pauseStartedAt) return;
+    const seconds = Math.round((Date.now() - pauseStartedAt) / 1000);
+    pauseStartedAt = 0;
+    clearInterval(pauseTick);
+    document.getElementById('pause-overlay').style.display = 'none';
+    postJSON(REST_EVENT_URL, { kind: 'pause', seconds: seconds, set_number: completed + 1 });
+    setClockStart = Date.now();  // don't bill paused time to the set
   });
 
   // ── Phase 2: real-time pain reporting ──────────────────────────────
