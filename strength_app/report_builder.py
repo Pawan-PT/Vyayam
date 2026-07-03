@@ -84,21 +84,25 @@ REPORT_FOOTER = (
     "assessment — the treating physiotherapist retains clinical judgment."
 )
 
-# cue_id -> patient-readable text (mirrors the R1 client registry).
+# cue_id -> what the coach actually says (R4b registry in coach_core.js —
+# the report quotes the live phrasing; keep the two in sync).
 CUE_TEXT = {
-    'knee_valgus': 'Push your knees out — do not let them cave in',
-    'knee_valgus_landing': 'Knees out on landing',
-    'soft_landing': 'Bend your knees on landing — absorb the impact',
-    'hips_even': 'Even out your hips — keep them level',
-    'stay_hinged': 'Stay hinged forward — push your hips back',
-    'foot_forward': 'Step your front foot further forward',
-    'chest_up': 'Stay upright — chest tall',
-    'hips_level': 'Keep your hips level — do not hike',
-    'stand_tall': 'Stand tall on the step',
-    'feet_together': 'Keep your feet together',
-    'hips_stacked': 'Keep your hips stacked',
+    'knee_valgus': 'Knees toward the camera',
+    'knee_valgus_landing': 'Land with your knees wide',
+    'soft_landing': 'Land soft and quiet',
+    'hips_even': 'Hips level, like a tray',
+    'stay_hinged': 'Push your hips back',
+    'foot_forward': 'Front foot further forward',
+    'chest_up': 'Chest proud',
+    'hips_level': 'Keep your hips level',
+    'stand_tall': 'Grow tall on the step',
+    'feet_together': 'Glue your feet together',
+    'hips_stacked': 'Stack your hips straight up',
     'orientation': 'Get into the starting position',
-    'hold_position': 'Get back into position',
+    'orientation_supine': 'Lie on your back',
+    'orientation_prone': 'Lie face down',
+    'orientation_sidelying': 'Lie on your side',
+    'hold_position': 'Back into position',
 }
 
 DIFFICULTY_LABEL = {
