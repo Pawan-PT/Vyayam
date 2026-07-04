@@ -128,5 +128,23 @@ As dr_shah at `/admin/` after the Part B/C sessions:
 **On full PASS: the camera/coaching freeze lifts.** File any failure as a
 bug with console text + the exact step number from this document.
 
+## Part G — New-exercise smoke (run once per exercise added)
+
+Per `docs/ADDING_AN_EXERCISE.md` step 10 — after adding any exercise:
+
+- [ ] `python manage.py export_exercise_targets --check` → "fresh"
+      (camera adds only) and full suite + node green
+- [ ] Therapist: builder shows it → add with sets/reps/note → Publish
+- [ ] Patient: today list shows it with the note → open it
+- [ ] GUIDED: description renders, Set-done taps post ExerciseSetLog rows
+      (mode guided), rest/+30s/pause work
+- [ ] CAMERA: Start Camera → framing → straight in → reps count on real
+      movement → form % responds → per-rep rows in reps_json → tempo chip
+      if prescribed → zero console errors
+- [ ] Report: finish the session → the new exercise's block renders with
+      the right mode label and numbers
+- [ ] Squat re-test (any camera-table change warrants the showpiece check)
+- [ ] Add the row to docs/EXERCISE_TEST_CHECKLIST.md with today's result
+
 ---
 *Every future phase appends its manual steps to this file (standing rule 8).*
