@@ -108,7 +108,7 @@ def _compute_link_metrics(link):
         profile = None
 
     if profile is not None:
-        from strength_app.models import WorkoutSession
+        from strength_app.models import PainEvent, WorkoutSession
         sessions = WorkoutSession.objects.filter(
             patient=profile,
             session_date__date__gte=today - timedelta(days=days_window),
@@ -121,6 +121,19 @@ def _compute_link_metrics(link):
             day_offset = (today - s.session_date.date()).days
             if 0 <= day_offset < 7 and s.total_exercises_completed > 0:
                 sparkline_7d[6 - day_offset] = 1
+
+        # D8: the pain trend was initialised to zeros and never populated,
+        # so the "Pain >5 last week" flag could never fire for a real
+        # patient. Fill it from PainEvent — the locked pain source.
+        recent_pain = PainEvent.objects.filter(
+            patient=profile,
+            created_at__date__gte=today - timedelta(days=6),
+        ).only('created_at', 'pain_severity')
+        for event in recent_pain:
+            day_offset = (today - timezone.localtime(event.created_at).date()).days
+            if 0 <= day_offset < 7:
+                slot = 6 - day_offset
+                pain_trend_7d[slot] = max(pain_trend_7d[slot], event.pain_severity)
 
     flags = []
     if compliance_pct and compliance_pct < 60:
@@ -903,7 +916,10 @@ def save_onboarding(request, link_id):
                 pp.gate_test_completed = True
                 pp.save()
         except Exception:
-            pass
+            # D5: the engine reads age/sex/goals from PatientProfile — a
+            # silent mirror failure means stale demographics drive dosing.
+            logger.warning('onboarding mirror to PatientProfile failed for '
+                           'link %s', link.id, exc_info=True)
 
     flash.success(request, "Patient details saved.")
     return redirect(f"/therapist/patient/{link.id}/?tab=today")

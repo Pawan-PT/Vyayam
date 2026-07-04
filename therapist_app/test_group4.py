@@ -99,6 +99,23 @@ class TherapistProgramBuilderTests(TestCase):
         item = PrescriptionItem.objects.get(prescription=rx)
         self.assertEqual(item.notes, "Don't rush. Stop if pain >3.")
 
+    def test_dashboard_pain_flag_fires_from_painevent(self):
+        # D8: the "Pain >5 last week" triage flag was dead for real patients
+        # (pain trend never populated). It must fire from PainEvent rows.
+        from strength_app.models import PainEvent, PatientProfile
+        from therapist_app.views import _compute_link_metrics
+        profile = PatientProfile.objects.create(
+            patient_id='D8P1', name='Flag Me', phone='9000009991',
+            age=30, goals='Rehab', user=self.patient_user,
+        )
+        PainEvent.objects.create(
+            patient=profile, exercise_id='ex_bw_squat',
+            exercise_name='Squat', pain_type='sharp', pain_severity=7,
+            outcome='exercise_skipped')
+        metrics = _compute_link_metrics(self.link)
+        self.assertIn('Pain >5 last week', metrics['flags'])
+        self.assertEqual(max(metrics['pain_trend_7d']), 7)
+
     def test_save_program_threshold_zero_survives_blank_is_null(self):
         # D2: an explicit 0 ("skip above ANY pain") must persist as 0;
         # blank means no therapist value and stays NULL.
