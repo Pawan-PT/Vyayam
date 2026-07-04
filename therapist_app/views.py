@@ -956,7 +956,13 @@ def save_program(request, link_id):
                     rest_seconds=_safe_int(item.get('rest_seconds') or item.get('rest'), 60, 0, 600),
                     tempo=str(item.get('tempo') or ''),
                     notes=str(item.get('notes') or ''),
-                    pain_stop_threshold=(_safe_int(item.get('pain_stop_threshold'), 0, 0, 10) or None),
+                    # D2: keep an explicit 0 (skip above ANY pain); only
+                    # blank/absent means "no therapist value" → NULL.
+                    pain_stop_threshold=(
+                        _safe_int(item.get('pain_stop_threshold'), 5, 0, 10)
+                        if item.get('pain_stop_threshold') not in (None, '')
+                        else None
+                    ),
                 )
         rx.save()
 

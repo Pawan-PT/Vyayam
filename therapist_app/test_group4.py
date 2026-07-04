@@ -99,6 +99,22 @@ class TherapistProgramBuilderTests(TestCase):
         item = PrescriptionItem.objects.get(prescription=rx)
         self.assertEqual(item.notes, "Don't rush. Stop if pain >3.")
 
+    def test_save_program_threshold_zero_survives_blank_is_null(self):
+        # D2: an explicit 0 ("skip above ANY pain") must persist as 0;
+        # blank means no therapist value and stays NULL.
+        for raw, expected in ((0, 0), ('', None), (None, None), (7, 7)):
+            payload = {
+                "week_number": 5,
+                "publish": True,
+                "items": [{"exercise_id": "ex_bw_squat", "sets": 3, "reps": 10,
+                           "pain_stop_threshold": raw}],
+            }
+            self.client.post(
+                reverse("therapist_save_program", args=[self.link.id]),
+                data=json.dumps(payload), content_type="application/json")
+            item = PrescriptionItem.objects.get(prescription__week_number=5)
+            self.assertEqual(item.pain_stop_threshold, expected, f'raw={raw!r}')
+
     def test_save_program_draft_only(self):
         payload = {
             "week_number": 2,

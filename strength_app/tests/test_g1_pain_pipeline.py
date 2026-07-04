@@ -118,6 +118,24 @@ class TestG1cManagedPainTiers(ManagedPainTierBase):
         self.assertIn('Anika Patel', content)
 
 
+class TestD2ThresholdZeroIsHonored(ManagedPainTierBase):
+    """D2 (health sweep): a therapist-set threshold of 0 means 'skip above
+    ANY pain' — it must not collapse to the default 5 at read time."""
+
+    def test_severity_1_skips_when_threshold_is_zero(self):
+        from therapist_app.models import PrescriptionItem
+        item = PrescriptionItem.objects.order_by('order').first()
+        item.pain_stop_threshold = 0
+        item.save(update_fields=['pain_stop_threshold'])
+        resp = self.report(severity=1)
+        out = resp.json()
+        self.assertEqual(out['action'], 'skip',
+                         'threshold 0 collapsed to the default — severity 1 '
+                         'must skip when the therapist set 0')
+        self.assertEqual(PainEvent.objects.get().outcome, 'exercise_skipped')
+        self.assertEqual(PainEvent.objects.get().threshold_applied, 0)
+
+
 class TestF1PainRateLimitAndAlertDedupe(ManagedPainTierBase):
     """Deploy review F1: the pain endpoint is rate-limited (15/min) and a
     burst of severity-8 reports on the same exercise raises ONE alert —

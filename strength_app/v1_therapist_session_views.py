@@ -496,7 +496,11 @@ def therapist_session_report_pain(request, idx):
         rep_number = None
 
     item = items[idx]['item']
-    threshold = item.pain_stop_threshold or getattr(settings, 'PAIN_STOP_THRESHOLD_DEFAULT', 5)
+    # D2: `is not None`, not `or` — a therapist-set 0 means "skip above ANY
+    # pain" (the most cautious setting) and must not collapse to the default.
+    threshold = (item.pain_stop_threshold
+                 if item.pain_stop_threshold is not None
+                 else getattr(settings, 'PAIN_STOP_THRESHOLD_DEFAULT', 5))
     pause_at = getattr(settings, 'PAIN_SESSION_PAUSE_THRESHOLD', 8)
 
     if severity >= pause_at:
