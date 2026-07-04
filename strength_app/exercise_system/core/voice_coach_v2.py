@@ -14,8 +14,12 @@ try:
     PYTTSX3_AVAILABLE = True
 except ImportError:
     PYTTSX3_AVAILABLE = False
-    print("⚠️  pyttsx3 not installed - voice coaching disabled")
-    print("   Install with: pip install pyttsx3")
+    # Optional desktop dependency — do NOT print at import time (this fired
+    # on every manage.py command). A loud warning belongs at first use.
+    import logging as _logging
+    _logging.getLogger(__name__).debug(
+        'pyttsx3 not installed - desktop voice coaching disabled '
+        '(pip install pyttsx3)')
 
 import threading
 import queue
