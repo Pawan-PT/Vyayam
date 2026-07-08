@@ -127,7 +127,32 @@
       "Bash(echo \"---EXIT: $?---\")",
       "Bash(echo \"===therapist grep exit: $?===\")",
       "Bash(awk 'NR>=713 && NR<=2226 && /^    [A-Z_]+: \\\\{/ {print NR\": \"$0}' strength_app/templates/strength_app/v1_exercise_execute.html)",
-      "Bash(echo \"exit: $?\")"
+      "Bash(echo \"exit: $?\")",
+      "Bash(mkdir -p /tmp/vyayam_final)",
+      "Read(//tmp/**)",
+      "Bash(grep -nE \"^\\\\s{4,8}\\(SQUAT_HOLD|PLANK|SIDE_PLANK|BALANCE|ROW_BENT_OVER|SQUAT|SQUAT_SINGLE|GLUTE_BRIDGE_SUPINE|LUNGE_SPLIT|[A-Z_]+\\):\\\\s*\\\\{\" strength_app/templates/strength_app/v1_exercise_execute.html)",
+      "Bash(/tmp/vyayam_final/venv_audit/bin/pip install *)",
+      "Bash(DJANGO_SECRET_KEY=test-key DJANGO_DEBUG=True python *)",
+      "Bash(/tmp/vyayam_final/venv_audit/bin/pip freeze *)",
+      "Bash(tee /tmp/vyayam_final/freeze.txt)",
+      "Bash(/tmp/vyayam_final/venv_audit/bin/pip-audit --progress-spinner off)",
+      "Bash(tee /tmp/vyayam_final/pip_audit_full.txt)",
+      "Bash(/tmp/vyayam_final/venv_audit/bin/pip list *)",
+      "Bash(/tmp/vyayam_final/venv_mp/bin/pip install *)",
+      "Bash(/tmp/vyayam_final/venv_mp/bin/pip list *)",
+      "Bash(DJANGO_SECRET_KEY=test-key DJANGO_DEBUG=True PYTHONPATH=/Users/pawandangarwala/Documents/vyayam/vyayam_django python /tmp/vyayam_final/prove_cascade.py)",
+      "Bash(curl -s https://pypi.org/pypi/mediapipe/json)",
+      "Bash(echo \"EXITCODE:$?\")",
+      "Bash(curl -s https://pypi.org/pypi/mediapipe/0.10.33/json)",
+      "Bash(DJANGO_SECRET_KEY=test-key DJANGO_DEBUG=True PYTHONPATH=/Users/pawandangarwala/Documents/vyayam/vyayam_django python /tmp/vyayam_final/prove_streak.py)",
+      "Bash(/tmp/vyayam_final/venv_audit/bin/pip download *)",
+      "Bash(xargs -n1 basename)",
+      "Bash(grep -rnoE \"P[0-9]{1,2}\\\\b\" docs/FOOTBALL_METHODS.md)",
+      "Bash(grep -oE \"P[0-9]{1,2}\")",
+      "Bash(grep -rniE \"reduces? .{0,20}\\(strain|injury|pain\\) by|protects? \\(the |your \\)|guarantee|clinically proven|prevents? .{0,15}\\(injury|pain|damage\\)\" strength_app/templates therapist_app/templates)",
+      "Bash(echo \"EXIT:$?\")",
+      "Bash(grep -rniE \"readiness|injury risk|risk of|predict|likelihood|prevent injur|ACWR|reduce.{0,10}risk\" strength_app/templates/strength_app/v1_dashboard.html strength_app/templates/strength_app/dashboard.html strength_app/templates/strength_app/v1_home_gamified.html strength_app/templates/strength_app/daily_workout.html strength_app/templates/strength_app/match_calendar.html)",
+      "Bash(awk '/FV_TENDENCY_CONFIG/{f=1} f{print NR\": \"$0} /^}/{if\\(f\\)exit}' strength_app/v1_football_constants.py)"
     ]
   }
 }
