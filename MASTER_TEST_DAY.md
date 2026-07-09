@@ -184,5 +184,17 @@ a therapist note first.
       with only "Set 2. Same rhythm." (no re-briefing). Voice toggle off →
       everything silent; back on → cues resume. Zero console errors.
 
+### Part H addendum — R6-HOTFIX safety faults (red)
+
+- [ ] H1. Squat well past your prescribed range (frontal or side-on) →
+      knee+thigh segments go RED and you HEAR "Too deep — come up a
+      little. Stay in your range." Red fades ~2.5s after the cue.
+- [ ] H2. Face the camera, shift your weight hard onto one leg mid-squat →
+      the MORE-bent leg goes RED + "Uneven — you're loading one side more.
+      Even out both knees." Turn side-on and repeat → SILENT (occluded far
+      leg = no guess, by design).
+- [ ] H3. Clean reps in range → NO red anywhere; only earned ambers (P4
+      knee-over-toe / heel-rise) appear.
+
 ---
 *Every future phase appends its manual steps to this file (standing rule 8).*
