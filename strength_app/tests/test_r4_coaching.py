@@ -55,9 +55,14 @@ class TestR4CoachWiring(TestCase):
         self.assertIn('ASSESSMENT_MODE) return', content)
 
     def test_tempo_speech_yields_to_arbitration(self):
+        # R6-P3: tempo is movement-synced (phase words via tempoPhaseWord,
+        # tier 'flow') — but it still yields the channel to live cues.
         content = self.render_camera_page()
         self.assertIn('Coach.tempoAllowed(', content)
-        self.assertIn("word + ' — ' + this._left", content)
+        self.assertIn('VyayamVoice.tempoPhaseWord(', content)
+        # The wall-clock metronome (spoken countdown numbers) must stay gone.
+        self.assertNotIn("word + ' — ' + this._left", content)
+        self.assertNotIn("VoiceCoach.speak('' + this._left", content)
 
     def test_coach_core_module_ships(self):
         js = Path(settings.BASE_DIR, 'strength_app', 'static',

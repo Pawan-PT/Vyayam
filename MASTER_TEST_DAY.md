@@ -146,5 +146,43 @@ Per `docs/ADDING_AN_EXERCISE.md` step 10 — after adding any exercise:
 - [ ] Squat re-test (any camera-table change warrants the showpiece check)
 - [ ] Add the row to docs/EXERCISE_TEST_CHECKLIST.md with today's result
 
+## Part H — R6-DEMO coaching feel (speech queue · briefing · synced tempo · squat faults)
+
+10-step demo walk for the bodyweight squat (full_squats) camera page — what
+you should HEAR at each moment. Prescribe full_squats with tempo 3-1-2-0 and
+a therapist note first.
+
+- [ ] 1. Open the exercise → HEAR "Next exercise. …", then setup cues one
+      after another with NO mid-word cutoffs anywhere in the session (P1).
+- [ ] 2. Demo plays twice ("Watch me…", "One more time…") → at demo end
+      HEAR "Now you try. Step into me." then, in order, the BRIEFING (P2):
+      "We'll go slowly down for a slow three count, hold, then push up." →
+      "Most common mistake: letting your knees drift past your toes. Sit
+      your hips back and keep your knees behind your toes." → "Your
+      therapist adds: {your note}." → "When you're ready, begin."
+- [ ] 3. Step into the outline DURING the briefing → verify NO rep starts
+      and no ghost lead-off until the briefing finishes (max 20s).
+- [ ] 4. Do a clean rep at the prescribed pace → HEAR phase words synced to
+      YOUR movement, not a clock (P3): "Slowly… all the way down." as you
+      descend → "Hold." at the bottom → "Push up." as you rise. NO spoken
+      numbers ever; chip + pills recolor per phase (blue/amber/green).
+- [ ] 5. Freeze mid-rep for a few seconds → tempo speech stays silent (no
+      wall-clock counting while you're not moving).
+- [ ] 6. Rush the descent (~1s) on two reps in a row → HEAR once: "Slower
+      on the way down — control it." Form % must NOT change from tempo.
+- [ ] 7. Turn SIDE-ON to the camera (fault checks are silent when front-on
+      — that's the confidence gate, not a bug). Squat pushing your knees
+      forward past your toes → within a rep HEAR "Knees drifting past your
+      toes — sit your hips back." and SEE the knee/shin segments AMBER
+      (never red). Repeat immediately → silent (8s cooldown, one per rep).
+- [ ] 8. Still side-on, let your heels lift on the descent → HEAR "Keep
+      your heels down. Weight through mid-foot." + shin/foot ambers.
+- [ ] 9. Do 3 shallow-but-counted reps in a row → HEAR once, gently: "You
+      can go a little deeper if it's comfortable." (encouragement, not a
+      fault — nothing ambers).
+- [ ] 10. Finish the set → "Set complete! Well done." → rest → set 2 starts
+      with only "Set 2. Same rhythm." (no re-briefing). Voice toggle off →
+      everything silent; back on → cues resume. Zero console errors.
+
 ---
 *Every future phase appends its manual steps to this file (standing rule 8).*
