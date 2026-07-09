@@ -3164,6 +3164,111 @@ async function startCamera() {
     },
   };
 
+  // ══ R6-P4: SQUAT NAMED-FAULT CHECKS — side-view, confidence-gated ═══════
+  // Pure observer fed from the USER_FOLLOWS handler (same pattern as the
+  // SL_RDL / plyo blocks); zero writes into detection internals. All faults
+  // amber (never red — amber-first; these are form cues, not safety class).
+  // Facing side comes from the heel→toe x-vector of the more-visible leg —
+  // a front-on user (toes at camera, |dx| < 0.03) or low landmark visibility
+  // (< 0.4, the file's existing convention, see the hold-exercise check)
+  // yields null and the checks stay SILENT. No confident view → no cue.
+  var SquatFaults = {
+    VIS: 0.4,
+    _kneeSince: 0,
+    _heelSince: 0,
+    _heelBase: null,       // rolling flat-foot reference: min(toe.y - heel.y)
+    _lastRepKey: '',
+    _faultCuedRepKey: null,
+    _cueLastAt: { knee: 0, heel: 0 },   // per-fault cooldown 8s
+    amberUntil: 0,
+    _amberSegs: [],
+    depthShortStreak: 0,
+    depthCued: false,
+    amberSegs: function() { return this._amberSegs; },
+    _side: function(lm) {
+      var mk = function(hl, to, kn, hp) {
+        return { heel: lm[hl], toe: lm[to], knee: lm[kn], hip: lm[hp] };
+      };
+      var L = mk(LM.leftHeel, LM.leftFootIndex, LM.leftKnee, LM.leftHip);
+      var R = mk(LM.rightHeel, LM.rightFootIndex, LM.rightKnee, LM.rightHip);
+      var vis = function(s) {
+        var v = 0, n = 0;
+        [s.heel, s.toe, s.knee].forEach(function(p) {
+          if (p && p.visibility !== undefined) { v += p.visibility; n++; }
+        });
+        return n ? v / n : 0;
+      };
+      var s, left;
+      if (vis(L) >= vis(R)) { s = L; left = true; } else { s = R; left = false; }
+      if (!s.heel || !s.toe || !s.knee || vis(s) < this.VIS) return null;
+      var dx = s.toe.x - s.heel.x;
+      if (Math.abs(dx) < 0.03) return null;   // not side-on — stay silent
+      s.sign = dx > 0 ? 1 : -1;
+      s.left = left;
+      return s;
+    },
+    _kneeSegsFor: function(left) {
+      // Knee/shin for the facing side (both key orders — cheap, order-proof).
+      return left ? ['23-25', '25-23', '25-27', '27-25']
+                  : ['24-26', '26-24', '26-28', '28-26'];
+    },
+    _heelSegsFor: function(left) {
+      // Shin + foot for the facing side.
+      return left ? ['25-27', '27-25', '27-29', '29-27', '29-31', '31-29', '27-31', '31-27']
+                  : ['26-28', '28-26', '28-30', '30-28', '30-32', '32-30', '28-32', '32-28'];
+    },
+    frame: function(lm, phases) {
+      var now = Date.now();
+      var repKey = ghostState.repCount + ':' + ghostState.partialRomReps;
+      this._lastRepKey = repKey;
+      var s = this._side(lm);
+      if (!s) { this._kneeSince = 0; this._heelSince = 0; return; }
+      var phase = phases[ghostState.currentPhaseIndex] || {};
+      var bucket = RepCapture._phaseBucket(phase.name);
+
+      // a) KNEE PAST TOES — eccentric/hold only, >0.04 normalized for >=300ms.
+      var kneeFault = false;
+      if ((bucket === 'ecc' || bucket === 'hold') &&
+          (s.knee.x - s.toe.x) * s.sign > 0.04) {
+        if (!this._kneeSince) this._kneeSince = now;
+        if (now - this._kneeSince >= 300) kneeFault = true;
+      } else {
+        this._kneeSince = 0;
+      }
+
+      // b) HEEL RISE — lift beyond noise vs the rolling flat-foot baseline.
+      var liftM = s.toe.y - s.heel.y;
+      if (this._heelBase === null || liftM < this._heelBase) this._heelBase = liftM;
+      var heelFault = false;
+      if (liftM - this._heelBase > 0.025) {
+        if (!this._heelSince) this._heelSince = now;
+        if (now - this._heelSince >= 300) heelFault = true;
+      } else {
+        this._heelSince = 0;
+      }
+
+      if (!kneeFault && !heelFault) return;
+
+      // Amber the involved segments for the live fault window (worst wins:
+      // knee over heel). Visual follows the fault even when speech cools down.
+      this._amberSegs = kneeFault ? this._kneeSegsFor(s.left) : this._heelSegsFor(s.left);
+      this.amberUntil = now + 600;
+
+      // Max ONE fault cue per rep (worst wins) + 8s per-fault cooldown; the
+      // arbiter adds its own rep spacing / occupancy / 3-strike fade on top.
+      if (this._faultCuedRepKey === repKey) return;
+      if (kneeFault && now - this._cueLastAt.knee >= 8000) {
+        this._cueLastAt.knee = now;
+        this._faultCuedRepKey = repKey;
+        coachCue('squat_knee_over_toe');
+      } else if (heelFault && !kneeFault && now - this._cueLastAt.heel >= 8000) {
+        this._cueLastAt.heel = now;
+        this._faultCuedRepKey = repKey;
+        coachCue('squat_heel_rise');
+      }
+    },
+  };
+
   // R4d: calibration wrapper — after the first 2 calibration reps, depth is
   // scored against THEIR natural range (+5° encouragement), never deeper
   // than textbook demands, floor-clamped. Assessments are NEVER calibrated
@@ -3229,6 +3334,28 @@ async function startCamera() {
     var res = Coach.repClosed(rep.rep_n, rep.form_pct, correctedIds, Date.now());
     for (var i = 0; i < res.lines.length; i++) VoiceCoach.speak(res.lines[i], false);
     CoachCal.onRep(rep);
+    // R6-P4c: depth ENCOURAGEMENT (not a fault) — 3 consecutive reps ending
+    // >15° short of the textbook knee target → one comfort-conditional line
+    // per exercise. A rep with no measured bottom angle resets the streak
+    // (never encourage off data we don't have).
+    if (ghostState.exerciseType === 'SQUAT' && !ASSESSMENT_MODE) {
+      var _dTarget = null;
+      var _dPhases = (ghostState.exerciseDef && ghostState.exerciseDef.phases) || [];
+      for (var _dp = 0; _dp < _dPhases.length; _dp++) {
+        var _dk = _dPhases[_dp].joints && _dPhases[_dp].joints.knee;
+        if (typeof _dk === 'number') _dTarget = (_dTarget === null) ? _dk : Math.min(_dTarget, _dk);
+      }
+      if (_dTarget !== null && typeof rep.bottom_angle === 'number' &&
+          rep.bottom_angle > _dTarget + 15) {
+        SquatFaults.depthShortStreak++;
+        if (SquatFaults.depthShortStreak >= 3 && !SquatFaults.depthCued) {
+          SquatFaults.depthCued = true;
+          coachCue('squat_depth_gentle');
+        }
+      } else {
+        SquatFaults.depthShortStreak = 0;
+      }
+    }
     // Tempo pace handling (voice only — NEVER colors form or scores).
     if (TempoCoach.hasTempo() && rep.phase_ms) {
       var prescribedEcc = TEMPO_PARTS[0];
@@ -3858,6 +3985,12 @@ async function startCamera() {
               VoiceCoach.speak('Keep your shoulders square.', false);
             }
           }
+        }
+        // R6-P4: SQUAT named-fault checks (knee-past-toes, heel rise) —
+        // side-view only, silent when the view/visibility can't see the
+        // fault confidently. Observer only; ambers via computePerJointColors.
+        if (ghostState.exerciseType === 'SQUAT' && lm) {
+          try { SquatFaults.frame(lm, phases); } catch (e) { /* never break tracking */ }
         }
         // "Go deeper" cue — fires when user hovers at partial depth for 3+ seconds (full squat only)
         if (ghostState.exerciseType === 'SQUAT') {
@@ -4668,6 +4801,15 @@ async function startCamera() {
           nodeColors[nodes[n]] = color;
         }
       }
+    }
+
+    // R6-P4: named-fault overlay — amber the involved segments for the live
+    // fault window. AMBER only, never red (amber-first; form, not safety).
+    // diff 999 wins the per-segment worst-color contest above.
+    if (!frozen && window.SquatFaults && SquatFaults.amberUntil > Date.now()) {
+      var FAULT_AMBER = { r: 255, g: 220, b: 0, diff: 999 };
+      var _fSegs = SquatFaults.amberSegs();
+      for (var f = 0; f < _fSegs.length; f++) segColors[_fSegs[f]] = FAULT_AMBER;
     }
 
     return { segmentColors: segColors, nodeColors: nodeColors };

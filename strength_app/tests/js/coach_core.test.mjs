@@ -176,9 +176,14 @@ test('calibrated target math: their range + 5°, clamped both ways', () => {
 
 test('every registry cue is <=8 words and never a fault-label', () => {
   const banned = /wrong|bad|rounding|cave|don't|do not|stop/i;
+  // R6-P4: exact-wording cues shipped verbatim per Pawan (squat knee cue is
+  // his authored string; depth line must stay comfort-conditional). These
+  // two may exceed the 8-word registry convention — nothing else may.
+  const exactAuthored = new Set(['squat_knee_over_toe', 'squat_depth_gentle']);
   for (const [id, def] of Object.entries(coach.CUES)) {
     const words = def.text.split(/\s+/).length;
-    assert.ok(words <= 8, `${id}: ${words} words`);
+    const cap = exactAuthored.has(id) ? 10 : 8;
+    assert.ok(words <= cap, `${id}: ${words} words`);
     assert.ok(!banned.test(def.text), `${id}: fault-label phrasing`);
     assert.ok(['safety', 'primary', 'refinement'].includes(def.priority));
   }

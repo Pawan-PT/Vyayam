@@ -56,6 +56,11 @@
     hold_position:       { text: 'Back into position',           priority: 'primary' },
     stand_tall:          { text: 'Grow tall on the step',        priority: 'refinement' },
     feet_together:       { text: 'Glue your feet together',      priority: 'refinement' },
+    // R6-P4: squat named-fault cues (side-view checks; amber-first, not red).
+    squat_knee_over_toe: { text: 'Knees drifting past your toes — sit your hips back.', priority: 'primary' },
+    squat_heel_rise:     { text: 'Keep your heels down. Weight through mid-foot.',      priority: 'primary' },
+    // Comfort-conditional depth encouragement — never commands depth.
+    squat_depth_gentle:  { text: "You can go a little deeper if it's comfortable.",     priority: 'refinement' },
   };
 
   // Reinforcement when a specific cue is corrected (R4c) — specific first,

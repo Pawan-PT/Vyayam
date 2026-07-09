@@ -35,3 +35,11 @@ Remove a row once the mentor approves it (or replace the string and re-tag).
 | Concentric 1s / 2s / 3s+ | "Up." / "Push up." / "Slowly push up, squeeze." | interim-live pending mentor |
 | Pause/top (if >0s) | "Reset." | interim-live pending mentor |
 | Pace nudge (ecc <50% prescribed ×2 consecutive reps, once/set) | "Slower on the way down — control it." | interim-live pending mentor |
+
+## R6-P4 — squat named-fault cues (coach_core.js CUES; amber-first, never red)
+
+| Cue id | String | Tag |
+|---|---|---|
+| squat_knee_over_toe | "Knees drifting past your toes — sit your hips back." | author: Pawan — live |
+| squat_heel_rise | "Keep your heels down. Weight through mid-foot." | interim-live pending mentor |
+| squat_depth_gentle | "You can go a little deeper if it's comfortable." | interim-live pending mentor (comfort-conditional — never commands depth) |
