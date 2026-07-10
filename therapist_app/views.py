@@ -85,35 +85,17 @@ def therapist_logout(request):
 # Helpers
 # ---------------------------------------------------------------------------
 
-def _compute_link_metrics(link):
-    """Returns the computed dashboard metrics per HANDOFF §3 (PatientCard).
-
-    Counts WorkoutSessions for the linked patient. The strength_app session is
-    keyed to PatientProfile (not Django User), so we look up the profile via
-    the user's email — best-effort. If no profile is found, we return zeros.
-    """
-    today = timezone.now().date()
-    days_window = 14
-
+def _metrics_from_rows(has_profile, sessions, pain_events, today,
+                       days_window=14):
+    """Pure metric math per HANDOFF §3 (PatientCard) over pre-fetched rows —
+    shared by the single-link path and the bulk path (B-N1). D8's pain trend
+    from PainEvent (the locked pain source) is preserved."""
     sparkline_7d = [0] * 7
     pain_trend_7d = [0, 0, 0, 0, 0, 0, 0]
     compliance_pct = 0
 
-    try:
-        from strength_app.models import PatientProfile
-        profile = None
-        if link.patient_id:
-            profile = PatientProfile.objects.filter(user_id=link.patient_id).first()
-    except Exception:
-        profile = None
-
-    if profile is not None:
-        from strength_app.models import PainEvent, WorkoutSession
-        sessions = WorkoutSession.objects.filter(
-            patient=profile,
-            session_date__date__gte=today - timedelta(days=days_window),
-        )
-        completed = sessions.filter(total_exercises_completed__gt=0).count()
+    if has_profile:
+        completed = sum(1 for s in sessions if s.total_exercises_completed > 0)
         prescribed = max(days_window, completed)  # rough heuristic; refined later
         compliance_pct = int(round((completed / prescribed) * 100)) if prescribed else 0
 
@@ -122,14 +104,7 @@ def _compute_link_metrics(link):
             if 0 <= day_offset < 7 and s.total_exercises_completed > 0:
                 sparkline_7d[6 - day_offset] = 1
 
-        # D8: the pain trend was initialised to zeros and never populated,
-        # so the "Pain >5 last week" flag could never fire for a real
-        # patient. Fill it from PainEvent — the locked pain source.
-        recent_pain = PainEvent.objects.filter(
-            patient=profile,
-            created_at__date__gte=today - timedelta(days=6),
-        ).only('created_at', 'pain_severity')
-        for event in recent_pain:
+        for event in pain_events:
             day_offset = (today - timezone.localtime(event.created_at).date()).days
             if 0 <= day_offset < 7:
                 slot = 6 - day_offset
@@ -160,6 +135,73 @@ def _compute_link_metrics(link):
     }
 
 
+def _compute_link_metrics(link):
+    """Single-link metrics (patient_detail). List pages use
+    _bulk_link_metrics — keep the row filters in lockstep."""
+    today = timezone.now().date()
+    days_window = 14
+
+    try:
+        from strength_app.models import PatientProfile
+        profile = None
+        if link.patient_id:
+            profile = PatientProfile.objects.filter(user_id=link.patient_id).first()
+    except Exception:
+        profile = None
+
+    sessions, pain_events = [], []
+    if profile is not None:
+        from strength_app.models import PainEvent, WorkoutSession
+        sessions = list(WorkoutSession.objects.filter(
+            patient=profile,
+            session_date__date__gte=today - timedelta(days=days_window),
+        ))
+        pain_events = list(PainEvent.objects.filter(
+            patient=profile,
+            created_at__date__gte=today - timedelta(days=6),
+        ).only('created_at', 'pain_severity'))
+
+    return _metrics_from_rows(profile is not None, sessions, pain_events,
+                              today, days_window)
+
+
+def _bulk_link_metrics(links):
+    """B-N1/B-N2 (2026-07 exam): metrics for every card in 3 flat queries
+    (profiles, sessions, pain events) instead of ~4 per link. Returns
+    {link.id: metrics}."""
+    today = timezone.now().date()
+    days_window = 14
+
+    from strength_app.models import PainEvent, PatientProfile, WorkoutSession
+    user_ids = [l.patient_id for l in links if l.patient_id]
+    profiles = {p.user_id: p
+                for p in PatientProfile.objects.filter(user_id__in=user_ids)}
+
+    sessions_by_profile = {}
+    for s in WorkoutSession.objects.filter(
+            patient__in=profiles.values(),
+            session_date__date__gte=today - timedelta(days=days_window),
+    ).only('patient_id', 'session_date', 'total_exercises_completed'):
+        sessions_by_profile.setdefault(s.patient_id, []).append(s)
+
+    pain_by_profile = {}
+    for e in PainEvent.objects.filter(
+            patient__in=profiles.values(),
+            created_at__date__gte=today - timedelta(days=6),
+    ).only('patient_id', 'created_at', 'pain_severity'):
+        pain_by_profile.setdefault(e.patient_id, []).append(e)
+
+    out = {}
+    for link in links:
+        profile = profiles.get(link.patient_id) if link.patient_id else None
+        out[link.id] = _metrics_from_rows(
+            profile is not None,
+            sessions_by_profile.get(profile.pk, []) if profile else [],
+            pain_by_profile.get(profile.pk, []) if profile else [],
+            today, days_window)
+    return out
+
+
 def _seed_demo_metrics(link):
     """The dashboard prototype shows specific metrics per patient. Until the
     strength_app session pipeline writes real data here, we hand-roll the
@@ -172,7 +214,7 @@ def _seed_demo_metrics(link):
     return seed.get('metrics') or {}
 
 
-def _link_card(link):
+def _link_card(link, metrics=None):
     seed = _seed_demo_metrics(link)
     if seed:
         compliance = seed.get('compliance', 0)
@@ -181,7 +223,7 @@ def _link_card(link):
         flags = seed.get('flags', [])
         last_session = seed.get('last_session', '—')
     else:
-        m = _compute_link_metrics(link)
+        m = metrics if metrics is not None else _compute_link_metrics(link)
         compliance = m['compliance_pct']
         sparkline = m['sparkline_7d']
         pain = m['pain_trend_7d']
@@ -309,7 +351,8 @@ def dashboard(request):
         .exclude(status='archived')
         .order_by('status', 'full_name')
     )
-    cards = [_link_card(link) for link in links]
+    metrics = _bulk_link_metrics(links)
+    cards = [_link_card(link, metrics.get(link.id)) for link in links]
 
     # R2-T1: triage ordering — "who do I need to look at?" answered on
     # screen one. Unreviewed alerts (sharp pain / red-flag changes) first,
@@ -469,8 +512,19 @@ def patient_list(request):
     q = request.GET.get('q', '').strip()
 
     links = list(therapist.patient_links.exclude(status='archived').order_by('-invited_at'))
-    cards = [_link_card(link) for link in links]
+    # B-N2 (2026-07 exam): cards computed ONCE (was three times — the counts
+    # comprehensions re-ran every card's queries and threw two passes away).
+    metrics = _bulk_link_metrics(links)
+    all_cards = [_link_card(link, metrics.get(link.id)) for link in links]
 
+    counts = {
+        'all': len(links),
+        'active': sum(1 for l in links if l.status == 'active'),
+        'pending': sum(1 for l in links if l.status == 'pending'),
+        'flagged': sum(1 for c in all_cards if c['flags']),
+    }
+
+    cards = all_cards
     if filter_kind == 'active':
         cards = [c for c in cards if not c['pending']]
     elif filter_kind == 'pending':
@@ -481,13 +535,6 @@ def patient_list(request):
     if q:
         ql = q.lower()
         cards = [c for c in cards if ql in (c['name'] or '').lower()]
-
-    counts = {
-        'all': len([c for c in [_link_card(l) for l in links]]),
-        'active': sum(1 for l in links if l.status == 'active'),
-        'pending': sum(1 for l in links if l.status == 'pending'),
-        'flagged': sum(1 for c in [_link_card(l) for l in links] if c['flags']),
-    }
 
     ctx = {
         'therapist': therapist,

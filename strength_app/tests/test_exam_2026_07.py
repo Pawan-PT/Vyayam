@@ -215,6 +215,62 @@ class TestBX3FlashNotShadowedByChat(TestCase):
         self.assertIn('chat_messages', resp.context)
 
 
+class TestBN1DashboardQueriesFlat(TestCase):
+    """B-N1/B-N2 (S2): dashboard + patient_list card queries must be flat in
+    the number of patients (was ~4/card on dashboard, ~12/link on the list)."""
+
+    def _mk_link(self, n):
+        from django.contrib.auth.models import User
+        from django.utils import timezone
+        from therapist_app.models import TherapistPatientLink
+        from strength_app.models import WorkoutSession
+        p_user = User.objects.create_user(f'bn1_p{n}', password='x')
+        profile = PatientProfile.objects.create(
+            patient_id=f'BN1P{n}', name=f'P{n}', phone=f'900000997{n}',
+            age=30, goals='Rehab', therapist_managed=True, user=p_user)
+        link = TherapistPatientLink.objects.create(
+            therapist=self.therapist, patient=p_user, full_name=f'P{n}',
+            email=f'bn1p{n}@x.com', status='active')
+        WorkoutSession.objects.create(
+            patient=profile, session_date=timezone.now(),
+            total_exercises_completed=3)
+        PainEvent.objects.create(patient=profile, pain_severity=6,
+                                 outcome='continued')
+        return link
+
+    def setUp(self):
+        from django.contrib.auth.models import User
+        from therapist_app.models import Therapist
+        self.t_user = User.objects.create_user('dr_bn1', password='x')
+        self.therapist = Therapist.objects.create(user=self.t_user,
+                                                  full_name='Dr BN1')
+        self.client.force_login(self.t_user)
+
+    def _count(self, url):
+        from django.db import connection
+        from django.test.utils import CaptureQueriesContext
+        with CaptureQueriesContext(connection) as ctx:
+            resp = self.client.get(url)
+            self.assertEqual(resp.status_code, 200)
+        return len(ctx)
+
+    def test_dashboard_and_list_query_counts_do_not_scale_with_patients(self):
+        for n in range(2):
+            self._mk_link(n)
+        dash_2 = self._count('/therapist/dashboard/')
+        list_2 = self._count('/therapist/patients/')
+        for n in range(2, 8):
+            self._mk_link(n)
+        dash_8 = self._count('/therapist/dashboard/')
+        list_8 = self._count('/therapist/patients/')
+        self.assertEqual(
+            dash_2, dash_8,
+            f'dashboard queries scale with N: {dash_2} @2 vs {dash_8} @8')
+        self.assertEqual(
+            list_2, list_8,
+            f'patient_list queries scale with N: {list_2} @2 vs {list_8} @8')
+
+
 class TestBX1DeleteAccountManagedBlock(TestCase):
     """B-X1 (S1): therapist-managed patients must not be able to cascade-
     delete their clinical record (SessionReports, PainEvent/RedFlagEvent audit
