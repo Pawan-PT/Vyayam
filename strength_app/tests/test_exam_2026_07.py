@@ -488,6 +488,16 @@ class TestE11CatalogRegistryIntegrity(TestCase):
                     f"{entry['exercise_id']}: key {key!r} not in registry")
 
 
+class TestE15StaticRoutesSmoke(TestCase):
+    """E15 (S4): the static/legal/PWA endpoints render."""
+
+    def test_static_pages_render(self):
+        for name in ('home', 'offline', 'privacy_policy',
+                     'terms_of_service', 'disclaimer', 'service_worker'):
+            resp = self.client.get(reverse(name))
+            self.assertEqual(resp.status_code, 200, name)
+
+
 class TestBX1DeleteAccountManagedBlock(TestCase):
     """B-X1 (S1): therapist-managed patients must not be able to cascade-
     delete their clinical record (SessionReports, PainEvent/RedFlagEvent audit

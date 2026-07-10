@@ -369,8 +369,8 @@
 
 <script>
 // ── Configuration ──────────────────────────────────────────────────────────
-const STRETCH_INDEX      = {{ stretch_index }};
-const DURATION_SECONDS   = {{ stretch.duration_seconds }};
+const STRETCH_INDEX      = parseInt("{{ stretch_index }}", 10) || 0;  // C19
+const DURATION_SECONDS   = parseInt("{{ stretch.duration_seconds }}", 10) || 30;
 const IS_LAST            = {{ is_last_stretch|yesno:"true,false" }};
 const STRETCH_COMPLETE_URL = "{% url 'stretch_complete' %}";
 

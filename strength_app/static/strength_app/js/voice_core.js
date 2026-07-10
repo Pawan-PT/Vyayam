@@ -144,7 +144,11 @@
     try {
       stopClip();
       state.currentTime = 0;
-      state.play();
+      // C16 (2026-07 exam): autoplay-policy rejection is async — swallow it
+      // so a blocked clip is silent, not an unhandled rejection. (Dormant
+      // until coach mp3s ship.)
+      var p = state.play();
+      if (p && typeof p.catch === 'function') p.catch(function () {});
       _currentClip = state;
       return true;
     } catch (e) {

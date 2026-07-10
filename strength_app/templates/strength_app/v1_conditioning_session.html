@@ -163,7 +163,7 @@
 </script>
 <script>
 (function(){
-  const type = '{{ protocol.protocol.type }}';
+  const type = '{{ protocol.protocol.type|escapejs }}';  // C19
   let timer = null;
   let paused = false;
   let totalSeconds = 0;
@@ -171,18 +171,18 @@
 
   // Interval state
   let currentRound = 0;
-  const totalRounds = {{ protocol.protocol.rounds|default:0 }};
-  const workSec = {{ protocol.protocol.work_seconds|default:0 }};
-  const restSec = {{ protocol.protocol.rest_seconds|default:0 }};
+  const totalRounds = parseInt("{{ protocol.protocol.rounds|default:0 }}", 10) || 0;
+  const workSec = parseInt("{{ protocol.protocol.work_seconds|default:0 }}", 10) || 0;
+  const restSec = parseInt("{{ protocol.protocol.rest_seconds|default:0 }}", 10) || 0;
   let isWorkPhase = true;
 
   // RSA state
   let currentSet = 1;
   let currentSprint = 1;
-  const totalSets = {{ protocol.protocol.sets|default:0 }};
-  const sprintsPerSet = {{ protocol.protocol.sprints_per_set|default:0 }};
-  const restBetweenSprints = {{ protocol.protocol.rest_between_sprints_seconds|default:25 }};
-  const restBetweenSets = {{ protocol.protocol.rest_between_sets_seconds|default:180 }};
+  const totalSets = parseInt("{{ protocol.protocol.sets|default:0 }}", 10) || 0;
+  const sprintsPerSet = parseInt("{{ protocol.protocol.sprints_per_set|default:0 }}", 10) || 0;
+  const restBetweenSprints = parseInt("{{ protocol.protocol.rest_between_sprints_seconds|default:25 }}", 10) || 25;
+  const restBetweenSets = parseInt("{{ protocol.protocol.rest_between_sets_seconds|default:180 }}", 10) || 180;
   let rsaPhase = 'sprint'; // 'sprint', 'rest_sprint', 'rest_set'
 
   const display = document.getElementById('timerDisplay');
@@ -211,7 +211,7 @@
   function startTimer() {
     if (timer) return;
     if (type === 'continuous') {
-      if (remaining <= 0) remaining = {{ protocol.protocol.duration_minutes|default:30 }} * 60;
+      if (remaining <= 0) remaining = (parseInt("{{ protocol.protocol.duration_minutes|default:30 }}", 10) || 30) * 60;
     } else if (type === 'intervals') {
       if (remaining <= 0) { currentRound = 0; startWorkPhase(); return; }
     } else if (type === 'sprint_intervals') {

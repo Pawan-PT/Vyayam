@@ -65,3 +65,10 @@
 - Filming verification of camera exercises (docs/FILMING_PROTOCOL.md).
 - D3 data migration ONLY IF production patients exist with
   `absolute_stop=True` rows written before Run 1 (stores internal IDs).
+
+8. (2026-07 exam, ledger D2/D5) The authoritative full-tree `pip-audit`
+   must run INSIDE the Linux deploy image — mediapipe==0.10.33 has no
+   macOS/py3.12 wheel, so dev-machine environments drift (0.10.14 locally).
+   When touching requirements.txt, generate a hash-pinned lockfile
+   (pip-compile) and pin at least: pillow>=12.2, protobuf>=5.29.6,
+   fonttools>=4.60.2 (transitive CVEs, SECURITY_AUDIT rows 23-24).

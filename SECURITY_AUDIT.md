@@ -52,3 +52,13 @@ set `DJANGO_SECRET_KEY`, `DJANGO_DEBUG=False`, `DJANGO_ALLOWED_HOSTS`,
 `DJANGO_CSRF_ORIGINS`, `DJANGO_SSL_REDIRECT=1`, `DJANGO_TRUSTED_PROXY=1`
 (behind Render's proxy), SMTP creds for password reset, strong admin
 credentials.
+
+## 2026-07 final-examination addendum (Agent D round 2 — CODEBASE_HEALTH_2026-07.md)
+
+| # | Item | Status |
+|---|------|--------|
+| 22 | `/admin/login/` had NO rate limit while all app logins are 5/300s (ledger D1) | **FIXED** — admin.site.login wrapped with the shared limiter, 5/300s, test-covered |
+| 23 | Transitive dependencies unpinned — only the 7 direct packages are pinned; no lockfile (ledger D2) | **ACCEPTED/DOCUMENTED** — generate a hash-pinned lockfile and run full-tree pip-audit in the deploy image (see DEPLOY_CHECKLIST item 8); dev-machine mediapipe env drift makes local full-tree audits non-authoritative (D5) |
+| 24 | Transitive CVEs present in the deployed closure: pillow 11.2.1 (PYSEC-2025-61, PYSEC-2026-165, CVE-2026-25990/40192/42309-11 — via reportlab/matplotlib), protobuf 4.25.8 (PYSEC-2026-1805 — via mediapipe), fonttools 4.58.4 (CVE-2025-66034 — via matplotlib) (ledger D3) | **ACCEPT-AND-DOCUMENT** — reachability LOW: no server-side attacker-controlled image/font parsing (PDF is output-only; live CV is client-side JS). Pin pillow≥12.2, protobuf≥5.29.6, fonttools≥4.60.2 when the lockfile lands |
+| 25 | CSP remains Report-Only with 'unsafe-inline' (ledger D4) | **ACCEPTED (transitional, row 5)** — note: the target policy must drop 'unsafe-inline' + adopt nonces before enforcement delivers XSS value; ~40 templates carry inline scripts/handlers |
+| 26 | Session fixation, reset-token lifecycle, csrf_exempt absence, |safe usage, rate-limiter coverage map | **RE-VERIFIED CLEAN 2026-07-10** (details in agent report / ledger) |

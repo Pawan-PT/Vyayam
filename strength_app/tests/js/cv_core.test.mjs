@@ -108,3 +108,13 @@ test('detectOrientation: standing vs supine vs sidelying', () => {
   side[cv.LM.leftShoulder] = P(0.5, 0.30); side[cv.LM.rightShoulder] = P(0.5, 0.50);
   assert.equal(cv.detectOrientation(side), 'sidelying');
 });
+
+// E12 (2026-07 exam): findWorstJoint was the only untested pure cv_core export.
+test('findWorstJoint: largest deviation wins, 500x scale for normalized targets, null when unmeasurable', () => {
+  assert.equal(cv.findWorstJoint({ knee: 120, hip: 92 }, { knee: 90, hip: 90 }), 'knee');
+  // hipLevel err 0.10 * 500 = 50 beats knee err 20
+  assert.equal(
+    cv.findWorstJoint({ hipLevel: 0.14, knee: 110 }, { hipLevel: 0.04, knee: 90 }),
+    'hipLevel');
+  assert.equal(cv.findWorstJoint({}, { knee: 90 }), null);
+});

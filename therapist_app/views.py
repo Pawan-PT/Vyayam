@@ -572,11 +572,13 @@ def library(request):
 @therapist_required
 def reports(request):
     therapist = request.user.therapist
+    # B-P1 (2026-07 exam): newest 100 — reports are weekly, so this is
+    # years of history; Paginator when someone actually hits the bound.
     reports_qs = (
         ProgressReport.objects
         .filter(link__therapist=therapist)
         .select_related('link')
-        .order_by('-created_at')
+        .order_by('-created_at')[:100]
     )
     ctx = {
         'therapist': therapist,
@@ -790,7 +792,7 @@ def patient_detail(request, link_id):
         link.messages.select_related('sender', 'sender__therapist')
         .order_by('-sent_at')[:200]))
 
-    reports_qs = list(link.progress_reports.all())
+    reports_qs = list(link.progress_reports.all()[:100])  # B-P1: bounded
 
     # R3: per-session reports (newest first) for the Reports tab.
     session_reports = list(

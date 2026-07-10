@@ -1001,7 +1001,7 @@ def progress_reports(request: HttpRequest):
         return redirect('patient_login')
     
     patient = get_object_or_404(PatientProfile, patient_id=patient_id)
-    reports = ProgressReport.objects.filter(patient=patient).order_by('-report_date')
+    reports = ProgressReport.objects.filter(patient=patient).order_by('-report_date')[:100]  # B-P2: bounded
     
     return render(request, 'strength_app/progress_reports.html', {
         'patient': patient,

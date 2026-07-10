@@ -29,7 +29,7 @@
     <button id="startBtn" onclick="startCam()" style="flex:1;padding:12px;background:#0c6c3f;color:#fff;font-weight:700;border:none;border-radius:10px;">Start camera</button>
     <button onclick="resetRep()" style="flex:1;padding:12px;background:#e2e8f0;color:#0f172a;font-weight:700;border:none;border-radius:10px;">Reset rep</button>
   </div>
-  <p style="font-size:12px;color:#94a3b8;margin-top:8px;">Tuning: a high "fall speed" spike = the break point. Current break threshold: <span id="thr"></span>°/frame. Watch the numbers vs your real movement and tell Claude if it fires too early or too late.</p>
+  <p style="font-size:12px;color:#94a3b8;margin-top:8px;">A high "fall speed" spike marks your break point — the deepest position you controlled. Break threshold: <span id="thr"></span>°/frame.</p>
 </div>
 {% endblock %}
 

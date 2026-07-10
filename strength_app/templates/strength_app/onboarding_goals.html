@@ -134,7 +134,7 @@
   }
 
   document.addEventListener('DOMContentLoaded', function() {
-    var existing = ['{{ initial_goal_type }}', '{{ initial_goal_secondary }}'].filter(function(g) { return g; });
+    var existing = ['{{ initial_goal_type|escapejs }}', '{{ initial_goal_secondary|escapejs }}'].filter(function(g) { return g; });  // C19
     existing.forEach(function(key) {
       var card = document.querySelector('.goal-card[data-key="' + key + '"]');
       if (card && !selectedGoals.includes(key)) selectedGoals.push(key);

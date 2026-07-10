@@ -501,10 +501,10 @@
 
   // ── Assessment mode ──────────────────────────────────────────────────────
   const ASSESSMENT_MODE     = {{ assessment_mode|yesno:"true,false" }};
-  const ASSESSMENT_TYPE     = "{{ assessment_type|default:'' }}";
-  const ASSESSMENT_DURATION = {{ assessment_duration|default:60 }};
-  const ASSESSMENT_TEST_ID  = "{{ assessment_test_id|default:'' }}";
-  const ASSESSMENT_TEST_INDEX = {{ assessment_test_index|default:0 }};
+  const ASSESSMENT_TYPE     = "{{ assessment_type|default:''|escapejs }}";
+  const ASSESSMENT_DURATION = parseInt("{{ assessment_duration|default:60 }}", 10) || 60;  // C19
+  const ASSESSMENT_TEST_ID  = "{{ assessment_test_id|default:''|escapejs }}";
+  const ASSESSMENT_TEST_INDEX = parseInt("{{ assessment_test_index|default:0 }}", 10) || 0;  // C19
   const ASSESSMENT_SIDE     = "{{ assessment_side|default:''|escapejs }}";
   const ASSESSMENT_VARIANT  = "{{ assessment_variant|default:''|escapejs }}";
   const ASSESSMENT_SCORING  = {% if assessment_scoring_json %}{{ assessment_scoring_json|safe }}{% else %}{}{% endif %};
@@ -544,7 +544,9 @@
     return EXERCISE_TYPE_MAP[EXERCISE_ID] || null;
   }
   const MIND_MUSCLE_CUE = "{{ exercise.mind_muscle_cue.during|default:''|escapejs }}";
-  window.VYAYAM_DEBUG = true;
+  // C21 (2026-07 exam): per-frame console logging off in production —
+  // flip from devtools (window.VYAYAM_DEBUG = true) when debugging.
+  window.VYAYAM_DEBUG = false;
 
   let stream = null;
   let pose   = null;
@@ -2360,12 +2362,17 @@ async function startCamera() {
     'sprint_in_place': 'JUMP_LANDING', 'jumping_rope_simulation': 'JUMP_LANDING',
     'marching_on_spot': 'JUMP_LANDING', 'burpees': 'JUMP_LANDING', 'butt_kicks': 'JUMP_LANDING',
 
-    // PLYOMETRICS (6) — dedicated ghost coaches with landing valgus + absorption checks
+    // PLYOMETRICS — dedicated ghost coaches with landing valgus + absorption
+    // checks. C22 (2026-07 exam): these keys were defined THREE times in
+    // this object with conflicting BALANCE_SINGLE values (correct PLYO_*
+    // survived only by key order). Single canonical definition now.
     'single_leg_hop_lateral':  'PLYO_SL_HOP_LATERAL',
     'lateral_bound_stick':     'PLYO_LATERAL_BOUND_STICK',
     'lateral_bound_and_stick': 'PLYO_LATERAL_BOUND_STICK',
+    'lateral_bound':           'PLYO_LATERAL_BOUND_STICK',
     'single_leg_hop_forward':  'PLYO_SL_HOP_FORWARD',
     'single_leg_landing':      'PLYO_SL_LANDING',
+    'single_leg_hop_and_stick': 'PLYO_SL_LANDING',
 
     // PUSH_UP (28)
     'push_ups': 'PUSH_UP', 'wall_push_up': 'WALL_PUSH_UP', 'knee_push_up': 'PUSH_UP',
@@ -2423,10 +2430,9 @@ async function startCamera() {
     'clock_reaches': 'BALANCE_SINGLE', 'tandem_walking': 'BALANCE_SINGLE',
     'backward_walking': 'BALANCE_SINGLE', 'sideways_walking': 'BALANCE_SINGLE',
     'lateral_gait_training': 'BALANCE_SINGLE', 'perturbation_training': 'BALANCE_SINGLE',
-    'single_leg_landing': 'BALANCE_SINGLE', 'single_leg_hop_forward': 'BALANCE_SINGLE',
-    'single_leg_hop_lateral': 'BALANCE_SINGLE', 'single_leg_hop_and_stick': 'BALANCE_SINGLE',
-    'single_leg_bound': 'BALANCE_SINGLE', 'lateral_bound': 'BALANCE_SINGLE',
-    'lateral_bound_and_stick': 'BALANCE_SINGLE', 'lateral_hops': 'BALANCE_SINGLE',
+    // C22: plyo keys removed — canonical PLYO_* definitions above.
+    'single_leg_bound': 'BALANCE_SINGLE',
+    'lateral_hops': 'BALANCE_SINGLE',
     'side_to_side_hops': 'BALANCE_SINGLE', 'skaters': 'BALANCE_SINGLE',
     'power_skip': 'BALANCE_SINGLE', 'sprint_start': 'BALANCE_SINGLE',
     'shuttle_run': 'BALANCE_SINGLE', 'change_of_direction': 'BALANCE_SINGLE',
@@ -2519,12 +2525,7 @@ async function startCamera() {
     'jumping_rope_simulation': 'JUMP_LANDING', 'burpees': 'JUMP_LANDING',
     'butt_kicks': 'JUMP_LANDING',
 
-    // PLYOMETRICS (6) — dedicated ghost coaches
-    'single_leg_hop_lateral':  'PLYO_SL_HOP_LATERAL',
-    'lateral_bound_stick':     'PLYO_LATERAL_BOUND_STICK',
-    'lateral_bound_and_stick': 'PLYO_LATERAL_BOUND_STICK',
-    'single_leg_hop_forward':  'PLYO_SL_HOP_FORWARD',
-    'single_leg_landing':      'PLYO_SL_LANDING',
+    // C22: plyo keys removed — canonical PLYO_* definitions above (batch 1).
 
     // PUSH_UP
     'wall_push_up': 'WALL_PUSH_UP', 'knee_push_up': 'PUSH_UP',
@@ -2569,8 +2570,8 @@ async function startCamera() {
     // BALANCE_SINGLE
     'single_leg_eyes_closed': 'BALANCE_SINGLE', 'star_excursion': 'BALANCE_SINGLE',
     'tandem_walking': 'BALANCE_SINGLE', 'sideways_walking': 'BALANCE_SINGLE',
-    'perturbation_training': 'BALANCE_SINGLE', 'single_leg_hop_forward': 'BALANCE_SINGLE',
-    'single_leg_hop_and_stick': 'BALANCE_SINGLE', 'lateral_bound': 'BALANCE_SINGLE',
+    'perturbation_training': 'BALANCE_SINGLE',
+    // C22: plyo keys removed — canonical PLYO_* definitions above (batch 1).
     'lateral_hops': 'BALANCE_SINGLE', 'skaters': 'BALANCE_SINGLE',
     'sprint_start': 'BALANCE_SINGLE', 'change_of_direction': 'BALANCE_SINGLE',
 
@@ -3155,6 +3156,10 @@ async function startCamera() {
     var setN = completedSets + 1;
     if (ASSESSMENT_MODE || setN === _coachSetStarted) return;
     _coachSetStarted = setN;
+    // C20 (2026-07 exam): the heel-rise baseline is a normalized min that
+    // goes stale when the user repositions between sets — reset per set
+    // (cue layer only; detection untouched).
+    if (window.SquatFaults) { SquatFaults._heelBase = null; SquatFaults._heelSince = 0; }
     var r = Coach.setStarted(setN, ghostState.targetReps || 10);
     if (r.line) VoiceCoach.speak(r.line, true);
     // R6-P2: no re-briefing on later sets — just the rhythm reminder.
@@ -3529,11 +3534,19 @@ async function startCamera() {
 
   document.addEventListener('DOMContentLoaded', function() {
     VoiceCoach.init();
-    if (speechSynthesis.onvoiceschanged !== undefined) {
-      speechSynthesis.onvoiceschanged = function() { VoiceCoach.init(); };
-    }
+    // C17 (2026-07 exam): the voiceschanged re-init here queued a fresh
+    // warmup utterance on every event (Chrome fires several) — removed;
+    // voice_core already re-picks the voice on its own listener.
     setTimeout(function() { VoiceCoach.announceStart(EXERCISE_NAME); }, 600);
 
+    // C13 (2026-07 exam): leaving the page mid-session must release the
+    // camera and stop speech — nothing should keep running from a
+    // backgrounded/closed tab.
+    window.addEventListener('pagehide', function() {
+      if (stream) { try { stream.getTracks().forEach(function(t) { t.stop(); }); } catch (e) {} }
+      try { if (typeof VoiceCoach !== 'undefined' && VoiceCoach.stop) VoiceCoach.stop(); } catch (e) {}
+      try { window.speechSynthesis && speechSynthesis.cancel(); } catch (e) {}
+    });
   });
 
   // ============================================================================
@@ -5629,7 +5642,9 @@ async function startCamera() {
       if (bdg) bdg.style.display = 'block';
       if (!vr) return;
       vr.loop = true;  // loop through the whole demo window so it never freezes on a frame
-      try { vr.currentTime = 0; vr.play(); } catch(e) {}
+      // C16 (2026-07 exam): play() rejection (autoplay policy) is async —
+      // catch the promise, not just sync throws.
+      try { vr.currentTime = 0; var _p = vr.play(); if (_p && _p.catch) _p.catch(function() {}); } catch(e) {}
     };
     window.videoModeDemoPause = function() {
       if (!window.VIDEO_MODE) return;
@@ -6500,7 +6515,11 @@ async function startCamera() {
     }, 500);
 
     // Poll repState for max_reps counting
-    setInterval(function() {
+    // C21 (2026-07 exam): kept a handle so finishAssessment clears it.
+    // (C14 ledger note: this max_reps branch is doubly dead — repState.count
+    // is never incremented and the server routes max_reps to the classic
+    // template. Documented, not wired — deferred to a template cleanup.)
+    var _maxRepsPoll = setInterval(function() {
       if (!ASSESSMENT_MODE || assessTimerEnded || ASSESSMENT_TYPE !== 'max_reps') return;
       var count = (window.repState && repState.count) ? repState.count : 0;
       if (count !== assessRepCount) {
@@ -6521,13 +6540,16 @@ async function startCamera() {
 
     function finishAssessment() {
       clearInterval(_ghostStateCheck);
+      clearInterval(_maxRepsPoll);  // C21
       var measured = ASSESSMENT_TYPE === 'max_reps' ? assessRepCount : assessHoldTime;
       var score = computeAssessmentScore(measured);
       var scoreEl = document.getElementById('assessmentScoreResult');
       var scoreVal = document.getElementById('assessmentScoreValue');
       if (scoreEl) scoreEl.style.display = 'block';
       if (scoreVal) scoreVal.textContent = score;
-      if (window.VoiceCoach) VoiceCoach.speak('Test complete. Your score is ' + score + ' out of 5.', true);
+      // C15 (2026-07 exam): VoiceCoach is a const, not a window property —
+      // the old window. guard was always false and this line never spoke.
+      if (typeof VoiceCoach !== 'undefined') VoiceCoach.speak('Test complete. Your score is ' + score + ' out of 5.', true);
     }
 
     window.saveAssessmentScore = function() {

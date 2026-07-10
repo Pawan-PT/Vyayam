@@ -319,14 +319,14 @@ input[type=range] { width: 100%; accent-color: #0c6c3f; }
 
 <script>
 const CFG = {
-  familyIndex: {{ family_index }},
-  levelIndex:  {{ level_index }},
-  totalFamilies: {{ total_families }},
-  totalLevels: {{ total_levels }},
+  familyIndex: parseInt("{{ family_index }}", 10) || 0,  // C19
+  levelIndex:  parseInt("{{ level_index }}", 10) || 0,
+  totalFamilies: parseInt("{{ total_families }}", 10) || 0,
+  totalLevels: parseInt("{{ total_levels }}", 10) || 0,
   isLastLevel: {{ is_last_level|yesno:"true,false" }},
   isLastFamily: {{ is_last_family|yesno:"true,false" }},
-  targetReps: {{ current_level.target_reps }},
-  holdDuration: {{ current_level.hold_duration }},
+  targetReps: parseInt("{{ current_level.target_reps }}", 10) || 0,
+  holdDuration: parseInt("{{ current_level.hold_duration }}", 10) || 0,
 };
 
 

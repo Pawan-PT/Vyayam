@@ -125,7 +125,7 @@
     }
   }
   {% if np.nutrition_goal %}
-  document.addEventListener('DOMContentLoaded', function() { selectGoal('{{ np.nutrition_goal }}'); });
+  document.addEventListener('DOMContentLoaded', function() { selectGoal('{{ np.nutrition_goal|escapejs }}'); });  // C19
   {% endif %}
 </script>
 {% endblock %}

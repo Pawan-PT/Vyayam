@@ -736,10 +736,10 @@
 (function() {
   const csrf = "{{ csrf_token }}";
   const linkId = "{{ link.id }}";
-  const week = {{ current_week }};
+  const week = parseInt("{{ current_week }}", 10) || 1;  // C19
   const initial = JSON.parse(document.getElementById('rx-items-data').textContent);
   const catalog = {
-    {% for e in catalog %}"{{ e.exercise_id }}": {name: "{{ e.name|escapejs }}", pattern: "{{ e.movement_pattern }}", equipment: "{{ e.equipment }}"}{% if not forloop.last %},{% endif %}
+    {% for e in catalog %}"{{ e.exercise_id }}": {name: "{{ e.name|escapejs }}", pattern: "{{ e.movement_pattern|escapejs }}", equipment: "{{ e.equipment|escapejs }}"}{% if not forloop.last %},{% endif %}
     {% endfor %}
   };
 
