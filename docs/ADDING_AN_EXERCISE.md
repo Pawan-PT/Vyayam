@@ -61,9 +61,14 @@ JS for a guided exercise.
 **Decision rule (locked):** camera tracking ships only when the movement
 passed `docs/FILMING_PROTOCOL.md` on a real device. Until then it ships as
 guided (Path 1) — honest guided beats fake tracking. Adding a NEW ghost
-phase template (`EXERCISE_PHASES` key) means editing the frozen camera
-template — do not do that while the R4 test-day freeze holds; reuse an
-existing audited `js_type`.
+phase template no longer touches the frozen camera template: since 2026-07,
+new `js_type` definitions + fault observers go in
+`strength_app/static/strength_app/js/coach_dark.js` (UMD, node-tested in
+`coach_dark.test.mjs`; `install()` merges them without ever overwriting an
+audited live key). Prefer reusing an existing audited `js_type` when one
+matches the movement; a coach can also ship DARK behind a `*_rx` key with
+the catalog flag False — see "Dark camera coaches" in CLAUDE.md for the
+pattern and flip procedure.
 
 1. **Python module** — `strength_app/exercise_system/exercises/<name>_v2.py`.
    Copy the nearest sibling (e.g. `static_glutei_v2.py` for a hold,
@@ -105,8 +110,12 @@ existing audited `js_type`.
    Commit `strength_app/static/strength_app/js/exercise_targets.json`
    together with the code change — `--check` is the CI gate.
 6. **Patient-facing content** — `strength_app/exercise_content.py` (or
-   `exercise_content_gap_fill.py`), keyed by the SNAKE id:
-   `instructions_en`, `form_cues_en` (list), `mind_muscle_cue_en`.
+   `exercise_content_gap_fill.py`), keyed by the SNAKE id. The REAL keys are
+   `instructions` (list of sentences), `form_cues` (list) and
+   `mind_muscle_cue` (dict with a `during` entry) — this doc previously said
+   `*_en` keys, which exist in ZERO entries (2026-07 exam finding A8; the
+   views that still read `*_en` are a known deferred fix gated on a mentor
+   pass — see CODEBASE_HEALTH_2026-07.md).
 7. **Therapist catalog** — `therapist_app/exercise_catalog.py` entry as in
    Path 1 but with `"v2_ghost_supported": True,
    "v2_exercise_key": "<snake_name>"`.

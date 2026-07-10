@@ -50,6 +50,20 @@ claims, no diagnosis language in patient-facing content · football/athlete tier
 training-readiness wording only · patient-facing clinical wording changes get flagged for
 Pawan's physio mentor before shipping.
 
+## Dark camera coaches (2026-07 final session — NOT patient-visible yet)
+11 prescription-tier coaches ship DARK behind `*_rx` registry keys: wall_sit_rx,
+plank_hold_rx, side_plank_rx, single_leg_balance_rx, knee_to_chest_rx (holds) ·
+straight_leg_raise_rx, prone_knee_bend_rx, supine_hip_abduction_rx,
+sidelying_hip_abduction_rx, db_shoulder_press_rx, band_row_rx (reps).
+JS lives in `coach_dark.js` (node: coach_dark.test.mjs); integrity suite:
+`strength_app/tests/test_camera_dark.py`. QA surface: `/therapist/qa/dark-coaches/`
+(therapist-only, writes nothing). prone_glute_squeeze + ankle_pumps are
+PERMANENTLY guided (reason in their catalog descriptions).
+**Flip procedure (per exercise, ONLY after its filming-protocol pass + the
+matching MASTER_TEST_DAY Part H-2026-07 walk):** set `"v2_ghost_supported": True`
+on the catalog entry — one line; the key is already wired. Cue strings are in
+MENTOR_REVIEW_QUEUE §2026-07 — mentor sign-off before flipping.
+
 ## Known landmines
 - 257/264 modules in `strength_app/exercise_system/exercises/` import PoseAnalyzer/cv2
   unguarded at module top → `export_exercise_targets` and module-importing tests hard-require
@@ -57,12 +71,20 @@ Pawan's physio mentor before shipping.
   and proving the gate green in a mediapipe-free venv.
 - `strength_app/backend/` is NOT legacy-dead: `utils.py` imports the live 5-gate
   return-to-sport engine from it.
-- `cv_available` context var (views.py) currently feeds no template — dead, cleanup candidate.
-- Camera demo videos: `strength_app/static/strength_app/videos/<engine_key>.mp4` + allowlist
-  `VIDEO_MODE_EXERCISES` in v1_exercise_execute.html (~line 5124).
+- `cv_available` context var (views.py:436) feeds only the retired legacy flow — dead,
+  cleanup candidate.
+- Camera demo videos AUTO-DETECT (2026-07 Phase 4): drop
+  `strength_app/static/strength_app/videos/<engine_key>.mp4` + collectstatic and that
+  exercise runs VIDEO_MODE on next process start — `cv_targets.get_video_mode_exercises()`;
+  no allowlist, no code edit.
+- Content-key mismatch (ledger A8, DEFERRED-BLOCKED): three views read `*_en` content keys
+  that exist in ZERO entries — camera/library pages show no instructions/cues. The one-line
+  fix (read `instructions`/`form_cues`/`mind_muscle_cue`) is gated on the mentor pass for
+  A6/A7 gap_fill wording; do not fix without that sign-off.
 - Camera/coaching feel-layer freeze: until Pawan's MASTER_TEST_DAY device walk passes,
   evidence-backed bug fixes only on the camera template and coaching — do not add behavior.
-  (Delete this bullet after test day passes.)
+  (Delete this bullet after test day passes. The 2026-07 dark coaches were added as
+  provably-inert new code under session authorization — parity proof in the ledger.)
 
 ## Style
 Pawan is terse and direct; give decisions and evidence, not essays. If context runs low
