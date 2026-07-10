@@ -42,6 +42,22 @@
   {% endfor %}
   {% endif %}
 
+  {% if managed_blocked %}
+  <!-- Therapist-managed: deletion routed through the therapist -->
+  <div class="bg-surface-container-lowest rounded-lg p-5 shadow-[0_4px_20px_rgba(26,28,28,0.04)] space-y-3">
+    <div class="font-bold text-sm text-on-surface">Your account is managed by your therapist</div>
+    <p class="text-sm text-on-secondary-container leading-relaxed">
+      Your exercise sessions, reports and pain history are part of your
+      treatment record with your therapist. To close your account, please ask
+      your therapist — they can arrange deletion while meeting record-keeping
+      obligations.
+    </p>
+    <a href="{% url 'v1_dashboard' %}"
+       class="block w-full py-3 border-2 border-outline-variant/40 text-on-secondary-container font-bold text-sm rounded-xl text-center no-underline">
+      Back to my dashboard
+    </a>
+  </div>
+  {% else %}
   <!-- Confirmation form -->
   <div class="bg-surface-container-lowest rounded-lg p-5 shadow-[0_4px_20px_rgba(26,28,28,0.04)]">
     <form method="post" class="space-y-4">
@@ -74,6 +90,7 @@
       </div>
     </form>
   </div>
+  {% endif %}
 
   <!-- Reassurance -->
   <p class="text-xs text-on-secondary-container/60 text-center leading-relaxed">

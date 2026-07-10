@@ -1534,6 +1534,21 @@ def delete_account(request: HttpRequest):
 
     patient = get_object_or_404(PatientProfile, patient_id=patient_id)
 
+    # B-X1 (2026-07 exam): a therapist-managed patient's account anchors the
+    # therapist's clinical record — generated SessionReports and the
+    # PainEvent/RedFlagEvent audit trails all CASCADE off PatientProfile, and
+    # reports are clinically immutable. Managed deletion goes through the
+    # therapist (retention-vs-erasure policy: MENTOR_REVIEW_QUEUE §2026-07).
+    if patient.therapist_managed:
+        if request.method == 'POST':
+            messages.error(
+                request,
+                'Your account is managed by your therapist, so it cannot be '
+                'deleted from here. Please ask your therapist to close your '
+                'account — this protects your treatment records.')
+        return render(request, 'strength_app/delete_account.html',
+                      {'managed_blocked': True})
+
     if request.method == 'POST':
         password = request.POST.get('password', '')
         confirmed = request.POST.get('confirm_delete')
