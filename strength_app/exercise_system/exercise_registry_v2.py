@@ -39,6 +39,7 @@ from .exercises import KneeToChestRxV2
 from .exercises import ProneKneeBendRxV2
 from .exercises import SupineHipAbductionRxV2
 from .exercises import SidelyingHipAbductionRxV2
+from .exercises import DbShoulderPressRxV2
 from .exercises import PartialSquatsV2
 from .exercises import GluteBridgeV2
 from .exercises import StraightLegRaisesV2
@@ -3001,6 +3002,16 @@ EXERCISE_METADATA = {
         'display_name': 'Wall Sit',
         'unilateral': False,
         'movement_pattern': 'squat',
+        'rx_dark_2026_07': True,
+    },
+    'db_shoulder_press_rx': {
+        'class': DbShoulderPressRxV2,
+        'category': 'strength',
+        'subcategory': 'intermediate',
+        'level': 2,
+        'display_name': 'Dumbbell Shoulder Press',
+        'unilateral': False,
+        'movement_pattern': 'push',
         'rx_dark_2026_07': True,
     },
     'sidelying_hip_abduction_rx': {

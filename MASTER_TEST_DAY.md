@@ -302,3 +302,15 @@ the filming day BEFORE flipping that exercise's flag.
    Within ~0.5s: trunk segments amber + "Stack your hips straight up".
 4. Tiny lift (~10°): the lift phase must NOT complete — no rep.
 5. Both sides. No red at any point.
+
+### H35. db_shoulder_press_rx — Dumbbell Shoulder Press (reps, front view)
+1. Camera in FRONT at chest height, ~2m; head, arms and hips in frame.
+2. Clean reps (both dumbbells pressed together to near-straight, controlled
+   lower): rep counter advances once per press-and-lower cycle.
+3. Deliberate fault — press one arm fully while the other stays at the
+   shoulder. Within ~0.5s: the lagging arm ambers + "Press both arms up
+   together".
+4. Shrug your shoulders to your ears at the rack: the soft stance warning
+   appears ("Drop your shoulders away from your ears") — warning only.
+5. Half press (elbows to ~120°): the press phase must NOT complete.
+6. No red at any point.

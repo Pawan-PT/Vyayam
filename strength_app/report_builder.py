@@ -113,6 +113,7 @@ CUE_TEXT = {
     'slr_knee_straight': 'Keep that knee locked straight',
     'prone_hips_flat': 'Keep your hips on the floor',
     'pelvis_still': 'Keep your pelvis still',
+    'press_even': 'Press both arms up together',
 }
 
 DIFFICULTY_LABEL = {

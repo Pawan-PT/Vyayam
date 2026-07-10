@@ -75,6 +75,7 @@
     slr_knee_straight:   { text: 'Keep that knee locked straight',            priority: 'primary' },
     prone_hips_flat:     { text: 'Keep your hips on the floor',               priority: 'primary' },
     pelvis_still:        { text: 'Keep your pelvis still',                    priority: 'primary' },
+    press_even:          { text: 'Press both arms up together',               priority: 'primary' },
   };
 
   // Reinforcement when a specific cue is corrected (R4c) — specific first,

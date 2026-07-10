@@ -429,4 +429,41 @@ test('SIDELYING_ABD_RX: stacked/lifted phases score; roll-back faults', () => {
   assert.deepEqual(runFaults(obs, [lift, lift, lift, lift], gs), []);
 });
 
+test('PRESS_DB_RX: rack/lockout phases score; asymmetric press faults', () => {
+  const def = dark.PHASES.PRESS_DB_RX;
+  assert.equal(def.phases.length, 4);
+
+  // Front view. Racked: elbows bent ~85° at the shoulders.
+  const rack = frame();
+  rack[L.leftShoulder] = P(0.40, 0.30); rack[L.rightShoulder] = P(0.60, 0.30);
+  rack[L.leftElbow] = P(0.38, 0.44);    rack[L.rightElbow] = P(0.62, 0.44);
+  rack[L.leftWrist] = P(0.52, 0.42);    rack[L.rightWrist] = P(0.48, 0.42);
+  const rackScore = scorePhase(def, 'rack', rack);
+  assert.ok(rackScore >= 70, `rack scored ${rackScore}`);
+  assert.ok(scorePhase(def, 'press', rack) < 70);
+
+  // Lockout: both arms straight overhead.
+  const up = frame();
+  up[L.leftShoulder] = P(0.40, 0.30); up[L.rightShoulder] = P(0.60, 0.30);
+  up[L.leftElbow] = P(0.40, 0.19);    up[L.rightElbow] = P(0.60, 0.19);
+  up[L.leftWrist] = P(0.41, 0.08);    up[L.rightWrist] = P(0.59, 0.08);
+  assert.ok(scorePhase(def, 'lockout', up) >= 70,
+            `lockout scored ${scorePhase(def, 'lockout', up)}`);
+  assert.ok(scorePhase(def, 'rack', up) < 70);
+
+  // Asymmetric: left arm locked out, right still racked.
+  const uneven = frame();
+  uneven[L.leftShoulder] = P(0.40, 0.30); uneven[L.rightShoulder] = P(0.60, 0.30);
+  uneven[L.leftElbow] = P(0.40, 0.19);    uneven[L.rightElbow] = P(0.62, 0.44);
+  uneven[L.leftWrist] = P(0.41, 0.08);    uneven[L.rightWrist] = P(0.48, 0.42);
+
+  const gs = { mode: 'USER_FOLLOWS', isHoldExercise: false, repCount: 0 };
+  const obs = dark.FAULTS.PRESS_DB_RX;
+  obs.resetSet(); obs._lastAt = {};
+  assert.deepEqual(runFaults(obs, [uneven, uneven, uneven, uneven], gs),
+                   ['press_even']);
+  obs.resetSet(); obs._lastAt = {};
+  assert.deepEqual(runFaults(obs, [up, up, up, up], gs), []);
+});
+
 // [VYAYAM-DARK-TESTS-END]

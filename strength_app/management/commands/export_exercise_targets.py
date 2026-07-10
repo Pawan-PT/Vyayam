@@ -148,6 +148,7 @@ CAMERA = {
     'prone_knee_bend_rx': 'PRONE_KNEE_BEND_RX',
     'supine_hip_abduction_rx': 'SUPINE_ABD_RX',
     'sidelying_hip_abduction_rx': 'SIDELYING_ABD_RX',
+    'db_shoulder_press_rx': 'PRESS_DB_RX',
 }
 
 # Manual — no JS template matches the real movement, the movement travels

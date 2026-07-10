@@ -38,6 +38,8 @@ DARK_COACHES = {
                                 False, ['pelvis_still']),
     'sidelying_hip_abduction_rx': ('ex_sidelying_hip_abduction',
                                    'SIDELYING_ABD_RX', False, []),
+    'db_shoulder_press_rx': ('ex_db_shoulder_press', 'PRESS_DB_RX', False,
+                             ['press_even']),
 }
 
 # Cue ids the dark coaches reuse from the existing registry.

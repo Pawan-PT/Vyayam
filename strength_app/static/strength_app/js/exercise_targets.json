@@ -1399,6 +1399,38 @@
   "tracking": "camera",
   "unilateral": true
  },
+ "db_shoulder_press_rx": {
+  "display_name": "Dumbbell Shoulder Press",
+  "is_hold": false,
+  "js_type": "PRESS_DB_RX",
+  "movement_pattern": "push",
+  "phases": {
+   "bent": {
+    "avg_elbow": 85,
+    "tolerance": 15
+   },
+   "extending": {
+    "avg_elbow": [
+     85,
+     168
+    ],
+    "tolerance": 18
+   },
+   "flexing": {
+    "avg_elbow": [
+     85,
+     168
+    ],
+    "tolerance": 18
+   },
+   "straight": {
+    "avg_elbow": 168,
+    "tolerance": 12
+   }
+  },
+  "tracking": "camera",
+  "unilateral": false
+ },
  "dead_bug": {
   "display_name": "Dead Bug",
   "is_hold": false,

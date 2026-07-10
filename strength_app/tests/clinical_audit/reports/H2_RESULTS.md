@@ -123,6 +123,7 @@
 | quad_set_with_shr | ok | 100.0 | 100.0 | 0 |
 | pnf_hamstring_stretch | ok | 100.0 | 100.0 | 0 |
 | single_arm_push_up_prog | ok | 100.0 | 100.0 | 0 |
+| db_shoulder_press_rx | ok | 100.0 | 90.4 | 0 |
 | supine_hip_abduction_rx | ok | 100.0 | 100.0 | 0 |
 | side_plank_rx | ok | 100.0 | 100.0 | 0 |
 | plank_hold_rx | ok | 100.0 | 99.5 | 0 |

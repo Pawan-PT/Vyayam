@@ -154,8 +154,8 @@ EXERCISES = [
         "movement_pattern": "Push",
         "equipment": "Dumbbell",
         "video_url": "",
-        "v2_ghost_supported": False,
-        "v2_exercise_key": "",
+        "v2_ghost_supported": False,  # DARK — flip after filming protocol
+        "v2_exercise_key": "db_shoulder_press_rx",
         "description": "Seated overhead dumbbell press. Develops deltoid and rotator cuff strength through a full range.",
         "default_sets": 3,
         "default_reps": 10,

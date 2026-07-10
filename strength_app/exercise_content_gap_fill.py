@@ -4130,4 +4130,19 @@ EXERCISE_CONTENT_GAP_FILL = {
         'mind_muscle_cue': {'during': 'Lift from the outside of the hip, not the waist.'},
     },
 
+    'db_shoulder_press_rx': {
+        'display_name': 'Dumbbell Shoulder Press',
+        'movement_pattern': 'push',
+        'level': 'intermediate',
+        'target_muscles': ['Deltoids', 'Triceps', 'Upper back'],
+        'instructions': [
+            'Sit or stand tall, a dumbbell at each shoulder, palms forward.',
+            'Press both arms up together until the elbows are almost straight.',
+            'Reach tall without shrugging your shoulders to your ears.',
+            'Lower with control back to shoulder height.',
+        ],
+        'form_cues': ['Both arms travel together', 'Shoulders down, away from the ears', 'Lower under control'],
+        'mind_muscle_cue': {'during': 'Push the ceiling away evenly with both hands.'},
+    },
+
 }

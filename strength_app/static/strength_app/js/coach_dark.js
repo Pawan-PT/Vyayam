@@ -587,6 +587,57 @@
     },
   ]);
 
+  // ── db_shoulder_press_rx — overhead press reps, front view ──────────────
+  // Primary: average elbow angle cycling 85° (rack) → 168° (lockout).
+  // Fault: asymmetric press (one arm lagging >25°). Shoulder shrug rides
+  // the soft stanceCheck.
+  function _elbows(lm) {
+    return {
+      left: calcAngle(lm[LM.leftShoulder], lm[LM.leftElbow], lm[LM.leftWrist]),
+      right: calcAngle(lm[LM.rightShoulder], lm[LM.rightElbow], lm[LM.rightWrist]),
+    };
+  }
+
+  PHASES.PRESS_DB_RX = {
+    name: 'Dumbbell Shoulder Press',
+    bodyOrientation: 'standing',
+    cameraPosition: { view: 'front', instruction: 'Place camera in front of you at chest height. Head, arms and hips visible.' },
+    setupCues: [
+      'Sit or stand tall. A dumbbell at each shoulder.',
+      'Palms forward, elbows under your wrists.',
+      'Press both arms up together to almost straight.',
+      'Lower with control to shoulder height.',
+    ],
+    stanceCheck: { shoulderShrug: true, label: 'Shoulders down, dumbbells racked' },
+    phases: [
+      { name: 'rack',    duration: 0,    joints: { elbow: 85 },  voice: 'Dumbbells at your shoulders' },
+      { name: 'press',   duration: 1800, joints: { elbow: 168 }, voice: 'Press up together' },
+      { name: 'lockout', duration: 700,  joints: { elbow: 168 }, voice: 'Reach tall' },
+      { name: 'lower',   duration: 1800, joints: { elbow: 85 },  voice: 'Lower with control' },
+    ],
+    checkAngles: function (lm) {
+      var e = _elbows(lm);
+      return { elbow: (e.left + e.right) / 2 };
+    },
+    cues: { elbow: 'Press all the way up' },
+    forceArrows: [],
+  };
+
+  FAULTS.PRESS_DB_RX = makeFaults([
+    {
+      // One arm lagging the other by >25° mid-press.
+      cue: 'press_even', modes: ['USER_FOLLOWS', 'GHOST_LEADS'], minMs: 400,
+      test: function (lm) {
+        if (!allVisible(lm, [LM.leftShoulder, LM.leftElbow, LM.leftWrist,
+                             LM.rightShoulder, LM.rightElbow, LM.rightWrist])) return null;
+        var e = _elbows(lm);
+        if (Math.abs(e.left - e.right) <= 25) return null;
+        return armSegs(e.left < e.right);   // amber the LAGGING (more bent) arm
+      },
+    },
+  ]);
+  CUE_IDS.push('press_even');
+
   // [VYAYAM-DARK-DEFS-END]
 
   return {
