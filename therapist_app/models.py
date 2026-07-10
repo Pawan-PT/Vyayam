@@ -371,6 +371,15 @@ class ExerciseSetLog(models.Model):
     class Meta:
         ordering = ['session_log_id', 'exercise_id', 'set_number', 'id']
         indexes = [models.Index(fields=['session_log', 'exercise_id'])]
+        # B-D1 (2026-07 exam): the set-log endpoint claims idempotency on
+        # (session_log, exercise, set) via update_or_create — without a DB
+        # constraint two concurrent retries both insert, inflating the
+        # immutable report's set counts.
+        constraints = [
+            models.UniqueConstraint(
+                fields=['session_log', 'exercise_id', 'set_number'],
+                name='uniq_setlog_session_exercise_set'),
+        ]
 
     def __str__(self):
         return (f"{self.exercise_name} set {self.set_number} "

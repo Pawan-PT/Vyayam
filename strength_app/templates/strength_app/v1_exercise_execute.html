@@ -659,9 +659,38 @@ document.querySelectorAll('.show-demo-label').forEach(function(el) {
   el.textContent = SHOW_DEMO_LABEL;
 });
 
+// C9/C21 (2026-07 exam): the honest no-camera fallback, shared by the
+// permission-denied path and mid-session device loss. Manual reps, no form
+// score — never a frozen page behind the occlusion cue.
+function showCameraFailedFallback() {
+    if (window._cameraFailed) return;
+    window._cameraFailed = true;
+    if (stream) { try { stream.getTracks().forEach(function(t) { t.stop(); }); } catch (e) {} }
+    if (window.ghostState && ghostState.holdInterval) {
+      clearInterval(ghostState.holdInterval);
+      ghostState.holdInterval = null;
+    }
+    document.getElementById('cameraSection').innerHTML = `
+      <div class="cam-placeholder" style="flex-direction:column;gap:14px;padding:32px;text-align:center;">
+        <i class="fas fa-video-slash" style="font-size:3rem;opacity:.3;"></i>
+        <h6 class="mt-2" style="color:#fff;">Camera not available</h6>
+        <p style="opacity:.6;font-size:.85rem;">You can still complete this exercise. Count your reps and mark each set Done in the set tracker — no form score will be recorded without the camera.</p>
+        <div style="text-align:left;width:100%;max-width:280px;">
+          <label style="font-size:.82rem;opacity:.7;display:block;margin-bottom:4px;">Reps completed:</label>
+          <input type="number" id="manualReps" value="0" min="0" max="50"
+            style="width:100%;background:#2a2f4a;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:8px 12px;color:#fff;font-size:.9rem;margin-bottom:10px;">
+        </div>
+      </div>`;
+}
+
 async function startCamera() {
     console.log('startCamera called, EXERCISE_ID:', EXERCISE_ID);
     if (CV_TRACKING !== 'camera') return;  // guided mode never opens the camera
+    // C8 (2026-07 exam): double-click during the permission prompt opened a
+    // second stream + second Pose loop (rep machine advanced twice a frame,
+    // first camera track leaked). One start only.
+    if (stream || window._camStarting) return;
+    window._camStarting = true;
     try {
       try {
         stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } } });
@@ -671,9 +700,15 @@ async function startCamera() {
           stream = await navigator.mediaDevices.getUserMedia({ video: true });
         } catch(e2) {
           console.error('Camera fallback 2 also failed:', e2);
-          alert('Camera error details:\n\nError 1: ' + e1.name + ' — ' + e1.message + '\n\nError 2: ' + e2.name + ' — ' + e2.message + '\n\nHTTPS: ' + location.protocol + '\nSecure context: ' + window.isSecureContext + '\nmediaDevices exists: ' + !!navigator.mediaDevices);
           throw e2;
         }
+      }
+      // C9 (2026-07 exam): mid-session device loss (unplug / OS revoke) was
+      // indistinguishable from occlusion — the session froze behind the
+      // "I can't see you clearly" cue. Degrade to the honest manual fallback.
+      var _vTrack = stream.getVideoTracks && stream.getVideoTracks()[0];
+      if (_vTrack && _vTrack.addEventListener) {
+        _vTrack.addEventListener('ended', showCameraFailedFallback);
       }
       const video = document.getElementById('cameraFeed');
       video.srcObject = stream;
@@ -695,20 +730,12 @@ async function startCamera() {
         }
       }
     } catch(e) {
+      // C21 (2026-07 exam): was alert() dumping raw exception text at the
+      // patient; the honest fallback card says everything they need.
       console.error('Camera error:', e);
-      document.getElementById('cameraSection').innerHTML = `
-        <div class="cam-placeholder" style="flex-direction:column;gap:14px;padding:32px;text-align:center;">
-          <i class="fas fa-video-slash" style="font-size:3rem;opacity:.3;"></i>
-          <h6 class="mt-2" style="color:#fff;">Camera not available</h6>
-          <p style="opacity:.6;font-size:.85rem;">You can still complete this exercise. Count your reps and mark each set Done in the set tracker — no form score will be recorded without the camera.</p>
-          <div style="text-align:left;width:100%;max-width:280px;">
-            <label style="font-size:.82rem;opacity:.7;display:block;margin-bottom:4px;">Reps completed:</label>
-            <input type="number" id="manualReps" value="0" min="0" max="50"
-              style="width:100%;background:#2a2f4a;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:8px 12px;color:#fff;font-size:.9rem;margin-bottom:10px;">
-          </div>
-        </div>`;
-      // Override saveAndNext to use manual values
-      window._cameraFailed = true;
+      showCameraFailedFallback();
+    } finally {
+      window._camStarting = false;
     }
   }
 
@@ -3780,6 +3807,10 @@ async function startCamera() {
           ghostState.holdSeconds = 0;
           VoiceCoach.speak('Timer starting. Hold it.', true);
           ghostState.holdInterval = setInterval(function() {
+            // C11 (2026-07 exam): a hidden tab freezes the pose loop, so
+            // _lastMatchScore stays at its last good value while this 1 Hz
+            // interval keeps ticking — inflated holds. No frames, no count.
+            if (document.hidden) return;
             if (ghostState.mode === 'GUIDING') {
               // Only count if user is actually holding the position
               if (ghostState._lastMatchScore >= 40) {
@@ -5763,7 +5794,15 @@ async function startCamera() {
               drawKneeAlignmentIndicator(ctx, lm, ghostState.exerciseDef.stanceCheck, W, H);
             }
           }
-          formScores.push(matchScore || 50);
+          // C10 (2026-07 exam): only frames where the patient is actually
+          // performing count toward the stored form score — DEMO/WAITING/
+          // rest frames diluted it toward the idle default, and a genuine 0
+          // was mapped to 50.
+          if (ghostState.mode === 'USER_FOLLOWS' ||
+              ghostState.mode === 'GHOST_LEADS' ||
+              ghostState.mode === 'GUIDING') {
+            formScores.push(typeof matchScore === 'number' ? matchScore : 50);
+          }
           updateFormDisplay(matchScore || 50);
 
           var cueEl = document.getElementById('alignmentCue');
@@ -5950,6 +5989,10 @@ async function startCamera() {
 
   function startRest() {
     TempoCoach.stop();
+    // C7 (2026-07 exam): completing the next set mid-rest overwrote the
+    // running interval — the orphan kept ticking the same display and later
+    // spoke "Rest over" mid-set. Clear before starting a new one.
+    if (restInterval) { clearInterval(restInterval); restInterval = null; }
     const wrap = document.getElementById('restTimerWrap');
     const val  = document.getElementById('restVal');
     wrap.style.display = 'block';
@@ -6431,7 +6474,8 @@ async function startCamera() {
       assessCountdownInterval = setInterval(function() {
         if (ASSESSMENT_TYPE === 'hold') {
           var matchScore = (window.ghostState && ghostState._lastMatchScore) || 0;
-          if (matchScore >= 60) {
+          // C11 (2026-07 exam): don't score a frozen pose loop (hidden tab).
+          if (matchScore >= 60 && !document.hidden) {
             assessHoldTime++;
             var mEl = document.getElementById('assessmentMeasured');
             if (mEl) mEl.textContent = assessHoldTime;

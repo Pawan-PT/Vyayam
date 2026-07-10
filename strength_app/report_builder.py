@@ -637,9 +637,9 @@ def build_report(session_log):
     first_name = name.split()[0] if name else 'Patient'
 
     presc_items = list(prescription.items.all().order_by('order', 'id'))
-    log_items = {li.prescription_item_id: li
-                 for li in session_log.items.all()}
-    log_items_by_ex = {li.exercise_id: li for li in session_log.items.all()}
+    _items = list(session_log.items.all())  # B-N4: one query, two maps
+    log_items = {li.prescription_item_id: li for li in _items}
+    log_items_by_ex = {li.exercise_id: li for li in _items}
     set_logs_all = list(session_log.set_logs.all())
     rest_events_all = list(session_log.rest_events.all())
 
@@ -799,6 +799,14 @@ def generate_session_report(session_log):
 
     data = build_report(session_log)
     profile = PatientProfile.objects.filter(user=session_log.link.patient).first()
+    # B-D2 (2026-07 exam): a None profile used to raise NOT-NULL
+    # IntegrityError, which the race handler below misread — the report was
+    # silently never generated and every retry failed identically.
+    if profile is None:
+        logger.error(
+            'report NOT generated: no PatientProfile for link user %s '
+            '(session_log=%s)', session_log.link.patient_id, session_log.id)
+        return None
     try:
         return SessionReport.objects.create(
             link=session_log.link,

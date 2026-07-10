@@ -1459,6 +1459,9 @@ class PainEvent(models.Model):
 
     class Meta:
         ordering = ['-created_at']
+        # B-I1 (2026-07 exam): dashboard cards + report generation filter on
+        # (patient, created_at) — the locked pain source deserves an index.
+        indexes = [models.Index(fields=['patient', 'created_at'])]
 
     def __str__(self):
         return f"{self.patient_id} pain {self.pain_severity}/10 {self.exercise_name} ({self.outcome})"

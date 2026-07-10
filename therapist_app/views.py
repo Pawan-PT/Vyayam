@@ -449,9 +449,12 @@ def alert_mark_reviewed(request, alert_id):
 
 @therapist_required
 @require_POST
+@transaction.atomic
 def copy_previous_week(request, link_id):
     """Clone the most recent week's prescription into a new draft for the
-    next week — the single biggest time-saver in any prescription tool."""
+    next week — the single biggest time-saver in any prescription tool.
+    B-T4 (2026-07 exam): atomic like its save_program/save_onboarding
+    siblings — no half-copied draft week on failure."""
     therapist = request.user.therapist
     link = get_linked_patient_or_404(therapist, link_id)
 

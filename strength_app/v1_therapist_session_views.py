@@ -414,10 +414,14 @@ def therapist_session_feedback(request, idx):
     return render(request, 'strength_app/therapist_session_feedback.html', ctx)
 
 
+@transaction.atomic
 def _record_pain(link, patient, *, exercise_id, exercise_name, pain_type,
                  severity, set_number, threshold, outcome, rep_number=None):
     """Phase 2: log a PainEvent, post a SYSTEM message to the therapist chat
-    (every time), and raise an Alert (only on skip/pause). Returns the body."""
+    (every time), and raise an Alert (only on skip/pause). Returns the body.
+    B-T3 (2026-07 exam): atomic — the event and its therapist notification
+    live or die together (a retry after partial failure duplicated
+    PainEvents in the immutable pain record)."""
     when = timezone.localtime().strftime('%d %b %Y at %I:%M %p')
     where = f"set {set_number}" if set_number else "a set"
     ptype = (pain_type or '').strip()
