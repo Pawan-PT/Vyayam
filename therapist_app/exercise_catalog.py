@@ -469,8 +469,8 @@ EXERCISES = [
         "movement_pattern": "Core",
         "equipment": "None",
         "video_url": "",
-        "v2_ghost_supported": False,
-        "v2_exercise_key": "",
+        "v2_ghost_supported": False,  # DARK — flip after filming protocol
+        "v2_exercise_key": "plank_hold_rx",
         "description": "Support yourself on your forearms and toes, elbows under the shoulders. Hold a straight line from head to heels — squeeze the glutes and brace the abdominals so the hips neither sag nor pike up. Breathe steadily and hold. End the hold when you can no longer keep the straight line. (Each rep = one ~30s hold.)",
         "default_sets": 3,
         "default_reps": 30,

@@ -191,6 +191,65 @@
   ]);
   CUE_IDS.push('wall_sit_slide_down', 'wall_sit_heels');
 
+  // ── plank_hold_rx — forearm plank, side view ────────────────────────────
+  // Primary: body line (shoulder-hip-ankle ~180) + horizontal body. Faults:
+  // hip sag / hip pike via the hip's deviation from the shoulder-ankle line
+  // (same construct as cv_core's bodyLine stance check).
+  function _plankDeviation(lm) {
+    var sh = lm[LM.leftShoulder], hp = lm[LM.leftHip], ak = lm[LM.leftAnkle];
+    if (Math.min(vis(sh), vis(hp), vis(ak)) < 0.4) return null;
+    var bodyLen = Math.abs(ak.y - sh.y) + Math.abs(ak.x - sh.x);
+    if (bodyLen < 0.15) return null;
+    var midY = (sh.y + ak.y) / 2;
+    return (hp.y - midY) / bodyLen;   // + below the line (sag), - above (pike)
+  }
+
+  PHASES.PLANK_RX = {
+    name: 'Plank Hold',
+    bodyOrientation: 'prone',
+    cameraPosition: { view: 'side', instruction: 'Place camera to your side at floor level so your whole body is visible.' },
+    setupCues: [
+      'Forearms on the ground. Elbows under your shoulders.',
+      'Legs straight behind you, toes tucked.',
+      'Squeeze your glutes — one straight line, head to heels.',
+      'Breathe steadily and hold.',
+    ],
+    stanceCheck: { shoulderShrug: true, bodyLine: true, label: 'Elbows under shoulders, body straight' },
+    phases: [
+      { name: 'hold', duration: 0, joints: { bodyLine: 178, plankLevel: 0.05 }, voice: 'Hold a straight line' },
+    ],
+    checkAngles: function (lm) {
+      var bodyLine = (calcAngle(lm[LM.leftShoulder], lm[LM.leftHip], lm[LM.leftAnkle]) +
+                      calcAngle(lm[LM.rightShoulder], lm[LM.rightHip], lm[LM.rightAnkle])) / 2;
+      var plankLevel = Math.abs(
+        (lm[LM.leftShoulder].y + lm[LM.rightShoulder].y) / 2 -
+        (lm[LM.leftAnkle].y + lm[LM.rightAnkle].y) / 2);
+      return { bodyLine: bodyLine, plankLevel: plankLevel };
+    },
+    cues: { bodyLine: 'Straighten your body', plankLevel: 'Get into plank on the floor' },
+    forceArrows: [],
+  };
+
+  FAULTS.PLANK_RX = makeFaults([
+    {
+      cue: 'plank_hips_sag', modes: ['GUIDING'], minMs: 600,
+      test: function (lm) {
+        var dev = _plankDeviation(lm);
+        if (dev === null || dev <= 0.12) return null;
+        return HIP_SEGS;
+      },
+    },
+    {
+      cue: 'plank_hips_pike', modes: ['GUIDING'], minMs: 600,
+      test: function (lm) {
+        var dev = _plankDeviation(lm);
+        if (dev === null || dev >= -0.12) return null;
+        return HIP_SEGS;
+      },
+    },
+  ]);
+  CUE_IDS.push('plank_hips_sag', 'plank_hips_pike');
+
   // [VYAYAM-DARK-DEFS-END]
 
   return {

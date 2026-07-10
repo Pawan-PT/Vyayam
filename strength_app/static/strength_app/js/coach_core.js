@@ -68,6 +68,8 @@
     // strings queued for mentor review in MENTOR_REVIEW_QUEUE §2026-07).
     wall_sit_slide_down: { text: 'Slide down — thighs level with the floor', priority: 'primary' },
     wall_sit_heels:      { text: 'Keep both heels on the floor',             priority: 'primary' },
+    plank_hips_sag:      { text: 'Lift your hips — straight line',           priority: 'primary' },
+    plank_hips_pike:     { text: 'Lower your hips — straight line',          priority: 'primary' },
   };
 
   // Reinforcement when a specific cue is corrected (R4c) — specific first,

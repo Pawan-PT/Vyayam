@@ -4030,6 +4030,26 @@
   "tracking": "manual",
   "unilateral": false
  },
+ "plank_hold_rx": {
+  "display_name": "Plank Hold",
+  "is_hold": true,
+  "js_type": "PLANK_RX",
+  "movement_pattern": "core",
+  "phases": {
+   "holding": {
+    "avg_back": 178,
+    "avg_elbow": 90,
+    "tolerance": 10
+   },
+   "setup": {
+    "avg_back": 175,
+    "avg_elbow": 90,
+    "tolerance": 15
+   }
+  },
+  "tracking": "camera",
+  "unilateral": false
+ },
  "plank_shoulder_tap": {
   "display_name": "Plank Shoulder Tap",
   "is_hold": false,

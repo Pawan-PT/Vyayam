@@ -140,6 +140,7 @@ CAMERA = {
     # ── 2026-07 DARK prescription-tier coaches (*_rx keys; catalog flags
     #    stay False — nothing patient-reachable routes here yet) ──
     'wall_sit_rx': 'WALL_SIT_RX',
+    'plank_hold_rx': 'PLANK_RX',
 }
 
 # Manual — no JS template matches the real movement, the movement travels

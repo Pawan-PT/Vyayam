@@ -23,6 +23,8 @@ JS_DIR = Path(strength_app.__file__).parent / 'static' / 'strength_app' / 'js'
 DARK_COACHES = {
     'wall_sit_rx': ('ex_wall_sit', 'WALL_SIT_RX', True,
                     ['wall_sit_slide_down', 'wall_sit_heels']),
+    'plank_hold_rx': ('ex_plank_hold', 'PLANK_RX', True,
+                      ['plank_hips_sag', 'plank_hips_pike']),
 }
 
 # Cue ids the dark coaches reuse from the existing registry.

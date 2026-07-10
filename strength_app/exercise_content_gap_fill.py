@@ -4010,4 +4010,19 @@ EXERCISE_CONTENT_GAP_FILL = {
         'mind_muscle_cue': {'during': 'Push the floor away through your heels.'},
     },
 
+    'plank_hold_rx': {
+        'display_name': 'Plank Hold',
+        'movement_pattern': 'core',
+        'level': 'foundation',
+        'target_muscles': ['Abdominals', 'Glutes', 'Shoulders'],
+        'instructions': [
+            'Forearms on the floor, elbows under your shoulders, legs straight behind you.',
+            'Squeeze your glutes and brace your middle so your body forms one straight line.',
+            'Breathe steadily and hold the line — no sagging, no piking.',
+            'End the hold when you can no longer keep the straight line.',
+        ],
+        'form_cues': ['One straight line, head to heels', 'Elbows under shoulders', 'Breathe — never hold your breath'],
+        'mind_muscle_cue': {'during': 'Pull your elbows and toes toward each other.'},
+    },
+
 }

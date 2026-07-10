@@ -221,3 +221,12 @@ the filming day BEFORE flipping that exercise's flag.
 5. Break the hold entirely (stand up): clock pauses (⏸ shows), coach cue
    "Back into position" class behavior — no red at any point (no safety
    channel on this coach).
+
+### H27. plank_hold_rx — Plank Hold (hold, side view)
+1. Camera to your SIDE at floor level, ~2.5m; whole body in frame.
+2. Clean forearm plank: hold clock counts up, skeleton neutral, no cues.
+3. Deliberate fault — sag: let your hips drop toward the floor and hold.
+   Within ~1s: hip segments amber + "Lift your hips — straight line".
+4. Deliberate fault — pike: push your hips up into a tent. Within ~1s:
+   hip segments amber + "Lower your hips — straight line".
+5. Return to a straight line: amber clears, clock resumes. No red ever.

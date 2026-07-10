@@ -106,6 +106,8 @@ CUE_TEXT = {
     # 2026-07 dark coaches — keep in lockstep with coach_core.js CUES.
     'wall_sit_slide_down': 'Slide down — thighs level with the floor',
     'wall_sit_heels': 'Keep both heels on the floor',
+    'plank_hips_sag': 'Lift your hips — straight line',
+    'plank_hips_pike': 'Lower your hips — straight line',
 }
 
 DIFFICULTY_LABEL = {

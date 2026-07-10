@@ -151,4 +151,44 @@ test('WALL_SIT_RX: hold pose scores, standing does not; depth + heel faults fire
   assert.deepEqual(cued, []);
 });
 
+test('PLANK_RX: flat plank scores, standing does not; sag and pike fault', () => {
+  const def = dark.PHASES.PLANK_RX;
+  assert.equal(def.phases.length, 1);
+
+  // Horizontal body: shoulder → hip → ankle in one flat line near floor.
+  const plank = frame();
+  plank[L.leftShoulder] = P(0.25, 0.68); plank[L.rightShoulder] = P(0.25, 0.69);
+  plank[L.leftHip] = P(0.50, 0.70);      plank[L.rightHip] = P(0.50, 0.71);
+  plank[L.leftAnkle] = P(0.75, 0.72);    plank[L.rightAnkle] = P(0.75, 0.73);
+  assert.ok(scorePhase(def, 'hold', plank) >= 70);
+
+  // Standing: ankles far below shoulders → plankLevel huge.
+  const stand = frame();
+  stand[L.leftShoulder] = P(0.50, 0.25); stand[L.rightShoulder] = P(0.51, 0.25);
+  stand[L.leftHip] = P(0.50, 0.52);      stand[L.rightHip] = P(0.51, 0.52);
+  stand[L.leftAnkle] = P(0.50, 0.92);    stand[L.rightAnkle] = P(0.51, 0.92);
+  assert.ok(scorePhase(def, 'hold', stand) < 70);
+
+  const gs = { mode: 'GUIDING', isHoldExercise: true, repCount: 0 };
+  const obs = dark.FAULTS.PLANK_RX;
+
+  // Sag: hip well below the shoulder-ankle line.
+  const sag = frame();
+  sag[L.leftShoulder] = P(0.25, 0.70); sag[L.leftHip] = P(0.50, 0.80);
+  sag[L.leftAnkle] = P(0.75, 0.70);
+  obs.resetSet(); obs._lastAt = {};
+  assert.deepEqual(runFaults(obs, [sag, sag, sag, sag, sag], gs), ['plank_hips_sag']);
+
+  // Pike: hip well above the line.
+  const pike = frame();
+  pike[L.leftShoulder] = P(0.25, 0.70); pike[L.leftHip] = P(0.50, 0.60);
+  pike[L.leftAnkle] = P(0.75, 0.70);
+  obs.resetSet(); obs._lastAt = {};
+  assert.deepEqual(runFaults(obs, [pike, pike, pike, pike, pike], gs), ['plank_hips_pike']);
+
+  // A straight plank never faults.
+  obs.resetSet(); obs._lastAt = {};
+  assert.deepEqual(runFaults(obs, [plank, plank, plank, plank], gs), []);
+});
+
 // [VYAYAM-DARK-TESTS-END]
