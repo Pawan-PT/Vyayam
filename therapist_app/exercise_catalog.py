@@ -430,8 +430,8 @@ EXERCISES = [
         "movement_pattern": "Activation",
         "equipment": "None",
         "video_url": "",
-        "v2_ghost_supported": False,
-        "v2_exercise_key": "",
+        "v2_ghost_supported": False,  # DARK — flip after filming protocol
+        "v2_exercise_key": "sidelying_hip_abduction_rx",
         "description": "Lie on your side, bottom leg bent for support, top leg straight and in line with your body. Keeping the top leg straight and toes pointing forward (not up), lift it toward the ceiling to about 45°, then lower slowly. Keep the hips stacked and don't roll backward — it's a pure sideways lift driven by the outer hip.",
         "default_sets": 3,
         "default_reps": 12,

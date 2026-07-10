@@ -292,3 +292,13 @@ the filming day BEFORE flipping that exercise's flag.
    the leg. Within ~0.5s: hip segments amber + "Keep your pelvis still".
 4. Half slide (barely past hip width): the out phase must NOT complete.
 5. Both legs. No red at any point.
+
+### H34. sidelying_hip_abduction_rx — Side-lying Hip Abduction (reps, front view)
+1. Camera in FRONT at floor level; lie on your side facing it, full body
+   in frame.
+2. Clean reps (top leg to ~45°, slow lower, hips stacked): rep counter
+   advances once per lift-and-lower cycle.
+3. Deliberate fault — roll your torso back toward the ceiling as you lift.
+   Within ~0.5s: trunk segments amber + "Stack your hips straight up".
+4. Tiny lift (~10°): the lift phase must NOT complete — no rep.
+5. Both sides. No red at any point.

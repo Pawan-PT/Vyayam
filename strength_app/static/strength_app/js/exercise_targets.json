@@ -5098,6 +5098,36 @@
   "tracking": "manual",
   "unilateral": false
  },
+ "sidelying_hip_abduction_rx": {
+  "display_name": "Side-lying Hip Abduction",
+  "is_hold": false,
+  "js_type": "SIDELYING_ABD_RX",
+  "movement_pattern": "activation",
+  "phases": {
+   "down": {
+    "left_knee": 165,
+    "leg_separation": 40,
+    "tolerance": 10
+   },
+   "lifting": {
+    "left_knee": 165,
+    "leg_separation": 100,
+    "tolerance": 10
+   },
+   "lowering": {
+    "left_knee": 165,
+    "leg_separation": 100,
+    "tolerance": 10
+   },
+   "top": {
+    "left_knee": 165,
+    "leg_separation": 150,
+    "tolerance": 8
+   }
+  },
+  "tracking": "camera",
+  "unilateral": true
+ },
  "sideways_walking": {
   "display_name": "Sideways Walking",
   "is_hold": false,

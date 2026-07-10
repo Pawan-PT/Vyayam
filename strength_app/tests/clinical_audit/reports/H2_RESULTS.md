@@ -195,6 +195,7 @@
 | reverse_hyperextension | ok | 87.8 | 59.5 | 5 |
 | nordic_curl_partner | ok | 87.8 | 59.5 | 5 |
 | hip_abduction_sideline | ok | 87.3 | 75.0 | 5 |
+| sidelying_hip_abduction_rx | ok | 87.3 | 75.0 | 5 |
 | single_leg_squats | ok | 87.2 | 73.6 | 3 |
 | worlds_greatest_stretch | ok | 87.1 | 50.0 | 0 |
 | b_stance_rdl | ok | 87.0 | 59.5 | 5 |

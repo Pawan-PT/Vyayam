@@ -544,6 +544,49 @@
   FAULTS.SUPINE_ABD_RX.resetSet = function () { _supAbdBaseX.v = null; _supAbdReset(); };
   CUE_IDS.push('pelvis_still');
 
+  // ── sidelying_hip_abduction_rx — top-leg raise, front view ──────────────
+  // Primary: ankle vertical separation x100 (sidelying body is horizontal
+  // in frame, the top leg rises — CLAMSHELL\'s unit convention). Fault:
+  // torso rolling back (shoulders un-stacking → x-spread jumps). Reuses the
+  // existing hips_stacked cue id.
+  PHASES.SIDELYING_ABD_RX = {
+    name: 'Side-lying Hip Abduction',
+    bodyOrientation: 'sidelying',
+    cameraPosition: { view: 'front', instruction: 'Lie on your side facing the camera. Your full body from head to feet must be visible.' },
+    setupCues: [
+      'Lie on your side. Bottom knee bent for support.',
+      'Top leg straight, in line with your body.',
+      'Toes point forward, not up.',
+      'Lift the top leg toward the ceiling, then lower slowly.',
+    ],
+    stanceCheck: null,
+    phases: [
+      { name: 'down',  duration: 0,    joints: { legLiftPct: 6 },  voice: 'Legs stacked' },
+      { name: 'lift',  duration: 2000, joints: { legLiftPct: 32 }, voice: 'Lift the top leg' },
+      { name: 'hold',  duration: 800,  joints: { legLiftPct: 32 }, voice: 'Hold' },
+      { name: 'lower', duration: 2000, joints: { legLiftPct: 6 },  voice: 'Lower slowly' },
+    ],
+    checkAngles: function (lm) {
+      return {
+        legLiftPct: Math.min(80, Math.abs(lm[LM.leftAnkle].y - lm[LM.rightAnkle].y) * 100),
+      };
+    },
+    cues: { legLiftPct: 'Lift the leg a little higher' },
+    forceArrows: [],
+  };
+
+  FAULTS.SIDELYING_ABD_RX = makeFaults([
+    {
+      // Roll-back: shoulders un-stack — their x-separation opens up.
+      cue: 'hips_stacked', modes: ['USER_FOLLOWS', 'GHOST_LEADS'], minMs: 500,
+      test: function (lm) {
+        if (!allVisible(lm, [LM.leftShoulder, LM.rightShoulder])) return null;
+        if (Math.abs(lm[LM.leftShoulder].x - lm[LM.rightShoulder].x) <= 0.16) return null;
+        return TRUNK_SEGS;
+      },
+    },
+  ]);
+
   // [VYAYAM-DARK-DEFS-END]
 
   return {

@@ -4115,4 +4115,19 @@ EXERCISE_CONTENT_GAP_FILL = {
         'mind_muscle_cue': {'during': 'Lead the slide from the outside of your hip.'},
     },
 
+    'sidelying_hip_abduction_rx': {
+        'display_name': 'Side-lying Hip Abduction',
+        'movement_pattern': 'activation',
+        'level': 'foundation',
+        'target_muscles': ['Glute medius'],
+        'instructions': [
+            'Lie on your side, bottom leg bent for support, top leg straight.',
+            'Keep the top leg in line with your body, toes pointing forward.',
+            'Lift the leg toward the ceiling to about 45 degrees.',
+            'Lower slowly. Hips stay stacked — no rolling back.',
+        ],
+        'form_cues': ['Hips stacked, no rolling back', 'Toes forward, not up', 'Slow on the way down'],
+        'mind_muscle_cue': {'during': 'Lift from the outside of the hip, not the waist.'},
+    },
+
 }

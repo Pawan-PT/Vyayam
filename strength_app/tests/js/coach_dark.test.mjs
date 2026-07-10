@@ -395,4 +395,38 @@ test('SUPINE_ABD_RX: center/out phases score by spread; pelvis shift faults', ()
   assert.deepEqual(runFaults(obs, [center, out, center, out], gs), []);
 });
 
+test('SIDELYING_ABD_RX: stacked/lifted phases score; roll-back faults', () => {
+  const def = dark.PHASES.SIDELYING_ABD_RX;
+  assert.equal(def.phases.length, 4);
+
+  // Sidelying front view: body horizontal, ankles stacked (~same y).
+  const down = frame();
+  down[L.leftShoulder] = P(0.25, 0.64); down[L.rightShoulder] = P(0.26, 0.62);
+  down[L.leftAnkle] = P(0.75, 0.66);    down[L.rightAnkle] = P(0.75, 0.61);
+  assert.ok(scorePhase(def, 'down', down) >= 70,
+            `down scored ${scorePhase(def, 'down', down)}`);
+  assert.ok(scorePhase(def, 'lift', down) < 70);
+
+  // Top leg lifted ~45°: top ankle well above the bottom one.
+  const lift = frame();
+  lift[L.leftShoulder] = P(0.25, 0.64); lift[L.rightShoulder] = P(0.26, 0.62);
+  lift[L.leftAnkle] = P(0.75, 0.66);    lift[L.rightAnkle] = P(0.72, 0.34);
+  assert.ok(scorePhase(def, 'lift', lift) >= 70,
+            `lift scored ${scorePhase(def, 'lift', lift)}`);
+  assert.ok(scorePhase(def, 'down', lift) < 70);
+
+  // Roll-back: shoulders splay apart horizontally (torso opening up).
+  const rolled = frame();
+  rolled[L.leftShoulder] = P(0.20, 0.64); rolled[L.rightShoulder] = P(0.40, 0.60);
+  rolled[L.leftAnkle] = P(0.75, 0.66);    rolled[L.rightAnkle] = P(0.72, 0.34);
+
+  const gs = { mode: 'USER_FOLLOWS', isHoldExercise: false, repCount: 0 };
+  const obs = dark.FAULTS.SIDELYING_ABD_RX;
+  obs.resetSet(); obs._lastAt = {};
+  assert.deepEqual(runFaults(obs, [rolled, rolled, rolled, rolled], gs),
+                   ['hips_stacked']);
+  obs.resetSet(); obs._lastAt = {};
+  assert.deepEqual(runFaults(obs, [lift, lift, lift, lift], gs), []);
+});
+
 // [VYAYAM-DARK-TESTS-END]
