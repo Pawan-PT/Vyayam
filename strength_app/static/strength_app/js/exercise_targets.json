@@ -5239,6 +5239,22 @@
   "tracking": "camera",
   "unilateral": true
  },
+ "single_leg_balance_rx": {
+  "display_name": "Single-Leg Balance",
+  "is_hold": true,
+  "js_type": "BALANCE_RX",
+  "movement_pattern": "balance",
+  "phases": {
+   "holding": {
+    "lifted_knee": 90,
+    "stance_knee": 175,
+    "sway": 0,
+    "tolerance": 12
+   }
+  },
+  "tracking": "camera",
+  "unilateral": true
+ },
  "single_leg_bound": {
   "display_name": "Single Leg Bound",
   "is_hold": false,

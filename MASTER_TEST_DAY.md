@@ -240,3 +240,14 @@ the filming day BEFORE flipping that exercise's flag.
 4. Both sides: repeat lying on the other side — detection must work
    mirrored (the coach reads whichever side line is cleaner).
 5. No red at any point.
+
+### H29. single_leg_balance_rx — Single-Leg Balance (hold, front view)
+1. Camera in FRONT at waist height, ~2.5m; both feet visible.
+2. Lift one foot (knee toward hip height): hold clock counts, neutral color.
+3. Deliberate fault — foot down: quietly put the foot back on the floor and
+   stand on two feet. Within ~1s: both shins amber + "Lift your foot to
+   restart the clock"; the hold clock pauses (score falls under the
+   40-point hold gate).
+4. Deliberate fault — hip drop: keep the knee up but let the free-side hip
+   sag hard. Within ~1s: hip segments amber + "Keep your hips level".
+5. Repeat on the other leg. No red at any point.

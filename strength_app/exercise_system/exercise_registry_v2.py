@@ -33,6 +33,7 @@ from typing import Dict, List
 from .exercises import WallSitRxV2
 from .exercises import PlankHoldRxV2
 from .exercises import SidePlankRxV2
+from .exercises import SingleLegBalanceRxV2
 from .exercises import PartialSquatsV2
 from .exercises import GluteBridgeV2
 from .exercises import StraightLegRaisesV2
@@ -2995,6 +2996,16 @@ EXERCISE_METADATA = {
         'display_name': 'Wall Sit',
         'unilateral': False,
         'movement_pattern': 'squat',
+        'rx_dark_2026_07': True,
+    },
+    'single_leg_balance_rx': {
+        'class': SingleLegBalanceRxV2,
+        'category': 'balance',
+        'subcategory': 'foundation',
+        'level': 1,
+        'display_name': 'Single-Leg Balance',
+        'unilateral': True,
+        'movement_pattern': 'balance',
         'rx_dark_2026_07': True,
     },
     'side_plank_rx': {

@@ -109,6 +109,7 @@ CUE_TEXT = {
     'plank_hips_sag': 'Lift your hips — straight line',
     'plank_hips_pike': 'Lower your hips — straight line',
     'side_plank_hip_drop': 'Push your hip up',
+    'balance_foot_down': 'Lift your foot to restart the clock',
 }
 
 DIFFICULTY_LABEL = {

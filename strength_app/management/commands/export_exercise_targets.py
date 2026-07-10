@@ -142,6 +142,7 @@ CAMERA = {
     'wall_sit_rx': 'WALL_SIT_RX',
     'plank_hold_rx': 'PLANK_RX',
     'side_plank_rx': 'SIDE_PLANK_RX',
+    'single_leg_balance_rx': 'BALANCE_RX',
 }
 
 # Manual — no JS template matches the real movement, the movement travels

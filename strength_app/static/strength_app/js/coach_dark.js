@@ -295,6 +295,56 @@
   ]);
   CUE_IDS.push('side_plank_hip_drop');
 
+  // ── single_leg_balance_rx — one-leg hold, front view ────────────────────
+  // Primary: lifted knee clearly raised + hips level + tall trunk. Faults:
+  // foot back on the ground (hold clock stalls — tell them why) and hip
+  // drop (reuses the existing hips_level cue id).
+  PHASES.BALANCE_RX = {
+    name: 'Single-Leg Balance',
+    bodyOrientation: 'standing',
+    cameraPosition: { view: 'front', instruction: 'Place camera in front of you. Full body visible including both feet.' },
+    setupCues: [
+      'Stand tall. Fix your eyes on one point ahead.',
+      'Lift one foot clearly off the ground.',
+      'Standing knee soft, not locked.',
+      'Hips level — hold as still as you can.',
+    ],
+    stanceCheck: { maxFootRotation: 0.18, hipLevel: true, label: 'Standing foot straight, hips level' },
+    phases: [
+      { name: 'hold', duration: 0, joints: { hipLevel: 0.03, liftedKnee: 0.10 }, voice: 'Balance — stay tall and still' },
+    ],
+    checkAngles: function (lm) {
+      return {
+        hipLevel: Math.abs(lm[LM.leftHip].y - lm[LM.rightHip].y),
+        liftedKnee: Math.abs(lm[LM.leftKnee].y - lm[LM.rightKnee].y),
+      };
+    },
+    cues: { hipLevel: 'Level your hips', liftedKnee: 'Lift your foot off the ground' },
+    forceArrows: [],
+  };
+
+  FAULTS.BALANCE_RX = makeFaults([
+    {
+      // Foot back on the floor: knees level again while the hold runs.
+      cue: 'balance_foot_down', modes: ['GUIDING'], minMs: 700,
+      test: function (lm) {
+        if (!allVisible(lm, [LM.leftKnee, LM.rightKnee])) return null;
+        if (Math.abs(lm[LM.leftKnee].y - lm[LM.rightKnee].y) >= 0.05) return null;
+        return kneeShinSegs(true).concat(kneeShinSegs(false));
+      },
+    },
+    {
+      // Pelvis tilt: one hip clearly below the other.
+      cue: 'hips_level', modes: ['GUIDING'], minMs: 600,
+      test: function (lm) {
+        if (!allVisible(lm, [LM.leftHip, LM.rightHip])) return null;
+        if (Math.abs(lm[LM.leftHip].y - lm[LM.rightHip].y) <= 0.06) return null;
+        return HIP_SEGS;
+      },
+    },
+  ]);
+  CUE_IDS.push('balance_foot_down');
+
   // [VYAYAM-DARK-DEFS-END]
 
   return {

@@ -219,4 +219,39 @@ test('SIDE_PLANK_RX: straight lateral line scores; dropped hip faults', () => {
   assert.deepEqual(runFaults(obs, [hold, hold, hold, hold], gs), []);
 });
 
+test('BALANCE_RX: raised-knee hold scores; foot-down and hip-drop fault', () => {
+  const def = dark.PHASES.BALANCE_RX;
+  assert.equal(def.phases.length, 1);
+
+  // Balancing: left knee lifted well above right, hips level.
+  const hold = frame();
+  hold[L.leftHip] = P(0.46, 0.50);  hold[L.rightHip] = P(0.54, 0.505);
+  hold[L.leftKnee] = P(0.46, 0.58); hold[L.rightKnee] = P(0.54, 0.70);
+  assert.ok(scorePhase(def, 'hold', hold) >= 70,
+            `hold scored ${scorePhase(def, 'hold', hold)}`);
+
+  // Both feet down: knees level → liftedKnee ~0 → misses the 0.10 target.
+  const down = frame();
+  down[L.leftHip] = P(0.46, 0.50);  down[L.rightHip] = P(0.54, 0.50);
+  down[L.leftKnee] = P(0.46, 0.70); down[L.rightKnee] = P(0.54, 0.70);
+  assert.ok(scorePhase(def, 'hold', down) < 70);
+
+  const gs = { mode: 'GUIDING', isHoldExercise: true, repCount: 0 };
+  const obs = dark.FAULTS.BALANCE_RX;
+  obs.resetSet(); obs._lastAt = {};
+  assert.deepEqual(runFaults(obs, [down, down, down, down, down], gs),
+                   ['balance_foot_down']);
+
+  // Hip drop while the knee stays up.
+  const tilt = frame();
+  tilt[L.leftHip] = P(0.46, 0.46);  tilt[L.rightHip] = P(0.54, 0.55);
+  tilt[L.leftKnee] = P(0.46, 0.58); tilt[L.rightKnee] = P(0.54, 0.70);
+  obs.resetSet(); obs._lastAt = {};
+  assert.deepEqual(runFaults(obs, [tilt, tilt, tilt, tilt], gs), ['hips_level']);
+
+  // Clean hold: silent.
+  obs.resetSet(); obs._lastAt = {};
+  assert.deepEqual(runFaults(obs, [hold, hold, hold, hold], gs), []);
+});
+
 // [VYAYAM-DARK-TESTS-END]

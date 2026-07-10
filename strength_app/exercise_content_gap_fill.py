@@ -4040,4 +4040,19 @@ EXERCISE_CONTENT_GAP_FILL = {
         'mind_muscle_cue': {'during': 'Push the floor away and lift your hip to the ceiling.'},
     },
 
+    'single_leg_balance_rx': {
+        'display_name': 'Single-Leg Balance',
+        'movement_pattern': 'balance',
+        'level': 'foundation',
+        'target_muscles': ['Ankle stabilisers', 'Glute medius', 'Core'],
+        'instructions': [
+            'Stand tall and fix your eyes on a point at head height.',
+            'Lift one foot clearly off the ground, knee toward hip height.',
+            'Keep your hips level and your standing knee soft.',
+            'Hold as steadily as you can, then switch legs.',
+        ],
+        'form_cues': ['Eyes on one fixed point', 'Hips level', 'Standing knee soft, not locked'],
+        'mind_muscle_cue': {'during': 'Grip the floor with your standing foot.'},
+    },
+
 }

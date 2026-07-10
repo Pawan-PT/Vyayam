@@ -23,6 +23,7 @@
 | backward_walking | no_scoring | — | — | 0 |
 | static_quadriceps | no_scoring | — | — | 0 |
 | static_hip_adductors | no_scoring | — | — | 0 |
+| single_leg_balance_rx | no_scoring | — | — | 0 |
 | knee_circles | no_targets | — | — | 0 |
 | pallof_press_isometric | no_targets | — | — | 0 |
 | side_plank | no_targets | — | — | 0 |

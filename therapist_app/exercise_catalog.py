@@ -254,8 +254,8 @@ EXERCISES = [
         "movement_pattern": "Core",
         "equipment": "None",
         "video_url": "",
-        "v2_ghost_supported": False,
-        "v2_exercise_key": "",
+        "v2_ghost_supported": False,  # DARK — flip after filming protocol
+        "v2_exercise_key": "single_leg_balance_rx",
         "description": "Eyes-open static stance on one leg. Trains ankle and knee proprioception in closed kinetic chain.",
         "default_sets": 3,
         "default_reps": 30,
