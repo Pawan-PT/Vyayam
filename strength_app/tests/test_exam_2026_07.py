@@ -56,6 +56,47 @@ class TestA1A2NoBannedTerms(TestCase):
                              f'{path.name} claims reactive strength')
 
 
+class TestA4LegacyCameraFlowRetired(TestCase):
+    """A4 (S2): legacy exercise_execute.html squat-scored every exercise and
+    painted red for poor form. The routes must redirect, never render."""
+
+    def _login(self, patient):
+        session = self.client.session
+        session['patient_id'] = patient.patient_id
+        session.save()
+
+    def test_v1_patient_routes_to_v1_flow(self):
+        patient = _make_patient('A4V1', '9000009983')
+        StrengthProfile.objects.create(
+            patient=patient, assessment_number=1,
+            squat_score=3, hinge_score=3, push_score=3,
+            pull_score=3, core_score=3, rotate_score=3, lunge_score=3,
+        )
+        self._login(patient)
+        resp = self.client.get(reverse('execute_exercise', args=[0]))
+        self.assertEqual(resp.status_code, 302)
+        self.assertEqual(resp.url, reverse('v1_execute_exercise', args=[0]))
+        resp = self.client.get(reverse('daily_workout'))
+        self.assertRedirects(resp, reverse('v1_session_overview'),
+                             fetch_redirect_response=False)
+
+    def test_pre_v1_patient_routes_to_onboarding(self):
+        patient = _make_patient('A4LEG', '9000009984')
+        self._login(patient)
+        for name, args in (('execute_exercise', [0]), ('daily_workout', [])):
+            resp = self.client.get(reverse(name, args=args))
+            self.assertEqual(resp.status_code, 302, name)
+            self.assertEqual(resp.url, reverse('onboarding_start'), name)
+
+    def test_legacy_template_never_renders(self):
+        patient = _make_patient('A4TPL', '9000009985')
+        self._login(patient)
+        resp = self.client.get(reverse('execute_exercise', args=[2]),
+                               follow=True)
+        used = {t.name for t in resp.templates if t.name}
+        self.assertNotIn('strength_app/exercise_execute.html', used)
+
+
 class TestBX1DeleteAccountManagedBlock(TestCase):
     """B-X1 (S1): therapist-managed patients must not be able to cascade-
     delete their clinical record (SessionReports, PainEvent/RedFlagEvent audit

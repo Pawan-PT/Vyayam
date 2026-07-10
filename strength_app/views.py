@@ -839,119 +839,28 @@ def daily_workout(request: HttpRequest):
     if StrengthProfile.objects.filter(patient=patient).exists():
         return redirect('v1_session_overview')
 
-    # Get prescription — check session first (fast), then fall back to DB.
-    # This means a server restart, session expiry, or opening a new tab
-    # will NOT break the workout flow.
-    prescription = request.session.get('prescription')
-    if not prescription:
-        # Try loading from the patient's health profile in DB
-        db_prescription = patient.current_prescription_json
-        if db_prescription and db_prescription.get('strength') or db_prescription.get('stretching'):
-            prescription = db_prescription
-            # Restore to session for the rest of this session
-            request.session['prescription'] = prescription
-        else:
-            messages.error(request, 'No prescription found. Please generate one first.')
-            return redirect('prescription')
-    
-    # Prepare workout data
-    all_exercises = []
-    
-    # Add stretching exercises
-    for exercise in prescription.get('stretching', []):
-        all_exercises.append({
-            'index': len(all_exercises),
-            'section': 'Stretching & Warm-Up',
-            'exercise_id': exercise['exercise_id'],
-            'exercise_name': exercise['exercise_name'],
-            'sets': exercise['sets'],
-            'reps': exercise['reps'],
-            'hold_duration': exercise.get('hold_duration', 0),
-            'rest': exercise.get('rest', 30),
-            'type': 'stretching'
-        })
-    
-    # Add strength exercises
-    for exercise in prescription.get('strength', []):
-        all_exercises.append({
-            'index': len(all_exercises),
-            'section': 'Strength Training',
-            'exercise_id': exercise['exercise_id'],
-            'exercise_name': exercise['exercise_name'],
-            'sets': exercise['sets'],
-            'reps': exercise['reps'],
-            'hold_duration': exercise.get('hold_duration', 0),
-            'rest': exercise.get('rest', 60),
-            'type': 'strength'
-        })
-    
-    # Add balance exercises (between strength and cardio)
-    for exercise in prescription.get('balance', []):
-        all_exercises.append({
-            'index': len(all_exercises),
-            'section': 'Balance & Stability',
-            'exercise_id': exercise['exercise_id'],
-            'exercise_name': exercise['exercise_name'],
-            'sets': exercise['sets'],
-            'reps': exercise['reps'],
-            'hold_duration': exercise.get('hold_duration', 0),
-            'rest': exercise.get('rest', 45),
-            'type': 'balance'
-        })
-
-    # Add cardio exercises
-    for exercise in prescription.get('cardio', []):
-        all_exercises.append({
-            'index': len(all_exercises),
-            'section': 'Cardio Finisher',
-            'exercise_id': exercise['exercise_id'],
-            'exercise_name': exercise['exercise_name'],
-            'sets': exercise.get('sets', 1),
-            'reps': exercise.get('reps', 1),
-            'hold_duration': exercise.get('hold_duration', 300),
-            'rest': exercise.get('rest', 0),
-            'type': 'cardio'
-        })
-    
-    # Store in session
-    request.session['workout_exercises'] = all_exercises
-    request.session['current_exercise_index'] = 0
-    request.session['exercise_results'] = []
-    
-    return render(request, 'strength_app/daily_workout.html', {
-        'patient': patient,
-        'prescription': prescription,  # Added for template
-        'exercises': all_exercises,
-        'total_exercises': len(all_exercises)
-    })
+    # A4 (2026-07 exam): the legacy workout list only led to the retired
+    # exercise_execute camera page (see execute_exercise). Pre-v1 patients
+    # complete v1 onboarding instead — same destination the login flow
+    # already gives them.
+    return redirect('onboarding_start')
 
 
 def execute_exercise(request: HttpRequest, exercise_index: int):
-    """Execute a single exercise with camera"""
+    """A4 (2026-07 exam): legacy camera page RETIRED. exercise_execute.html
+    squat-scored every exercise and painted red for poor form — both locked-
+    rule violations (ledger A4; same defect class as the removed server-side
+    analyze_frame stack, 2026-06 C1). Patients route to the honest v1 flow;
+    the pre-v1 cohort (no StrengthProfile) completes v1 onboarding instead."""
     patient_id = request.session.get('patient_id')
     if not patient_id:
         return redirect('patient_login')
-    
+
     patient = get_object_or_404(PatientProfile, patient_id=patient_id)
-    
-    # Get workout exercises from session
-    all_exercises = request.session.get('workout_exercises', [])
-    if not all_exercises or exercise_index >= len(all_exercises):
-        return redirect('daily_workout')
-    
-    exercise = all_exercises[exercise_index]
-    
-    # Store current index
-    request.session['current_exercise_index'] = exercise_index
-    
-    return render(request, 'strength_app/exercise_execute.html', {
-        'patient': patient,
-        'exercise': exercise,
-        'exercise_index': exercise_index,
-        'total_exercises': len(all_exercises),
-        'is_last_exercise': (exercise_index == len(all_exercises) - 1),
-        'cv_available': CV_AVAILABLE
-    })
+    from .models import StrengthProfile
+    if StrengthProfile.objects.filter(patient=patient).exists():
+        return redirect('v1_execute_exercise', exercise_index=exercise_index)
+    return redirect('onboarding_start')
 
 
 
