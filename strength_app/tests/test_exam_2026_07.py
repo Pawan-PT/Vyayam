@@ -140,6 +140,47 @@ class TestA5PlyoLandingCheckLabel(TestCase):
         self.assertEqual(block['mode'], 'camera (landing checks)')
 
 
+class TestBX2ReportChainProtected(TestCase):
+    """B-X2 (S2): generated SessionReports are immutable — deleting any
+    upstream row (Prescription, link, profile, log) must raise
+    ProtectedError, never cascade."""
+
+    def setUp(self):
+        from django.contrib.auth.models import User
+        from therapist_app.models import (
+            Prescription, SessionLog, SessionReport, Therapist,
+            TherapistPatientLink,
+        )
+        t_user = User.objects.create_user('dr_bx2', password='x')
+        therapist = Therapist.objects.create(user=t_user, full_name='Dr BX2')
+        p_user = User.objects.create_user('bx2_patient', password='x')
+        self.profile = PatientProfile.objects.create(
+            patient_id='BX2P', name='BX2', phone='9000009987', age=30,
+            goals='Rehab', therapist_managed=True, user=p_user)
+        self.link = TherapistPatientLink.objects.create(
+            therapist=therapist, patient=p_user, full_name='BX2',
+            email='bx2@x.com', status='active')
+        self.rx = Prescription.objects.create(link=self.link, week_number=1,
+                                              draft_json={})
+        self.log = SessionLog.objects.create(link=self.link,
+                                             prescription=self.rx)
+        self.report = SessionReport.objects.create(
+            link=self.link, session_log=self.log, patient=self.profile,
+            report_date='2026-07-10', status='complete', report_json={})
+
+    def test_upstream_deletes_are_blocked(self):
+        from django.db.models import ProtectedError
+        for obj in (self.rx, self.log, self.link, self.profile):
+            with self.assertRaises(ProtectedError,
+                                   msg=type(obj).__name__):
+                obj.delete()
+
+    def test_report_itself_remains_deletable_by_explicit_intent(self):
+        from therapist_app.models import SessionReport
+        self.report.delete()
+        self.assertFalse(SessionReport.objects.exists())
+
+
 class TestBX1DeleteAccountManagedBlock(TestCase):
     """B-X1 (S1): therapist-managed patients must not be able to cascade-
     delete their clinical record (SessionReports, PainEvent/RedFlagEvent audit

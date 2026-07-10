@@ -1468,8 +1468,23 @@ def delete_account(request: HttpRequest):
         if not _check(password, patient.password):
             messages.error(request, 'Incorrect password. Account not deleted.')
             return render(request, 'strength_app/delete_account.html')
+        # B-X2 defense in depth: SessionReport FKs are PROTECT — a profile
+        # that somehow carries generated reports (e.g. was managed once)
+        # cannot be cascade-deleted even from here.
+        from django.db import transaction
+        from django.db.models import ProtectedError
+        try:
+            with transaction.atomic():
+                patient.delete()
+        except ProtectedError:
+            messages.error(
+                request,
+                'Your account has treatment records with a therapist and '
+                'cannot be deleted from here. Please ask your therapist to '
+                'close your account.')
+            return render(request, 'strength_app/delete_account.html',
+                          {'managed_blocked': True})
         request.session.flush()
-        patient.delete()
         messages.success(request, 'Your account and all associated data have been permanently deleted.')
         return redirect('home')
 

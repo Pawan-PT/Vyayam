@@ -259,8 +259,10 @@ class SessionLog(models.Model):
     link = models.ForeignKey(
         TherapistPatientLink, on_delete=models.CASCADE, related_name='session_logs'
     )
+    # B-X2 (2026-07 exam): PROTECT — deleting a Prescription must never
+    # destroy logged session history (reports hang off these logs).
     prescription = models.ForeignKey(
-        Prescription, on_delete=models.CASCADE, related_name='session_logs'
+        Prescription, on_delete=models.PROTECT, related_name='session_logs'
     )
     started_at = models.DateTimeField(auto_now_add=True)
     completed_at = models.DateTimeField(null=True, blank=True)
@@ -388,12 +390,15 @@ class SessionReport(models.Model):
     ]
 
     link = models.ForeignKey(
-        TherapistPatientLink, on_delete=models.CASCADE,
+        TherapistPatientLink, on_delete=models.PROTECT,
         related_name='session_reports')
     session_log = models.OneToOneField(
-        SessionLog, on_delete=models.CASCADE, related_name='report')
+        SessionLog, on_delete=models.PROTECT, related_name='report')
+    # B-X2 (2026-07 exam): the whole chain is PROTECT — generated reports are
+    # clinically immutable; nothing may delete them by cascade. (Managed-
+    # patient self-serve deletion is separately blocked — B-X1.)
     patient = models.ForeignKey(
-        'strength_app.PatientProfile', on_delete=models.CASCADE,
+        'strength_app.PatientProfile', on_delete=models.PROTECT,
         related_name='session_reports')
     report_date = models.DateField()
     status = models.CharField(
