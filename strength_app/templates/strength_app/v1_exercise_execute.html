@@ -159,6 +159,13 @@
 
 {% block content %}
 <div class="ex-wrap">
+  {% if qa_mode %}
+  <!-- 2026-07 dark coaches: therapist QA surface only — this flag is set
+       exclusively by the login-gated QA views; no patient route passes it. -->
+  <div style="background:#1e293b;color:#fbbf24;border:2px dashed #fbbf24;border-radius:12px;padding:10px 14px;margin-bottom:12px;font-size:.9rem;font-weight:800;text-align:center;">
+    QA — not patient mode. Nothing here is recorded.
+  </div>
+  {% endif %}
   {% if pain_skip_banner %}
   <!-- DA-F2: server-side pain skip notice -->
   <div style="background:#fdecea;border:1px solid #ba1a1a55;color:#8c1414;border-radius:12px;padding:12px 14px;margin-bottom:12px;font-size:.9rem;font-weight:600;">
@@ -486,6 +493,9 @@
 <script src="{% static 'strength_app/js/voice_core.js' %}"></script>
 <!-- R4: coaching arbitration core (pure; node-tested in coach_core.test.mjs) -->
 <script src="{% static 'strength_app/js/coach_core.js' %}"></script>
+<!-- 2026-07: dark-shipped camera coaches (_rx keys only — inert for every
+     live exercise; node-tested in coach_dark.test.mjs) -->
+<script src="{% static 'strength_app/js/coach_dark.js' %}"></script>
 
 <script>
   const EXERCISE_ID   = "{{ exercise.exercise_id|escapejs }}";
@@ -2273,6 +2283,10 @@ async function startCamera() {
 
   };  // end EXERCISE_PHASES
 
+  // 2026-07 dark coaches: install the *_rx phase templates. install() never
+  // overwrites an existing key, so the audited live templates always win.
+  if (window.VyayamDark) { try { VyayamDark.install(EXERCISE_PHASES); } catch (e) {} }
+
   // ── Adjust target angles based on patient capability level ──
   (function() {
     // Squat depth: Level 1-2 = quarter squat (120°), Level 3 = parallel (105°), Level 4-5 = full (90°)
@@ -3160,6 +3174,10 @@ async function startCamera() {
     // goes stale when the user repositions between sets — reset per set
     // (cue layer only; detection untouched).
     if (window.SquatFaults) { SquatFaults._heelBase = null; SquatFaults._heelSince = 0; }
+    // 2026-07 dark coaches: same per-set reset for *_rx fault observers.
+    if (window.VyayamDark && VyayamDark.FAULTS[ghostState.exerciseType]) {
+      try { VyayamDark.FAULTS[ghostState.exerciseType].resetSet(); } catch (e) {}
+    }
     var r = Coach.setStarted(setN, ghostState.targetReps || 10);
     if (r.line) VoiceCoach.speak(r.line, true);
     // R6-P2: no re-briefing on later sets — just the rhythm reminder.
@@ -3692,6 +3710,15 @@ async function startCamera() {
   function updateGhostState(userAngles, matchScore, lm) {
     if (!ghostState.exerciseDef) return;
     var phases = ghostState.exerciseDef.phases;
+
+    // 2026-07 dark coaches: per-frame fault observer for *_rx exercise
+    // types only — FAULTS has no key for any live js_type, so this line is
+    // inert on every existing exercise. Observer only (detection boundary).
+    if (window.VyayamDark && VyayamDark.FAULTS[ghostState.exerciseType]) {
+      try {
+        VyayamDark.FAULTS[ghostState.exerciseType].frame(lm, ghostState, coachCue, Date.now());
+      } catch (e) { /* coaching must never break tracking */ }
+    }
 
     switch (ghostState.mode) {
 
@@ -4959,6 +4986,17 @@ async function startCamera() {
         var FAULT_RED = { r: 255, g: 50, b: 50, diff: 999 };
         var _rSegs = SquatFaults.redSegs();
         for (var r = 0; r < _rSegs.length; r++) segColors[_rSegs[r]] = FAULT_RED;
+      }
+    }
+
+    // 2026-07 dark coaches: *_rx fault ambers through the same worst-color
+    // contest. AMBER ONLY — dark coaches have no red/safety channel at all.
+    if (!frozen && window.VyayamDark && VyayamDark.FAULTS[ghostState.exerciseType]) {
+      var _dObs = VyayamDark.FAULTS[ghostState.exerciseType];
+      if (_dObs.amberUntil > Date.now()) {
+        var DARK_AMBER = { r: 255, g: 220, b: 0, diff: 999 };
+        var _dSegs = _dObs.amberSegs();
+        for (var d = 0; d < _dSegs.length; d++) segColors[_dSegs[d]] = DARK_AMBER;
       }
     }
 

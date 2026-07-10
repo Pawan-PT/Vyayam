@@ -336,7 +336,10 @@ class Command(BaseCommand):
             # holding-style python modules and the *_HOLD/PLANK/BALANCE
             # JS templates are holds.
             hold_types = {'PLANK', 'SIDE_PLANK', 'BALANCE', 'HANG_HOLD',
-                          'SQUAT_HOLD', 'HINGE_HOLD', 'LUNGE_HOLD'}
+                          'SQUAT_HOLD', 'HINGE_HOLD', 'LUNGE_HOLD',
+                          # 2026-07 dark coaches (hold-type *_rx js_types)
+                          'WALL_SIT_RX', 'PLANK_RX', 'SIDE_PLANK_RX',
+                          'BALANCE_RX', 'KNEE_TO_CHEST_RX'}
             is_hold = (
                 ex_id in HOLD_EXERCISE_IDS
                 or (js_type in hold_types)
