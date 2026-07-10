@@ -6281,6 +6281,42 @@
   "tracking": "camera",
   "unilateral": true
  },
+ "straight_leg_raise_rx": {
+  "display_name": "Straight Leg Raise",
+  "is_hold": false,
+  "js_type": "SLR_RX",
+  "movement_pattern": "activation",
+  "phases": {
+   "down": {
+    "knee_angle": 175,
+    "lift_angle": 0,
+    "tolerance": 8
+   },
+   "lifting": {
+    "knee_angle": 175,
+    "lift_angle": [
+     0,
+     45
+    ],
+    "tolerance": 10
+   },
+   "lowering": {
+    "knee_angle": 175,
+    "lift_angle": [
+     0,
+     45
+    ],
+    "tolerance": 10
+   },
+   "top": {
+    "knee_angle": 175,
+    "lift_angle": 45,
+    "tolerance": 8
+   }
+  },
+  "tracking": "camera",
+  "unilateral": true
+ },
  "straight_leg_raises": {
   "display_name": "Straight Leg Raises",
   "is_hold": false,

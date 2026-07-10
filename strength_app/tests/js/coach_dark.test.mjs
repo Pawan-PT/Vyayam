@@ -254,4 +254,47 @@ test('BALANCE_RX: raised-knee hold scores; foot-down and hip-drop fault', () => 
   assert.deepEqual(runFaults(obs, [hold, hold, hold, hold], gs), []);
 });
 
+test('SLR_RX: rest/raise phases score in sequence; bent-knee lift faults', () => {
+  const def = dark.PHASES.SLR_RX;
+  assert.equal(def.phases.length, 4, 'SLR is a 4-phase rep cycle');
+
+  // Supine side view, body horizontal. Flat: everything on one line.
+  const flat = frame();
+  flat[L.leftShoulder] = P(0.25, 0.70); flat[L.rightShoulder] = P(0.25, 0.71);
+  flat[L.leftHip] = P(0.45, 0.70);      flat[L.rightHip] = P(0.45, 0.71);
+  flat[L.leftKnee] = P(0.60, 0.70);     flat[L.rightKnee] = P(0.60, 0.71);
+  flat[L.leftAnkle] = P(0.72, 0.70);    flat[L.rightAnkle] = P(0.72, 0.71);
+  assert.ok(scorePhase(def, 'rest', flat) >= 70,
+            `rest scored ${scorePhase(def, 'rest', flat)}`);
+  assert.ok(scorePhase(def, 'raise', flat) < 70, 'flat must not pass raise');
+
+  // Left leg raised ~45°, knee straight (hip→knee→ankle collinear).
+  const raised = frame();
+  raised[L.leftShoulder] = P(0.25, 0.70); raised[L.rightShoulder] = P(0.25, 0.71);
+  raised[L.leftHip] = P(0.45, 0.70);      raised[L.rightHip] = P(0.45, 0.71);
+  raised[L.leftKnee] = P(0.56, 0.59);     raised[L.rightKnee] = P(0.60, 0.71);
+  raised[L.leftAnkle] = P(0.64, 0.51);    raised[L.rightAnkle] = P(0.72, 0.71);
+  assert.ok(scorePhase(def, 'raise', raised) >= 70,
+            `raise scored ${scorePhase(def, 'raise', raised)}`);
+  assert.ok(scorePhase(def, 'rest', raised) < 70, 'raised must not pass rest');
+
+  // Raised but knee bent: ankle hangs straight down from the knee.
+  const bent = frame();
+  bent[L.leftShoulder] = P(0.25, 0.70); bent[L.rightShoulder] = P(0.25, 0.71);
+  bent[L.leftHip] = P(0.45, 0.70);      bent[L.rightHip] = P(0.45, 0.71);
+  bent[L.leftKnee] = P(0.56, 0.59);     bent[L.rightKnee] = P(0.60, 0.71);
+  bent[L.leftAnkle] = P(0.56, 0.70);    bent[L.rightAnkle] = P(0.72, 0.71);
+
+  const gs = { mode: 'USER_FOLLOWS', isHoldExercise: false, repCount: 0 };
+  const obs = dark.FAULTS.SLR_RX;
+  obs.resetSet(); obs._lastAt = {};
+  assert.deepEqual(runFaults(obs, [bent, bent, bent, bent], gs),
+                   ['slr_knee_straight']);
+
+  // Straight-leg raise never faults; flat leg never faults (nothing raised).
+  obs.resetSet(); obs._lastAt = {};
+  assert.deepEqual(runFaults(obs, [raised, raised, raised, raised], gs), []);
+  assert.deepEqual(runFaults(obs, [flat, flat, flat, flat], gs), []);
+});
+
 // [VYAYAM-DARK-TESTS-END]

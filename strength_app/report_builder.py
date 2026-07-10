@@ -110,6 +110,7 @@ CUE_TEXT = {
     'plank_hips_pike': 'Lower your hips — straight line',
     'side_plank_hip_drop': 'Push your hip up',
     'balance_foot_down': 'Lift your foot to restart the clock',
+    'slr_knee_straight': 'Keep that knee locked straight',
 }
 
 DIFFICULTY_LABEL = {

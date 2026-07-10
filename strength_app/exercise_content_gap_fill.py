@@ -4055,4 +4055,19 @@ EXERCISE_CONTENT_GAP_FILL = {
         'mind_muscle_cue': {'during': 'Grip the floor with your standing foot.'},
     },
 
+    'straight_leg_raise_rx': {
+        'display_name': 'Straight Leg Raise',
+        'movement_pattern': 'activation',
+        'level': 'foundation',
+        'target_muscles': ['Quadriceps', 'Hip flexors'],
+        'instructions': [
+            'Lie on your back, working leg straight, other knee bent with the foot flat.',
+            'Tighten the thigh to lock the knee fully straight.',
+            'Lift the straight leg to about the height of the bent knee.',
+            'Pause briefly, then lower slowly with control.',
+        ],
+        'form_cues': ['Knee locked straight the whole way', 'Lift from the hip, not the knee', 'Lower slowly — no dropping'],
+        'mind_muscle_cue': {'during': 'Squeeze the top of your thigh before the leg leaves the floor.'},
+    },
+
 }

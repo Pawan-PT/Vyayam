@@ -251,3 +251,15 @@ the filming day BEFORE flipping that exercise's flag.
 4. Deliberate fault — hip drop: keep the knee up but let the free-side hip
    sag hard. Within ~1s: hip segments amber + "Keep your hips level".
 5. Repeat on the other leg. No red at any point.
+
+### H30. straight_leg_raise_rx — Straight Leg Raise (reps, side view)
+1. Camera to your SIDE at floor level, ~2.5m; lie on your back, full body
+   in frame.
+2. Clean reps (knee locked, lift to bent-knee height, slow lower): rep
+   counter advances once per full cycle; green through the movement.
+3. Deliberate fault — bend the knee as you lift (heel drops toward your
+   backside mid-raise). Within ~0.5s: working shin ambers + "Keep that knee
+   locked straight". Max one fault cue per rep.
+4. Too-shallow lift (a few degrees off the floor): the raise phase should
+   NOT complete — the rep must not count.
+5. No red at any point.

@@ -225,6 +225,7 @@
 | straight_leg_raises | ok | 81.8 | 75.0 | 0 |
 | goblet_squat | ok | 81.8 | 47.9 | 0 |
 | sumo_squat | ok | 81.8 | 46.7 | 0 |
+| straight_leg_raise_rx | ok | 81.8 | 75.0 | 0 |
 | sideways_walking | ok | 81.7 | 75.0 | 0 |
 | deficit_reverse_lunge | ok | 81.7 | 47.9 | 0 |
 | marching_on_spot | ok | 81.3 | 72.5 | 0 |

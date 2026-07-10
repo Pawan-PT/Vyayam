@@ -34,6 +34,7 @@ from .exercises import WallSitRxV2
 from .exercises import PlankHoldRxV2
 from .exercises import SidePlankRxV2
 from .exercises import SingleLegBalanceRxV2
+from .exercises import StraightLegRaiseRxV2
 from .exercises import PartialSquatsV2
 from .exercises import GluteBridgeV2
 from .exercises import StraightLegRaisesV2
@@ -2996,6 +2997,16 @@ EXERCISE_METADATA = {
         'display_name': 'Wall Sit',
         'unilateral': False,
         'movement_pattern': 'squat',
+        'rx_dark_2026_07': True,
+    },
+    'straight_leg_raise_rx': {
+        'class': StraightLegRaiseRxV2,
+        'category': 'strength',
+        'subcategory': 'foundation',
+        'level': 1,
+        'display_name': 'Straight Leg Raise',
+        'unilateral': True,
+        'movement_pattern': 'activation',
         'rx_dark_2026_07': True,
     },
     'single_leg_balance_rx': {

@@ -345,6 +345,62 @@
   ]);
   CUE_IDS.push('balance_foot_down');
 
+  // ── straight_leg_raise_rx — supine hip-flexion reps, side view ──────────
+  // Primary: working hip angle (shoulder-hip-knee) cycling 172° → 135°.
+  // Fault: the raised leg\'s knee bending during the lift (the movement\'s
+  // defining error — the lift must come from the hip).
+  function _slrWorking(lm) {
+    var lHip = calcAngle(lm[LM.leftShoulder], lm[LM.leftHip], lm[LM.leftKnee]);
+    var rHip = calcAngle(lm[LM.rightShoulder], lm[LM.rightHip], lm[LM.rightKnee]);
+    var left = lHip <= rHip;
+    return {
+      left: left,
+      hip: left ? lHip : rHip,
+      knee: left ? calcAngle(lm[LM.leftHip], lm[LM.leftKnee], lm[LM.leftAnkle])
+                 : calcAngle(lm[LM.rightHip], lm[LM.rightKnee], lm[LM.rightAnkle]),
+    };
+  }
+
+  PHASES.SLR_RX = {
+    name: 'Straight Leg Raise',
+    bodyOrientation: 'supine',
+    cameraPosition: { view: 'side', instruction: 'Place camera to your side at floor level while you lie on your back. Full body visible.' },
+    setupCues: [
+      'Lie on your back. Working leg straight, other knee bent, foot flat.',
+      'Tighten the thigh — lock the knee dead straight.',
+      'Lift the straight leg to the height of the bent knee.',
+      'Lower slowly. The knee never bends.',
+    ],
+    stanceCheck: null,
+    phases: [
+      { name: 'rest',  duration: 0,    joints: { workingHip: 172 }, voice: 'Leg flat, knee locked' },
+      { name: 'raise', duration: 2000, joints: { workingHip: 135 }, voice: 'Lift the leg — knee straight' },
+      { name: 'hold',  duration: 800,  joints: { workingHip: 135 }, voice: 'Hold' },
+      { name: 'lower', duration: 2000, joints: { workingHip: 172 }, voice: 'Lower slowly' },
+    ],
+    checkAngles: function (lm) {
+      return { workingHip: _slrWorking(lm).hip };
+    },
+    cues: { workingHip: 'Lift to the height of your bent knee' },
+    forceArrows: [],
+  };
+
+  FAULTS.SLR_RX = makeFaults([
+    {
+      // Knee bend while the leg is raised (hip clearly flexed).
+      cue: 'slr_knee_straight', modes: ['USER_FOLLOWS', 'GHOST_LEADS'], minMs: 400,
+      test: function (lm) {
+        if (!allVisible(lm, [LM.leftHip, LM.leftKnee, LM.leftAnkle,
+                             LM.rightHip, LM.rightKnee, LM.rightAnkle])) return null;
+        var w = _slrWorking(lm);
+        if (w.hip > 160) return null;        // leg not raised — nothing to judge
+        if (w.knee >= 155) return null;      // straight enough
+        return kneeShinSegs(w.left);
+      },
+    },
+  ]);
+  CUE_IDS.push('slr_knee_straight');
+
   // [VYAYAM-DARK-DEFS-END]
 
   return {

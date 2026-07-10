@@ -143,6 +143,7 @@ CAMERA = {
     'plank_hold_rx': 'PLANK_RX',
     'side_plank_rx': 'SIDE_PLANK_RX',
     'single_leg_balance_rx': 'BALANCE_RX',
+    'straight_leg_raise_rx': 'SLR_RX',
 }
 
 # Manual — no JS template matches the real movement, the movement travels

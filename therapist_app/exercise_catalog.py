@@ -391,8 +391,8 @@ EXERCISES = [
         "movement_pattern": "Activation",
         "equipment": "None",
         "video_url": "",
-        "v2_ghost_supported": False,
-        "v2_exercise_key": "",
+        "v2_ghost_supported": False,  # DARK — flip after filming protocol
+        "v2_exercise_key": "straight_leg_raise_rx",
         "description": "Lie on your back, working leg straight, other knee bent with the foot flat. Tighten the thigh to lock the knee fully straight, then lift the straight leg to about the height of the bent knee. Hold briefly and lower slowly with control. Keep the knee dead straight throughout — the lift comes from the hip, not a bending knee.",
         "default_sets": 3,
         "default_reps": 10,

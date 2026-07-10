@@ -29,6 +29,8 @@ DARK_COACHES = {
                       ['side_plank_hip_drop']),
     'single_leg_balance_rx': ('ex_sl_balance', 'BALANCE_RX', True,
                               ['balance_foot_down']),
+    'straight_leg_raise_rx': ('ex_slr', 'SLR_RX', False,
+                              ['slr_knee_straight']),
 }
 
 # Cue ids the dark coaches reuse from the existing registry.
