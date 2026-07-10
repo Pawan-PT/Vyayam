@@ -101,6 +101,10 @@ def football_assessment_execute(request, test_index):
 
     test = FOOTBALL_ASSESSMENT_TESTS[test_index]
     side = request.GET.get('side', '')
+    # C6 (2026-07 exam): side renders into inline JS — whitelist for every
+    # test, not just the bilateral redirect below.
+    if side not in ('left', 'right'):
+        side = ''
     is_bilateral = test.get('is_bilateral', False)
 
     # Bilateral tests: redirect to ?side=left if no side specified

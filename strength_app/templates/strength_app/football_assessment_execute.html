@@ -116,7 +116,7 @@
         test_index: {{ test_index }},
         raw_value: rawVal,
         score: score,
-        side: '{{ side }}',
+        side: '{{ side|escapejs }}',
       }),
     })
     .then(function(r) { return r.json(); })

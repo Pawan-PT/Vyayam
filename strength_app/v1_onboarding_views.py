@@ -633,6 +633,13 @@ def onboarding_strength_test_execute(request, test_index):
     test = V1_STRENGTH_TESTS[test_index]
     side = request.GET.get('side', '')
     variant = request.GET.get('variant', '')
+    # C6 (2026-07 exam): these GET strings land inside inline JS — whitelist
+    # server-side (autoescape does not neutralise an encoded newline inside a
+    # JS string literal); the template additionally |escapejs's them.
+    if side not in ('left', 'right'):
+        side = ''
+    if variant not in (test.get('variants') or {}):
+        variant = ''
 
     # ── Variant handling (pull test: bar vs row) ──────────────────────────
     has_variants = test.get('has_variants', False)

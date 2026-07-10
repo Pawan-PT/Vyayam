@@ -199,8 +199,8 @@
 
   const DURATION = {{ test.duration_seconds }};
   const TEST_INDEX = {{ test_index }};
-  const SIDE = "{{ side }}";
-  const VARIANT = "{{ variant }}";
+  const SIDE = "{{ side|escapejs }}";
+  const VARIANT = "{{ variant|escapejs }}";
   const CIRCUMFERENCE = 283;
   let selectedScore = null;
   let timerInterval = null;

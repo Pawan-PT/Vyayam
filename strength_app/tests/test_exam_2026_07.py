@@ -373,6 +373,33 @@ class TestC1C2C3CameraTemplateFetchSafety(TestCase):
                          'state (C2 managed, C3 self-serve)')
 
 
+class TestC6GetParamsWhitelisted(TestCase):
+    """C6 (S2): request.GET side/variant render into inline JS — hostile
+    values (encoded newlines) must be whitelisted away server-side."""
+
+    def setUp(self):
+        patient = _make_patient('C6P', '9000009990')
+        session = self.client.session
+        session['patient_id'] = patient.patient_id
+        session.save()
+
+    def test_hostile_side_is_dropped(self):
+        resp = self.client.get(
+            reverse('onboarding_strength_test_execute', args=[0]),
+            {'side': '\nalert(1)//', 'variant': ' x'})
+        self.assertEqual(resp.status_code, 200)
+        # test_index 0 renders the ghost-overlay template variant, so assert
+        # the security property itself: hostile input never reaches the page.
+        self.assertNotIn('alert(1)', resp.content.decode())
+
+    def test_legit_side_passes(self):
+        resp = self.client.get(
+            reverse('onboarding_strength_test_execute', args=[0]),
+            {'side': 'left'})
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn('"left"', resp.content.decode())
+
+
 class TestBX1DeleteAccountManagedBlock(TestCase):
     """B-X1 (S1): therapist-managed patients must not be able to cascade-
     delete their clinical record (SessionReports, PainEvent/RedFlagEvent audit
