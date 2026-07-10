@@ -16,6 +16,7 @@ import json
 import logging
 from datetime import date
 
+from django.db import transaction
 from django.shortcuts import render, redirect
 from django.http import JsonResponse
 
@@ -932,7 +933,12 @@ def v1_conditioning_session(request):
 # VIEW 7: POST-SESSION FEEDBACK
 # ============================================================================
 
+@transaction.atomic
 def v1_post_session_feedback(request):
+    # B-T1 (2026-07 exam): the POST writes WorkoutSession + N
+    # ExerciseExecutions + SessionFeedback + patient.save — one clinical
+    # unit. A mid-loop failure must roll back the lot, or a browser re-POST
+    # duplicates a half-written session.
     patient, err = _require_patient(request)
     if err:
         return err

@@ -18,6 +18,7 @@ import logging
 from datetime import date, timedelta
 
 from django.contrib import messages as flash
+from django.db import transaction
 from django.db.models import Avg, Count
 from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -190,7 +191,11 @@ def therapist_session_today(request):
 
 
 @require_POST
+@transaction.atomic
 def therapist_session_start(request):
+    # B-T2 (2026-07 exam): SessionLog + its SessionLogItems are one unit —
+    # a partial failure left an orphan "abandoned" session in the
+    # therapist's history and a retry created a second log.
     patient, err = _require_patient(request)
     if err:
         return err

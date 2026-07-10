@@ -271,6 +271,59 @@ class TestBN1DashboardQueriesFlat(TestCase):
             f'patient_list queries scale with N: {list_2} @2 vs {list_8} @8')
 
 
+class TestBT1BT2AtomicWrites(TestCase):
+    """B-T1/B-T2 (S2): multi-row session writes are single transactions — a
+    mid-write failure must leave zero rows, not a partial session."""
+
+    def test_bt1_self_serve_completion_rolls_back(self):
+        from unittest import mock
+        from strength_app.models import (ExerciseExecution, SessionFeedback,
+                                         WorkoutSession)
+        patient = _make_patient('BT1P', '9000009989')
+        StrengthProfile.objects.create(
+            patient=patient, assessment_number=1,
+            squat_score=3, hinge_score=3, push_score=3,
+            pull_score=3, core_score=3, rotate_score=3, lunge_score=3)
+        session = self.client.session
+        session['patient_id'] = patient.patient_id
+        session['v1_session'] = {'meta': {}, 'modifiers_applied': {}}
+        session['v1_exercise_results'] = [
+            {'exercise_id': 'full_squats', 'exercise_name': 'Full Squats',
+             'completed_sets': 3, 'prescribed_sets': 3,
+             'completed_reps_per_set': [10, 10, 10]},
+        ]
+        session.save()
+
+        with mock.patch.object(SessionFeedback.objects, 'create',
+                               side_effect=RuntimeError('boom')):
+            with self.assertRaises(RuntimeError):
+                self.client.post(reverse('v1_post_session_feedback'), {
+                    'perceived_difficulty': 'just_right',
+                })
+        self.assertEqual(WorkoutSession.objects.count(), 0,
+                         'partial WorkoutSession survived a failed POST')
+        self.assertEqual(ExerciseExecution.objects.count(), 0)
+
+    def test_bt2_managed_session_start_rolls_back(self):
+        from io import StringIO
+        from unittest import mock
+        from django.core.cache import cache
+        from django.core.management import call_command
+        from therapist_app.models import SessionLog, SessionLogItem
+        cache.clear()
+        call_command('seed_therapist_demo', stdout=StringIO())
+        resp = self.client.post(reverse('patient_login'),
+                                {'phone': '9000000001', 'password': 'patient'})
+        self.assertEqual(resp.status_code, 302)
+
+        with mock.patch.object(SessionLogItem.objects, 'create',
+                               side_effect=RuntimeError('boom')):
+            with self.assertRaises(RuntimeError):
+                self.client.post(reverse('therapist_session_start'))
+        self.assertEqual(SessionLog.objects.count(), 0,
+                         'orphan SessionLog survived a failed start')
+
+
 class TestBX1DeleteAccountManagedBlock(TestCase):
     """B-X1 (S1): therapist-managed patients must not be able to cascade-
     delete their clinical record (SessionReports, PainEvent/RedFlagEvent audit
