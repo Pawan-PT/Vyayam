@@ -576,3 +576,27 @@ class TestPhase4VideoModeAutoDetect(TestCase):
                 found = True
                 break
         self.assertTrue(found, 'no camera page rendered the video-mode slot')
+
+
+class TestBurnP2BrandedErrorPages(TestCase):
+    """Burn P2: branded 404/500 templates — no debug info, themed, link home.
+    (Django test runs already use DEBUG=False semantics for error handling.)"""
+
+    def test_unknown_url_uses_branded_404(self):
+        resp = self.client.get('/this-page-does-not-exist/')
+        self.assertEqual(resp.status_code, 404)
+        self.assertTemplateUsed(resp, '404.html')
+        body = resp.content.decode()
+        self.assertIn('VYAYAM', body)
+        self.assertIn('Back to VYAYAM', body)
+        self.assertNotIn('Traceback', body)
+
+    def test_500_handler_renders_branded_template(self):
+        from django.test import RequestFactory
+        from django.views.defaults import server_error
+        resp = server_error(RequestFactory().get('/boom/'))
+        self.assertEqual(resp.status_code, 500)
+        body = resp.content.decode()
+        self.assertIn('VYAYAM', body)
+        self.assertIn('Something went wrong on our side', body)
+        self.assertNotIn('Traceback', body)
