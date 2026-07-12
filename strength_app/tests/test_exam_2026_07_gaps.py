@@ -11,11 +11,11 @@ from strength_app.models import FootballProfile, PatientProfile, StrengthProfile
 
 
 def _make_patient(patient_id, phone, **extra):
+    extra.setdefault('age', 28)
     return PatientProfile.objects.create(
         patient_id=patient_id,
         name='Gap Fixture',
         phone=phone,
-        age=28,
         goals='Strength',
         training_history='intermediate',
         password=make_password('pw12345'),
@@ -232,3 +232,87 @@ class TestE1FootballScoreBands(TestCase):
         test = {'scoring_thresholds': [1, 2, 3, 4]}
         self.assertEqual(_score_from_thresholds(test, 'not-a-number'), 1)
         self.assertEqual(_score_from_thresholds(test, None), 1)
+
+
+class TestE6DosingModifiers(TestCase):
+    """E6 partial (burn P4): the highest-ranked dosing/progression modifiers —
+    age caps, 2-for-2 progression rule, plateau boundary, return-after-break
+    day boundaries. Tests only; contracts pinned from v1_safety_logic +
+    v1_constants."""
+
+    def test_age_caps_boundaries(self):
+        from strength_app.v1_safety_logic import get_age_limits
+        cases = (
+            (17, 3, False, 3, 0),    # under_18
+            (18, 5, True, 5, 0),     # 18_29 lower edge
+            (29, 5, True, 5, 0),
+            (49, 5, True, 5, 0),     # 30_49 upper edge
+            (50, 4, False, 3, 20),   # 50_64: power gated, +20s rest
+            (64, 4, False, 3, 20),
+            (65, 3, False, 2, 40),   # 65_plus: hardest caps
+        )
+        for age, cap, power, sets, rest in cases:
+            p = _make_patient(f'E6A{age}', f'90000097{age}', age=age)
+            limits = get_age_limits(p)
+            self.assertEqual(limits['max_capability'], cap, age)
+            self.assertEqual(limits['power_allowed'], power, age)
+            self.assertEqual(limits['max_sets'], sets, age)
+            self.assertEqual(limits['rest_modifier'], rest, age)
+
+    def test_progression_two_for_two_rule(self):
+        from strength_app.models import PatientFamilyCapability
+        from strength_app.v1_safety_logic import check_progression_ready
+        fc = PatientFamilyCapability(consecutive_comfortable_sessions=1)
+        self.assertFalse(check_progression_ready(fc))
+        fc.consecutive_comfortable_sessions = 2
+        self.assertTrue(check_progression_ready(fc))
+
+    def test_plateau_boundary(self):
+        from strength_app.models import PatientFamilyCapability
+        from strength_app.v1_safety_logic import detect_plateau
+        fc = PatientFamilyCapability(sessions_at_current_level=7,
+                                     ready_to_advance=False)
+        self.assertEqual(detect_plateau(fc), (False, ''))
+        fc.sessions_at_current_level = 8
+        is_plateau, suggestion = detect_plateau(fc)
+        self.assertTrue(is_plateau)
+        self.assertIn('Plateau detected after 8 sessions', suggestion)
+        # ready_to_advance suppresses the plateau even past the threshold
+        fc.ready_to_advance = True
+        self.assertEqual(detect_plateau(fc), (False, ''))
+
+    def test_return_after_break_day_boundaries(self):
+        from datetime import timedelta
+        from django.utils import timezone
+        from strength_app.models import WorkoutSession
+        from strength_app.v1_safety_logic import get_return_session_adjustments
+
+        patient = _make_patient('E6RB', '9000009720')
+        self.assertEqual(
+            get_return_session_adjustments(patient)['adjustment'], 'none',
+            'no session history must mean no adjustment')
+
+        cases = (
+            (10, 'none'),
+            (11, 'gentle_return'),
+            (14, 'gentle_return'),
+            (15, 'moderate_return'),
+            (28, 'moderate_return'),
+            (29, 'partial_reassessment'),
+            (56, 'partial_reassessment'),
+            (57, 'full_reassessment'),
+        )
+        ws = WorkoutSession.objects.create(
+            patient=patient, session_date=timezone.now(),
+            total_exercises_completed=3)
+        for days, expected in cases:
+            WorkoutSession.objects.filter(pk=ws.pk).update(
+                session_date=timezone.now() - timedelta(days=days))
+            out = get_return_session_adjustments(patient)
+            self.assertEqual(out['adjustment'], expected, f'{days} days')
+            if expected == 'gentle_return':
+                self.assertEqual(out['volume_modifier'], 0.7)
+                self.assertTrue(out['no_new_exercises'])
+            if expected == 'moderate_return':
+                self.assertEqual(out['volume_modifier'], 0.5)
+                self.assertTrue(out['tempo_slow'])
