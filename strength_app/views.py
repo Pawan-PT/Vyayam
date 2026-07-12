@@ -23,17 +23,6 @@ from .utils import generate_prescription
 import json
 import base64
 import time
-# Try to import CV modules (graceful fallback if not available)
-try:
-    import numpy as np
-    import cv2
-    from .exercise_system.core.pose_analyzer import PoseAnalyzer
-    from .exercise_system.core.form_calculator import FormCalculator
-    CV_AVAILABLE = True
-except ImportError:
-    np = None
-    cv2 = None
-    CV_AVAILABLE = False
 
 
 # ============================================================================
@@ -433,7 +422,6 @@ def execute_gate_test(request: HttpRequest, family_index: int, level_index: int)
         'is_last_level': is_last_level,
         'is_last_family': is_last_family,
         'overall_progress': overall_progress,
-        'cv_available': CV_AVAILABLE,
     })
 
 
