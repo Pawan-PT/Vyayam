@@ -379,7 +379,11 @@ EXERCISES = [
         "equipment": "None",
         "video_url": "",
         "v2_ghost_supported": False,
-        "v2_exercise_key": "",
+        # Key names the registry/video asset only — ghost stays False (guided
+        # by design), and deliberately NOT '_rx' so the QA dark-coach surface
+        # (which selects by endswith('_rx')) never lists it. Wires the filmed
+        # demo video (videos/ankle_pumps.mp4) to the guided session page.
+        "v2_exercise_key": "ankle_pumps",
         "description": "Lying or sitting with the leg straight, slowly point the toes away (downward), then pull them back up toward the shin, moving through the full pain-free range. Keep it slow and controlled — the knee stays still and only the ankle moves. Promotes circulation and ankle mobility. This exercise is guided by design: camera tracking of small foot movements is not reliable enough to coach honestly.",
         "default_sets": 3,
         "default_reps": 15,

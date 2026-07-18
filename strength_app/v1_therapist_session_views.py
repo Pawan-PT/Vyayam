@@ -91,10 +91,13 @@ def _enriched_items(rx):
     """Return prescription items with the catalog entry merged in. Used by
     both the Today list and the per-exercise pages so equipment/description/
     video_url/v2 flags come from the catalog."""
+    from .cv_targets import get_video_mode_exercises
+    filmed = set(get_video_mode_exercises())
     items = list(rx.items.all().order_by('order', 'id'))
     enriched = []
     for it in items:
         catalog = EXERCISES_BY_ID.get(it.exercise_id, {})
+        v2_key = catalog.get('v2_exercise_key', '')
         enriched.append({
             'item': it,
             'catalog': catalog,
@@ -103,7 +106,10 @@ def _enriched_items(rx):
             'equipment': catalog.get('equipment', '—'),
             'video_url': catalog.get('video_url', ''),
             'v2_ghost_supported': bool(catalog.get('v2_ghost_supported', False)),
-            'v2_exercise_key': catalog.get('v2_exercise_key', ''),
+            'v2_exercise_key': v2_key,
+            # Filmed demo exists at static/strength_app/videos/<key>.mp4 —
+            # same server-side scan that drives camera-page VIDEO_MODE.
+            'local_video': bool(v2_key) and v2_key in filmed,
             'movement_pattern': it.movement_pattern or catalog.get('movement_pattern', ''),
         })
     return enriched

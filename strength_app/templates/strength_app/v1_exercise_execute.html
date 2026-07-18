@@ -5669,6 +5669,16 @@ async function startCamera() {
                         'tempo', repTotalSec + 's)');
           }
         });
+
+        // Missing/undecodable .mp4 (e.g. stale server-side scan cache after a
+        // file was removed): kill VIDEO_MODE so the demo helpers no-op and the
+        // PiP never shows a broken player. Everything else is untouched.
+        _vrPlayer.addEventListener('error', function() {
+          console.warn('[VIDEO_MODE] demo video failed to load — disabling');
+          window.VIDEO_MODE = false;
+          _vrPip.style.display = 'none';
+          if (_vrBadge) _vrBadge.style.display = 'none';
+        });
       }
       if (_vrBadge) _vrBadge.style.display = 'none';
     }

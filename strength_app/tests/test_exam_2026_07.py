@@ -544,14 +544,26 @@ class TestBX1DeleteAccountManagedBlock(TestCase):
 
 
 class TestPhase4VideoModeAutoDetect(TestCase):
-    """Phase 4: VIDEO_MODE allowlist is derived from the videos directory —
-    with only full_squats.mp4 on disk, behavior is identical to the old
-    hardcoded list."""
+    """Phase 4: VIDEO_MODE allowlist is derived from the videos directory.
+    FILMED_KEYS is the manifest of demo videos on disk — update it when a
+    new <key>.mp4 lands (the failure IS the reminder to wire it here)."""
+
+    FILMED_KEYS = [
+        'ankle_pumps', 'band_pull_apart', 'band_row_rx', 'broad_jump',
+        'bulgarian_split_squats', 'clamshells', 'db_shoulder_press_rx',
+        'dead_bug', 'dumbbell_rowing', 'full_squats', 'glute_bridge',
+        'goblet_squat', 'knee_to_chest_rx', 'lateral_bound_and_stick',
+        'lateral_lunges', 'lunges', 'prone_knee_bend_rx', 'push_ups',
+        'sidelying_hip_abduction_rx', 'single_leg_balance_rx',
+        'single_leg_hop_forward', 'single_leg_hop_lateral',
+        'single_leg_landing', 'single_leg_rdl', 'step_ups',
+        'straight_leg_raise_rx', 'tuck_jumps', 'wall_push_up', 'wall_sit_rx',
+    ]
 
     def test_scan_returns_exactly_the_filmed_keys(self):
         import strength_app.cv_targets as cvt
         cvt._videos_cache = None
-        self.assertEqual(cvt.get_video_mode_exercises(), ['full_squats'])
+        self.assertEqual(cvt.get_video_mode_exercises(), self.FILMED_KEYS)
 
     def test_camera_page_consumes_the_server_list(self):
         from io import StringIO
@@ -571,8 +583,11 @@ class TestPhase4VideoModeAutoDetect(TestCase):
                 continue
             body = resp.content.decode()
             if 'VIDEO_MODE_EXERCISES' in body:
-                self.assertIn('var VIDEO_MODE_EXERCISES = ["full_squats"];',
-                              body)
+                import json as _json
+                from strength_app.cv_targets import get_video_mode_exercises
+                expected = ('var VIDEO_MODE_EXERCISES = '
+                            + _json.dumps(get_video_mode_exercises()) + ';')
+                self.assertIn(expected, body)
                 found = True
                 break
         self.assertTrue(found, 'no camera page rendered the video-mode slot')

@@ -19,7 +19,22 @@
   </div>
 
   <div class="video-frame" style="margin-bottom:14px;">
-    {% if enriched.video_url %}
+    {% if enriched.local_video %}
+      {% load static %}
+      {# Filmed demo — server-side scan guarantees the file exists; onerror is
+         a belt-and-braces fallback (stale scan cache) that swaps to the
+         same placeholder instead of a broken player. #}
+      <video controls muted playsinline preload="metadata" loop
+             style="position:absolute; inset:0; width:100%; height:100%; object-fit:contain;"
+             onerror="this.style.display='none'; document.getElementById('video-demo-fallback').style.display='flex';">
+        <source src="{% static 'strength_app/videos/' %}{{ enriched.v2_exercise_key }}.mp4" type="video/mp4"
+                onerror="var v=this.parentNode; v.style.display='none'; document.getElementById('video-demo-fallback').style.display='flex';">
+      </video>
+      <div class="placeholder" id="video-demo-fallback" style="display:none;">
+        <span class="material-symbols-outlined" style="font-size:2.4rem;">smart_display</span>
+        <div>Video demo coming soon</div>
+      </div>
+    {% elif enriched.video_url %}
       <iframe src="{{ enriched.video_url }}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
     {% else %}
       <div class="placeholder">

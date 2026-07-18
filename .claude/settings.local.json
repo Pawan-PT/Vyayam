@@ -152,7 +152,11 @@
       "Bash(grep -rniE \"reduces? .{0,20}\\(strain|injury|pain\\) by|protects? \\(the |your \\)|guarantee|clinically proven|prevents? .{0,15}\\(injury|pain|damage\\)\" strength_app/templates therapist_app/templates)",
       "Bash(echo \"EXIT:$?\")",
       "Bash(grep -rniE \"readiness|injury risk|risk of|predict|likelihood|prevent injur|ACWR|reduce.{0,10}risk\" strength_app/templates/strength_app/v1_dashboard.html strength_app/templates/strength_app/dashboard.html strength_app/templates/strength_app/v1_home_gamified.html strength_app/templates/strength_app/daily_workout.html strength_app/templates/strength_app/match_calendar.html)",
-      "Bash(awk '/FV_TENDENCY_CONFIG/{f=1} f{print NR\": \"$0} /^}/{if\\(f\\)exit}' strength_app/v1_football_constants.py)"
+      "Bash(awk '/FV_TENDENCY_CONFIG/{f=1} f{print NR\": \"$0} /^}/{if\\(f\\)exit}' strength_app/v1_football_constants.py)",
+      "Bash(cp staticfiles/strength_app/videos/*.mp4 strength_app/static/strength_app/videos/)",
+      "Bash(mv wall_sit.mp4 wall_sit_rx.mp4)",
+      "Bash(mv lateral_bound_stick.mp4 lateral_bound_and_stick.mp4)",
+      "Bash(mv ankle_pumps_rx.mp4 ankle_pumps.mp4)"
     ]
   }
 }
