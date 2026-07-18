@@ -391,4 +391,8 @@ class TestG0SentryLoaderJS(InlineJSAuditMixin, TestCase):
             # did, the </script> would truncate the block (dead-buttons
             # class) and node would flag the orphan.
             self.assertNotIn(b'</script><script>alert(1)@', r.content)
+            # CDN-failure guard: on a device where the CDN is blocked or
+            # offline the bundle never loads — the inline init must no-op
+            # behind window.Sentry, never throw (camera-page safety).
+            self.assertIn(b'if (window.Sentry', r.content)
         self.assert_all_js_clean(min_scripts=2)
