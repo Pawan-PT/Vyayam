@@ -34,7 +34,9 @@ Trust code, not summaries — including summaries in these docs. Verify at file:
 3. Detection boundary: NEVER touch landmark math, angle computation, rep state-machine
    internals, or MediaPipe setup. Cue arbitration, phrasing, coloring, capture, tempo
    speech are touchable.
-4. Git: checkpoint commit before each phase; one commit per logical fix (`fix(<tag>): ...`);
+4. Git: canonical branch is `main` (ship-ready-2026-06 merged & retired 2026-07-18;
+   pre-merge remote main preserved as `archive/main-pre-2026-07`). All work on `main`.
+   Checkpoint commit before each phase; one commit per logical fix (`fix(<tag>): ...`);
    push at phase ends and after checkpoints; never commit db.sqlite3/staticfiles/media/.env*.
 5. One phase per run. End every phase with exact manual browser steps appended to
    MASTER_TEST_DAY.md.
