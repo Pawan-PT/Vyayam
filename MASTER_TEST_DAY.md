@@ -325,3 +325,32 @@ the filming day BEFORE flipping that exercise's flag.
    back".
 4. Half pull (elbows to ~120°): the pull phase must NOT complete.
 5. No red at any point.
+
+## Part I — CI pipeline verification (sdlc-2026-07 Phase 1, run once after push)
+CI encodes the full gate in `.github/workflows/ci.yml` — push + PR, all branches.
+
+### I1. First green run
+1. Push any commit (the Phase 1 commit itself counts). Open the repo on
+   GitHub → Actions tab → "CI" workflow.
+2. A run appears for branch `ship-ready-2026-06` and completes GREEN in
+   under 30 min (job timeout kills it at 30).
+3. Open the run and confirm all steps present and green, in this order:
+   checkout · Python 3.12.3 · install requirements · Node · Django system
+   check · collectstatic · Django test suite (serial) · Node tests ·
+   Exercise targets fresh · Prod-mode smoke (check --deploy).
+4. In the "Django test suite (serial)" step log: "Ran 377 tests" (or more,
+   never fewer) and "OK".
+5. In the "Node tests" step log: `# pass 47` (or more) and `# fail 0`.
+6. In "Exercise targets fresh": "exercise_targets.json is fresh".
+7. In "Prod-mode smoke": "System check identified no issues (0 silenced)".
+   Any warning here is a regression — nothing is accepted or silenced.
+8. Note the "Install requirements" step duration. If it exceeds ~5 min,
+   that is the trigger to consider a mediapipe-free requirements-ci.txt —
+   ONLY after proving the suite green without mediapipe (CLAUDE.md
+   landmine: 257 exercise modules import cv2 unguarded; today the suite
+   hard-requires it, so this is a future refactor, not a quick edit).
+
+### I2. Red-path proof (once, then revert)
+1. On a throwaway branch, break one Django test assertion, push.
+2. Actions: the CI run goes RED at "Django test suite (serial)".
+3. Delete the throwaway branch. Never merge it.

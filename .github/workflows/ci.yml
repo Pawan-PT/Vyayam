@@ -1,0 +1,82 @@
+# VYAYAM CI — encodes the full gate exactly as defined in CLAUDE.md.
+# Gate = check clean · collectstatic exit 0 · Django suite green (serial) ·
+#        node tests green · export_exercise_targets --check "fresh" ·
+#        prod-mode check --deploy clean.
+# Step order matters: collectstatic MUST run before the Django suite
+# (manifest static storage — camera pages 500 without it).
+# Security note: no untrusted event input (titles/bodies/branch names) is
+# ever interpolated into run: commands in this workflow — keep it that way.
+name: CI
+
+on:
+  push:
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      # CI-only throwaway values — never real secrets.
+      DJANGO_SECRET_KEY: ci-test-key
+      DJANGO_DEBUG: "True"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.12.3 (matches runtime.txt)
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12.3"
+          cache: pip
+
+      - name: Install requirements
+        # requirements.txt includes mediapipe — required server-side:
+        # 257/264 exercise modules import PoseAnalyzer/cv2 unguarded, so
+        # export_exercise_targets and module-importing tests hard-require it
+        # (CLAUDE.md landmine). Do not split it out unless install time
+        # exceeds ~5 min AND the suite is proven green without it.
+        run: pip install -r requirements.txt
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Django system check
+        run: python manage.py check
+
+      - name: collectstatic
+        run: python manage.py collectstatic --noinput
+
+      - name: Django test suite (serial)
+        # --parallel 1 is deliberate: SQLite flakes in parallel. Do NOT
+        # "fix" CI time by parallelizing this.
+        run: python manage.py test --parallel 1
+
+      - name: Node tests
+        run: node --test strength_app/tests/js/*.test.mjs
+
+      - name: Exercise targets fresh
+        # Single-source CV architecture: exercise_targets.json must match
+        # the exercise modules. Requires mediapipe (see install step note).
+        run: |
+          python manage.py export_exercise_targets --check | tee /tmp/targets_check.txt
+          grep -q "is fresh" /tmp/targets_check.txt
+
+      - name: Prod-mode smoke (check --deploy)
+        # As of 2026-07-18 this is fully clean — 0 issues, 0 silenced — so
+        # any warning here is a regression and fails the job. No warnings
+        # are accepted/silenced. Note: the key must be 50+ chars with 5+
+        # unique characters or Django raises security.W009 spuriously.
+        env:
+          DJANGO_SECRET_KEY: ci-deploy-smoke-key-a7f3k9m2q8w4e6r1t5y0u3i7o9p2s4d6f8g1h3j5
+          DJANGO_DEBUG: "False"
+          DJANGO_ALLOWED_HOSTS: testserver
+          DJANGO_SSL_REDIRECT: "True"
+        run: |
+          python manage.py check --deploy 2>&1 | tee /tmp/deploy_check.txt
+          grep -q "System check identified no issues" /tmp/deploy_check.txt
