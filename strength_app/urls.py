@@ -13,6 +13,7 @@ from . import v1_football_views as views_football
 from . import v1_session_views as views_session
 from . import v1_progress_views as views_progress
 from . import v1_coach_views as views_coach
+from . import v1_athlete_views as views_athlete
 from . import v1_nutrition_views as views_nutrition
 from . import v1_therapist_session_views as views_thrx
 
@@ -84,6 +85,13 @@ urlpatterns = [
     # .json); nothing fetched this endpoint, and the view scored every
     # exercise with squat (knee-angle) logic — D5. The view function is
     # retained in views.py, fenced, for the desktop/dev runner context.
+
+    # ========================================================================
+    # ATHLETE PWA — coach-linked football athletes
+    # ========================================================================
+    path('athlete/today/',                                            views_athlete.athlete_today,                name='athlete_today'),
+    path('athlete/progress/',                                         views_athlete.athlete_progress,             name='athlete_progress'),
+    path('athlete/profile/',                                          views_athlete.athlete_profile,              name='athlete_profile'),
 
     # ========================================================================
     # COACH DASHBOARD
