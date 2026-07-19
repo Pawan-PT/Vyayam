@@ -121,6 +121,32 @@
       {% endif %}
     </div>
 
+    <!-- 1b. Manual-entry strength tests (bench / leg press) — display only,
+         never part of football_level (SB-5a deferred) -->
+    <div class="c-card">
+      <div class="c-card-title">Strength Tests — Manual Entry</div>
+      {% if strength_tests %}
+      <table class="c-table">
+        <thead><tr><th>Test</th><th>Entry</th><th>Est. 1RM (Epley)</th><th>Rel. BW</th></tr></thead>
+        <tbody>
+          {% for t in strength_tests %}
+          <tr>
+            <td>{{ t.label }}</td>
+            <td style="font-size:.8rem;color:#3d4f42;">{{ t.weight_kg|floatformat:"-1" }} kg × {{ t.reps }}{% if t.tested_at %} · {{ t.tested_at }}{% endif %}</td>
+            <td><strong>{{ t.e1rm|floatformat:"-1" }} kg</strong></td>
+            <td style="font-size:.8rem;color:#3d4f42;">{% if t.rel_bw %}{{ t.rel_bw }}×{% else %}—{% endif %}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <div style="font-size:.72rem;color:#3d4f42;opacity:.6;margin-top:8px;">
+        Athlete-entered weight × reps; not used in the football level.
+      </div>
+      {% else %}
+      <div class="empty">No strength-test entries yet.</div>
+      {% endif %}
+    </div>
+
     <!-- 2. Strength / HSR progression -->
     <div class="c-card">
       <div class="c-card-title">Strength / HSR Progression</div>

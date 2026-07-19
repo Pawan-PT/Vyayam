@@ -283,6 +283,11 @@ class TestG0AssessmentFootballConditioningJS(InlineJSAuditMixin, TestCase):
         self.audit_page(
             reverse('football_assessment_execute', args=[0]) +
             '?side=%0Ahostile', 'football execute 0 hostile')
+        # 2026-07 Part 3: strength_manual template variant (bench press —
+        # weight×reps entry) carries its own inline-JS branch.
+        self.audit_page(
+            reverse('football_assessment_execute', args=[6]) +
+            '?side=%0Ahostile', 'football strength test 6 hostile')
         self.audit_page(reverse('football_nordic_camera_test'),
                         'nordic diagnostic')
         self.audit_page(reverse('v1_conditioning_session'), 'conditioning')

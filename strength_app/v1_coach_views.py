@@ -377,6 +377,22 @@ def coach_athlete_detail(request, patient_id):
                 'checks': checks,
             }
 
+    # 1b — Manual-entry strength tests (bench/leg press, 2026-07 Part 3).
+    # Display only — deliberately NOT part of football_level (SB-5a deferred).
+    raw = patient.raw_test_data_json if isinstance(patient.raw_test_data_json, dict) else {}
+    strength_tests = []
+    for key, label in (('bench_press', 'Bench Press'), ('leg_press', 'Leg Press')):
+        rec = (raw.get('strength_tests') or {}).get(key)
+        if isinstance(rec, dict) and rec.get('e1rm'):
+            strength_tests.append({
+                'label': label,
+                'weight_kg': rec.get('weight_kg'),
+                'reps': rec.get('reps'),
+                'e1rm': rec.get('e1rm'),
+                'rel_bw': rec.get('rel_bw'),
+                'tested_at': rec.get('tested_at', ''),
+            })
+
     # 6 — Load + calendar.
     weekly_load = _weekly_load(patient, weeks=4)
     upcoming_matches = MatchDate.objects.filter(
@@ -411,6 +427,7 @@ def coach_athlete_detail(request, patient_id):
         'patient': patient,
         'football': football,
         'battery': battery,
+        'strength_tests': strength_tests,
         'asymmetry_panel': asymmetry_panel,
         'plyo_blockers': plyo_blockers,
         'weekly_load': weekly_load,
