@@ -382,3 +382,85 @@ Loader ships in `strength_app/templates/strength_app/_sentry.html`, included by
 6. Camera page (`v1_exercise_execute`): start a session, confirm the page
    still loads and coaches normally with the loader present (it extends
    base_gamified, so Sentry is on this page — watch for any console error).
+
+---
+
+## Part K — Athlete PWA + football demo seed (2026-07-18, LOCAL ONLY — not yet committed)
+
+Prep once: `DJANGO_SECRET_KEY=test-key DJANGO_DEBUG=True python manage.py seed_football_demo`
+(idempotent — safe to rerun; `--reset` removes only the FBDEMO rows).
+
+### K1. Athlete login + Today tab
+1. `/login/` → phone `9000000005`, password `athlete` → must land on
+   `/athlete/today/` (NOT the generic dashboard).
+2. Header reads "Today's Training, Kabir" with an "In-Season" phase pill.
+3. Next-match card shows the nearest seeded match (opponent + N days away).
+4. Amber "Performance tests due" card is visible (battery seeded 29 days ago).
+5. Today's session card lists exercises with sets × reps; "Start Training"
+   opens the existing session flow (`/v1/session/`).
+6. "This week's training" bar shows completed vs 4 planned.
+
+### K2. Progress tab
+1. Bottom nav → Progress. Header "Your Performance, Kabir".
+2. Level card shows L3 · Consolidation. Six battery bars (Single-Leg Hop,
+   Nordic Hold, 20 m Sprint, Pogo Reactivity — never "RSI" — COD 505,
+   Y-Balance) with 3/5-4/5 scores.
+3. Consistency: this-week count, last-4-weeks total (14), 4 weekly bars.
+4. sRPE bar chart shows the last-14-days sessions, values 4-7.
+5. Confirm ZERO pain/rehab wording anywhere on the page.
+
+### K3. Profile tab + nav states
+1. Bottom nav → Profile: Kabir Singh, 21 yrs · Central Midfielder;
+   "Your coach" = Arjun Mehta, S&C Coach · Vadodara United FC;
+   current block (In-Season / Strength / Week 4 / L3); 3 upcoming matches.
+2. Cycle all three tabs — active tab is highlighted sage each time.
+3. Log out → back to `/login/`.
+
+### K4. Coach side + no-regression
+1. `/coach/login/` → `coach_arjun` / `simple` → squad shows Kabir Singh
+   (L3, In-Season, green/on-track).
+2. Kabir row → detail: 6-test battery with raw values, weekly load bars,
+   recent sessions list, coach notes visible, 3 matches in calendar.
+3. Rehab regression: `/login/` → `9000000001` / `patient` (anika) must still
+   land on `/therapist-session/today/` and its 3 tabs still render.
+
+---
+
+## Part L — Strength tests (bench/leg press) + guided pacer (2026-07-19, LOCAL ONLY — not committed)
+
+Prep: `DJANGO_SECRET_KEY=test-key DJANGO_DEBUG=True python manage.py seed_football_demo`
+
+### L1. Athlete strength tests (manual entry)
+1. `/login/` → `9000000005` / `athlete` → Progress tab: "Strength" card shows
+   Bench Press 60 kg × 8 → est. 1RM 76 kg (1.09× BW) and Leg Press
+   140 kg × 10 → 186.7 kg (2.67× BW), labelled "Estimated 1RM (Epley)".
+2. `/football/assessment/` intro now lists 8 tests (bench + leg press last).
+3. Walk to test 7 (`/football/assessment/6/`): weight + reps inputs (NO
+   scoring guide, no camera), live e1RM preview appears as you type,
+   "No equipment available — skip this test" link advances without writing.
+4. Enter 60 / 8 → Save → lands on test 8; enter 140 / 10 → Save → results
+   page renders normally; football level UNCHANGED by strength entries.
+5. Coach console → Kabir detail: "Strength Tests — Manual Entry" table
+   between the battery and HSR cards, with the "not used in the football
+   level" footnote.
+
+### L2. Guided pacer (ankle pumps / prone glute squeeze)
+1. These two exercises must still be video-guided (no camera): catalog flags
+   remain False — prescribe one to a test patient (therapist console) or
+   verify via the seeded rehab flow after swapping a prescription item.
+2. On the guided exercise page: "Count-along pacer" card with the pill
+   "Guided exercise — follow the video".
+   - Ankle Pumps: Start pacer → count climbs every 2 s to the prescribed
+     reps → "SET DONE — MARK THE SET BELOW".
+   - Prone Glute Squeeze: SQUEEZE 5s countdown → RELAX 3s, per rep.
+3. Pacer start/stop writes nothing (set logging still via the set buttons).
+4. Any other guided exercise (e.g. Single-Leg Balance): NO pacer card.
+
+### L3. NOT done this session — dark-coach flip (deliberate)
+Parts 4A/4B detection already exists in coach_dark.js (all 11 *_rx coaches,
+integrity suite green). The v2_ghost_supported flip remains BLOCKED by the
+documented gates: filming-protocol pass + this file's Part H-2026-07 walk +
+mentor sign-off on MENTOR_REVIEW_QUEUE §2026-07 cue strings. Flip day per
+exercise = one line in therapist_app/exercise_catalog.py + remove that
+exercise's DARK assertions in strength_app/tests/test_camera_dark.py
+(lines 99-101 invariant + '>DARK<' count).
