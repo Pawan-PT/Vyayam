@@ -1,3 +1,13 @@
+---
+title: VYAYAM
+emoji: 🏋️
+colorFrom: blue
+colorTo: green
+sdk: docker
+app_port: 7860
+pinned: false
+---
+
 # VYAYAM STRENGTH TRAINING SYSTEM
 
 Personalised Physiotherapy & Strength Training Platform with Camera-Guided Form Tracking
