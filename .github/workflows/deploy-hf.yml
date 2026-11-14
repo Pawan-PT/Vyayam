@@ -37,10 +37,15 @@ jobs:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
           set -euo pipefail
+          rm -f DEPLOY_RESULT.md # a committed result from an earlier run must not pass as this run's
           : "${HF_TOKEN:?repo secret HF_TOKEN is empty}"
           echo "::add-mask::${HF_TOKEN}"
           pip install --quiet huggingface_hub
-          python scripts/hf_bootstrap.py | tee "${RUNNER_TEMP}/bootstrap.out"
+          # Keep the result file out of the workspace: the snapshot step runs `git add -A`.
+          rc=0
+          python scripts/hf_bootstrap.py | tee "${RUNNER_TEMP}/bootstrap.out" || rc=$?
+          [ -f DEPLOY_RESULT.md ] && mv DEPLOY_RESULT.md "${RUNNER_TEMP}/bootstrap_result.md"
+          [ "$rc" -eq 0 ] || exit "$rc"
           {
             echo "live_url=$(grep '^LIVE_URL=' "${RUNNER_TEMP}/bootstrap.out" | tail -n 1 | cut -d= -f2-)"
             echo "hf_user=$(grep '^HF_USER=' "${RUNNER_TEMP}/bootstrap.out" | tail -n 1 | cut -d= -f2-)"
@@ -77,23 +82,47 @@ jobs:
             "https://${HF_USER}:${HF_TOKEN}@huggingface.co/spaces/${HF_USER}/${HF_SPACE_NAME}" \
             hf-snapshot:main
 
+      # Runs on failure too: DEPLOY_RESULT.md on `deploy` is how a failure is read without Actions logs.
       - name: Write DEPLOY_RESULT.md back to deploy
+        if: always()
         env:
-          LIVE_URL: ${{ steps.bootstrap.outputs.live_url }}
+          JOB_STATUS: ${{ job.status }}
         run: |
           set -euo pipefail
-          : "${LIVE_URL:?bootstrap did not report LIVE_URL}"
+          saved="${RUNNER_TEMP}/bootstrap_result.md"
+          out="${RUNNER_TEMP}/final_result.md"
 
-          echo "Live URL: ${LIVE_URL}" >> "$GITHUB_STEP_SUMMARY"
-
-          git checkout -f -B deploy "${GITHUB_SHA}"
+          if [ "$JOB_STATUS" = "success" ] && [ -f "$saved" ] && [ "$(head -n 1 "$saved")" = "STATUS=OK" ]; then
+            cp "$saved" "$out"
+          elif [ -f "$saved" ] && [ "$(head -n 1 "$saved")" = "STATUS=FAILED" ]; then
+            cp "$saved" "$out"
+          elif [ -f "$saved" ]; then
+            # Bootstrap passed but a later step failed.
+            printf '%s\n' "STATUS=FAILED" "CODE=STEP_FAILED_AFTER_BOOTSTRAP" \
+              "REASON=The Space was created but a later step failed (likely the push to the Space)." \
+              "FIX=Open the run page and read the failed step; check HF_TOKEN can write to the Space." > "$out"
+          else
+            printf '%s\n' "STATUS=FAILED" "CODE=BOOTSTRAP_NO_RESULT" \
+              "REASON=The bootstrap step stopped before it wrote a result (secret missing or pip failed)." \
+              "FIX=Check the HF_TOKEN repo secret is set, then re-run." > "$out"
+          fi
           {
-            echo "LIVE_URL=${LIVE_URL}"
             echo
-            echo "- Deployed commit: ${GITHUB_SHA}"
-            echo "- Deployed at (UTC): $(date -u +%Y-%m-%dT%H:%M:%SZ)"
-          } > DEPLOY_RESULT.md
+            echo "- Run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+            echo "- Commit: ${GITHUB_SHA}"
+            echo "- At (UTC): $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          } >> "$out"
+
+          cat "$out" >> "$GITHUB_STEP_SUMMARY"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -f -B deploy "${GITHUB_SHA}"
+          cp "$out" DEPLOY_RESULT.md
           git add DEPLOY_RESULT.md
-          git commit -q -m "chore(deploy): record live URL [skip ci]"
+          git commit -q -m "chore(deploy): record deploy result [skip ci]"
           git pull --rebase origin deploy
           git push origin HEAD:deploy
+
+          # Keep the Actions page honest.
+          [ "$(head -n 1 "$out")" = "STATUS=OK" ] || exit 1
