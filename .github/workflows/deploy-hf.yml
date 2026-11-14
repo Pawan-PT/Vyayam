@@ -1,11 +1,14 @@
 # Deploy to a Hugging Face Space (Docker SDK) on every push to `deploy`.
-# Needs: repo variables HF_USERNAME, HF_SPACE; repo secret HF_TOKEN. See DEPLOY_HF.md.
+# Needs: repo secret HF_TOKEN. Optional: repo variable HF_SPACE (default "vyayam"). See DEPLOY_HF.md.
+# The Space is created and configured by scripts/hf_bootstrap.py; the live URL is written back
+# to DEPLOY_RESULT.md on the `deploy` branch.
 # Security: values reach the shell only through env vars; the token is never echoed.
 name: Deploy to Hugging Face Space
 
 on:
   push:
     branches: [deploy]
+  workflow_dispatch:
 
 concurrency:
   group: deploy-hf
@@ -13,27 +16,49 @@ concurrency:
 
 jobs:
   deploy:
+    # workflow_dispatch can pick any branch; only `deploy` may deploy.
+    if: github.ref == 'refs/heads/deploy'
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write # only to commit DEPLOY_RESULT.md back to `deploy`
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Create and configure the Space
+        id: bootstrap
+        env:
+          HF_SPACE: ${{ vars.HF_SPACE }}
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          set -euo pipefail
+          : "${HF_TOKEN:?repo secret HF_TOKEN is empty}"
+          echo "::add-mask::${HF_TOKEN}"
+          pip install --quiet huggingface_hub
+          python scripts/hf_bootstrap.py | tee "${RUNNER_TEMP}/bootstrap.out"
+          {
+            echo "live_url=$(grep '^LIVE_URL=' "${RUNNER_TEMP}/bootstrap.out" | tail -n 1 | cut -d= -f2-)"
+            echo "hf_user=$(grep '^HF_USER=' "${RUNNER_TEMP}/bootstrap.out" | tail -n 1 | cut -d= -f2-)"
+            echo "hf_space=$(grep '^HF_SPACE_NAME=' "${RUNNER_TEMP}/bootstrap.out" | tail -n 1 | cut -d= -f2-)"
+          } >> "$GITHUB_OUTPUT"
 
       # HF rejects plain-git pushes that contain binary files (mp4, png, ...).
       # So push a single snapshot commit with binaries stored via Git LFS.
       # shortcut: Space history is one commit per deploy, GitHub keeps the real history.
       - name: Push snapshot to the Space
         env:
-          HF_USERNAME: ${{ vars.HF_USERNAME }}
-          HF_SPACE: ${{ vars.HF_SPACE }}
+          HF_USER: ${{ steps.bootstrap.outputs.hf_user }}
+          HF_SPACE_NAME: ${{ steps.bootstrap.outputs.hf_space }}
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
           set -euo pipefail
-          : "${HF_USERNAME:?repo variable HF_USERNAME is empty}"
-          : "${HF_SPACE:?repo variable HF_SPACE is empty}"
-          : "${HF_TOKEN:?repo secret HF_TOKEN is empty}"
+          : "${HF_USER:?bootstrap did not report HF_USER}"
+          : "${HF_SPACE_NAME:?bootstrap did not report HF_SPACE_NAME}"
           echo "::add-mask::${HF_TOKEN}"
 
           git config user.name "github-actions[bot]"
@@ -49,5 +74,26 @@ jobs:
           git commit -q -m "Deploy ${GITHUB_SHA}"
 
           git push --force \
-            "https://${HF_USERNAME}:${HF_TOKEN}@huggingface.co/spaces/${HF_USERNAME}/${HF_SPACE}" \
+            "https://${HF_USER}:${HF_TOKEN}@huggingface.co/spaces/${HF_USER}/${HF_SPACE_NAME}" \
             hf-snapshot:main
+
+      - name: Write DEPLOY_RESULT.md back to deploy
+        env:
+          LIVE_URL: ${{ steps.bootstrap.outputs.live_url }}
+        run: |
+          set -euo pipefail
+          : "${LIVE_URL:?bootstrap did not report LIVE_URL}"
+
+          echo "Live URL: ${LIVE_URL}" >> "$GITHUB_STEP_SUMMARY"
+
+          git checkout -f -B deploy "${GITHUB_SHA}"
+          {
+            echo "LIVE_URL=${LIVE_URL}"
+            echo
+            echo "- Deployed commit: ${GITHUB_SHA}"
+            echo "- Deployed at (UTC): $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          } > DEPLOY_RESULT.md
+          git add DEPLOY_RESULT.md
+          git commit -q -m "chore(deploy): record live URL [skip ci]"
+          git pull --rebase origin deploy
+          git push origin HEAD:deploy
