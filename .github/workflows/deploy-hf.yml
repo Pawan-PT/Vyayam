@@ -1,0 +1,53 @@
+# Deploy to a Hugging Face Space (Docker SDK) on every push to `deploy`.
+# Needs: repo variables HF_USERNAME, HF_SPACE; repo secret HF_TOKEN. See DEPLOY_HF.md.
+# Security: values reach the shell only through env vars; the token is never echoed.
+name: Deploy to Hugging Face Space
+
+on:
+  push:
+    branches: [deploy]
+
+concurrency:
+  group: deploy-hf
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # HF rejects plain-git pushes that contain binary files (mp4, png, ...).
+      # So push a single snapshot commit with binaries stored via Git LFS.
+      # shortcut: Space history is one commit per deploy, GitHub keeps the real history.
+      - name: Push snapshot to the Space
+        env:
+          HF_USERNAME: ${{ vars.HF_USERNAME }}
+          HF_SPACE: ${{ vars.HF_SPACE }}
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          set -euo pipefail
+          : "${HF_USERNAME:?repo variable HF_USERNAME is empty}"
+          : "${HF_SPACE:?repo variable HF_SPACE is empty}"
+          : "${HF_TOKEN:?repo secret HF_TOKEN is empty}"
+          echo "::add-mask::${HF_TOKEN}"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git lfs install --local
+
+          git checkout --orphan hf-snapshot
+          for ext in mp4 webm mp3 wav png jpg jpeg gif webp ico pdf woff woff2 ttf; do
+            git lfs track "*.${ext}" > /dev/null
+          done
+          git rm -r --cached -q .
+          git add -A
+          git commit -q -m "Deploy ${GITHUB_SHA}"
+
+          git push --force \
+            "https://${HF_USERNAME}:${HF_TOKEN}@huggingface.co/spaces/${HF_USERNAME}/${HF_SPACE}" \
+            hf-snapshot:main
